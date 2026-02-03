@@ -1,0 +1,41 @@
+# DELIVR-CM Dependencies
+# ========================
+
+# Django Core
+Django>=5.0,<6.0
+djangorestframework>=3.14.0
+
+# Database - PostgreSQL + PostGIS
+psycopg2-binary>=2.9.9
+# Note: For production, use psycopg2 (requires libpq-dev)
+
+# Async Task Queue
+celery>=5.3.0
+redis>=5.0.0
+
+# Django Extensions
+django-cors-headers>=4.3.0
+django-filter>=23.5
+Pillow>=10.0.0
+
+# Authentication JWT
+djangorestframework-simplejwt>=5.3.0
+
+# Environment Variables
+python-decouple>=3.8
+
+# HTTP Client (for OSRM, Nominatim, WhatsApp API)
+requests>=2.31.0
+httpx>=0.26.0
+
+# GeoDjango utilities
+# (GDAL/GEOS installed at system level in Dockerfile)
+
+# Development & Testing
+pytest>=7.4.0
+pytest-django>=4.7.0
+factory-boy>=3.3.0
+
+# Code Quality
+black>=23.12.0
+flake8>=6.1.0

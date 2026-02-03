@@ -1,0 +1,55 @@
+# DELIVR-CM .gitignore
+# =====================
+
+# Environment
+.env
+*.env.local
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+*.egg
+
+# Virtual Environments
+venv/
+ENV/
+.venv/
+
+# Django
+*.log
+local_settings.py
+db.sqlite3
+media/
+staticfiles/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Docker
+.docker/
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
