@@ -8,7 +8,8 @@ services:
   web:
     build: .
     container_name: delivr_web
-    command: python manage.py runserver 0.0.0.0:8000
+    # Use Daphne ASGI server for WebSocket support
+    command: daphne -b 0.0.0.0 -p 8000 delivr_core.asgi:application
     volumes:
       - .:/app
     ports:

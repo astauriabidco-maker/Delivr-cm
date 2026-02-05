@@ -127,13 +127,19 @@ class DeliveryStatusUpdateSerializer(serializers.Serializer):
     """Serializer for updating delivery status."""
     
     status = serializers.ChoiceField(choices=DeliveryStatus.choices)
-    otp_code = serializers.CharField(max_length=4, required=False)
+    otp_code = serializers.CharField(max_length=4, required=False)  # For COMPLETED
+    pickup_otp = serializers.CharField(max_length=4, required=False)  # For PICKED_UP
 
     def validate(self, data):
         # OTP required for completion
         if data['status'] == DeliveryStatus.COMPLETED and not data.get('otp_code'):
             raise serializers.ValidationError(
-                "Le code OTP est requis pour valider la livraison."
+                "Le code OTP livraison est requis pour valider la livraison."
+            )
+        # Pickup OTP required for pickup
+        if data['status'] == DeliveryStatus.PICKED_UP and not data.get('pickup_otp'):
+            raise serializers.ValidationError(
+                "Le code OTP retrait est requis pour valider le ramassage."
             )
         return data
 
@@ -142,3 +148,41 @@ class CourierAssignSerializer(serializers.Serializer):
     """Serializer for courier assignment."""
     
     courier_id = serializers.UUIDField()
+
+
+class PublicOrderCreateSerializer(serializers.Serializer):
+    """
+    Serializer for creating order via Public Checkout (Magic Link).
+    
+    This is used by the public checkout page and differs from 
+    OrderCreateSerializer in field naming (client_ vs customer_).
+    """
+    
+    shop_id = serializers.UUIDField()
+    client_name = serializers.CharField(max_length=150)
+    client_phone = serializers.CharField(max_length=15)
+    neighborhood_id = serializers.UUIDField()
+    package_description = serializers.CharField()
+    payment_method = serializers.CharField(default='CASH')
+    
+    def validate_client_phone(self, value):
+        """Ensure phone number is in correct format."""
+        import re
+        # Remove spaces and dashes
+        clean = re.sub(r'[\s\-]', '', value)
+        
+        # Must start with +237 or be 9 digits
+        if clean.startswith('+237'):
+            if len(clean) != 13:
+                raise serializers.ValidationError(
+                    "Le numéro doit contenir 9 chiffres après +237"
+                )
+        elif len(clean) == 9 and clean.isdigit():
+            # Add country code
+            clean = f"+237{clean}"
+        else:
+            raise serializers.ValidationError(
+                "Format de numéro invalide. Utilisez +237XXXXXXXXX ou 9 chiffres."
+            )
+        
+        return clean

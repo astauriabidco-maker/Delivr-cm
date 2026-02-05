@@ -1,0 +1,395 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Intégrations & API - DELIVR-CM Backoffice</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .card {
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+        }
+
+        .status-ok {
+            color: #10b981;
+        }
+
+        .status-warning {
+            color: #f59e0b;
+        }
+
+        .status-error {
+            color: #ef4444;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 0.5rem 1rem;
+            background-color: #374151;
+            border: 1px solid #4b5563;
+            border-radius: 0.5rem;
+            color: white;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+
+        .btn-primary {
+            padding: 0.5rem 1.5rem;
+            background: linear-gradient(to right, #2563eb, #1d4ed8);
+            color: white;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(to right, #1d4ed8, #1e40af);
+        }
+
+        .btn-secondary {
+            padding: 0.5rem 1rem;
+            background-color: #374151;
+            color: #e5e7eb;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-secondary:hover {
+            background-color: #4b5563;
+        }
+    </style>
+</head>
+
+<body class="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 min-h-screen text-gray-100">
+
+    <!-- Header -->
+    <header class="bg-gray-800/50 border-b border-gray-700 backdrop-blur-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <a href="/admin/" class="text-gray-400 hover:text-white">← Admin</a>
+                <h1
+                    class="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+                    ⚙️ Intégrations & API
+                </h1>
+            </div>
+            <div class="flex items-center gap-4">
+                <span class="text-sm text-gray-400">
+                    Dernière mise à jour: {{ config.updated_at|date:"d/m/Y H:i" }}
+                </span>
+                <button onclick="testAllConnections()" class="btn-secondary">
+                    🧪 Tester les connexions
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Messages -->
+    {% if messages %}
+    <div class="max-w-7xl mx-auto px-6 pt-4">
+        {% for message in messages %}
+        <div class="bg-green-600/20 border border-green-500/50 text-green-300 px-4 py-3 rounded-lg mb-4">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <main class="max-w-7xl mx-auto px-6 py-8 space-y-8">
+
+        <!-- ================== WHATSAPP SECTION ================== -->
+        <section class="card bg-gray-800/50 rounded-2xl border border-gray-700 overflow-hidden">
+            <div class="bg-gradient-to-r from-green-600/20 to-green-800/20 px-6 py-4 border-b border-gray-700">
+                <h2 class="text-xl font-semibold flex items-center gap-2">
+                    📱 Configuration WhatsApp
+                </h2>
+            </div>
+            <form method="post" class="p-6">
+                {% csrf_token %}
+
+                <!-- Provider Toggle -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Provider Actif</label>
+                    <div class="flex gap-4">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="active_whatsapp_provider" value="twilio" class="w-4 h-4 text-green-500" {% if config.active_whatsapp_provider == 'twilio' %}checked{% endif %}>
+                            <span class="text-white">Twilio</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="active_whatsapp_provider" value="meta" class="w-4 h-4 text-blue-500" {% if config.active_whatsapp_provider == 'meta' %}checked{% endif %}>
+                            <span class="text-white">Meta Cloud API</span>
+                        </label>
+                    </div>
+                </div>
+
+
+                <div class="grid md:grid-cols-2 gap-6">
+                    <!-- Twilio -->
+                    <div class="bg-gray-700/30 rounded-xl p-4 border border-gray-600">
+                        <h3 class="font-medium text-green-400 mb-4 flex items-center justify-between">
+                            <span>Twilio</span>
+                            <button type="button" onclick="testConnection('twilio')"
+                                class="text-xs bg-gray-600 px-2 py-1 rounded hover:bg-gray-500">
+                                🧪 Test
+                            </button>
+                        </h3>
+                        <div class="space-y-3">
+                            <div>
+                                <label class="text-xs text-gray-400">Account SID (.env) 🔒</label>
+                                <div class="bg-gray-800 px-3 py-2 rounded text-gray-500 font-mono text-sm">
+                                    {{ secrets.twilio_account_sid }}
+                                </div>
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-400">Auth Token (.env) 🔒</label>
+                                <div class="bg-gray-800 px-3 py-2 rounded text-gray-500 font-mono text-sm">
+                                    {{ secrets.twilio_auth_token }}
+                                </div>
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-400">Numéro WhatsApp</label>
+                                <input type="text" name="twilio_whatsapp_number"
+                                    value="{{ config.twilio_whatsapp_number }}" class="input-field text-sm"
+                                    placeholder="whatsapp:+14155238886">
+                            </div>
+                        </div>
+                        <div id="twilio-status" class="mt-3 text-sm"></div>
+                    </div>
+
+                    <!-- Meta -->
+                    <div class="bg-gray-700/30 rounded-xl p-4 border border-gray-600">
+                        <h3 class="font-medium text-blue-400 mb-4 flex items-center justify-between">
+                            <span>Meta Cloud API</span>
+                            <button type="button" onclick="testConnection('meta')"
+                                class="text-xs bg-gray-600 px-2 py-1 rounded hover:bg-gray-500">
+                                🧪 Test
+                            </button>
+                        </h3>
+                        <div class="space-y-3">
+                            <div>
+                                <label class="text-xs text-gray-400">API Token (.env) 🔒</label>
+                                <div class="bg-gray-800 px-3 py-2 rounded text-gray-500 font-mono text-sm">
+                                    {{ secrets.meta_api_token }}
+                                </div>
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-400">Phone Number ID</label>
+                                <input type="text" name="meta_phone_number_id" value="{{ config.meta_phone_number_id }}"
+                                    class="input-field text-sm" placeholder="1234567890123456">
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-400">Verify Token</label>
+                                <input type="text" name="meta_verify_token" value="{{ config.meta_verify_token }}"
+                                    class="input-field text-sm" placeholder="delivr-cm-verify-token">
+                            </div>
+                        </div>
+                        <div id="meta-status" class="mt-3 text-sm"></div>
+                    </div>
+                </div>
+
+                <div class="mt-6 flex justify-end">
+                    <button type="submit" class="btn-primary">💾 Enregistrer WhatsApp</button>
+                </div>
+            </form>
+        </section>
+
+        <!-- ================== PRICING SECTION ================== -->
+        <section class="card bg-gray-800/50 rounded-2xl border border-gray-700 overflow-hidden">
+            <div class="bg-gradient-to-r from-yellow-600/20 to-orange-600/20 px-6 py-4 border-b border-gray-700">
+                <h2 class="text-xl font-semibold flex items-center gap-2">💰 Moteur de Tarification</h2>
+            </div>
+            <form method="post" class="p-6">
+                {% csrf_token %}
+
+                <div class="grid md:grid-cols-3 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Tarif de base (FCFA)</label>
+                        <input type="number" name="pricing_base_fare" value="{{ config.pricing_base_fare }}"
+                            onchange="updateSimulation()" class="input-field" min="0">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Coût par km (FCFA)</label>
+                        <input type="number" name="pricing_cost_per_km" value="{{ config.pricing_cost_per_km }}"
+                            onchange="updateSimulation()" class="input-field" min="0">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Tarif minimum (FCFA)</label>
+                        <input type="number" name="pricing_minimum_fare" value="{{ config.pricing_minimum_fare }}"
+                            onchange="updateSimulation()" class="input-field" min="0">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Commission plateforme (%)</label>
+                        <input type="number" name="platform_fee_percent" value="{{ config.platform_fee_percent }}"
+                            onchange="updateSimulation()" class="input-field" min="0" max="100">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Plafond dette coursier
+                            (FCFA)</label>
+                        <input type="number" name="courier_debt_ceiling" value="{{ config.courier_debt_ceiling }}"
+                            class="input-field" min="0">
+                    </div>
+                </div>
+
+                <!-- Price Simulator -->
+                <div
+                    class="mt-6 bg-gradient-to-r from-green-900/30 to-emerald-900/30 rounded-xl p-6 border border-green-700/50">
+                    <h3 class="font-medium text-green-400 mb-4">📊 Simulateur de Prix</h3>
+                    <div class="flex items-center gap-4 mb-4">
+                        <label class="text-sm text-gray-300">Distance:</label>
+                        <input type="range" id="distance-slider" min="1" max="30" value="5" oninput="updateSimulation()"
+                            class="w-48">
+                        <span id="distance-value" class="text-white font-mono">5 km</span>
+                    </div>
+                    <div id="simulation-result" class="grid grid-cols-3 gap-4 text-center">
+                        <div class="bg-gray-800/50 rounded-lg p-4">
+                            <div class="text-2xl font-bold text-white">{{ pricing_sim.total_price }} FCFA</div>
+                            <div class="text-xs text-gray-400">Prix Total</div>
+                        </div>
+                        <div class="bg-blue-900/30 rounded-lg p-4">
+                            <div class="text-2xl font-bold text-blue-400">{{ pricing_sim.platform_fee }} FCFA</div>
+                            <div class="text-xs text-gray-400">Commission</div>
+                        </div>
+                        <div class="bg-orange-900/30 rounded-lg p-4">
+                            <div class="text-2xl font-bold text-orange-400">{{ pricing_sim.courier_earning }} FCFA</div>
+                            <div class="text-xs text-gray-400">Gain Coursier</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-6 flex justify-end">
+                    <button type="submit" class="btn-primary">💾 Enregistrer Tarification</button>
+                </div>
+            </form>
+        </section>
+
+        <!-- ================== SERVICES SECTION ================== -->
+        <section class="card bg-gray-800/50 rounded-2xl border border-gray-700 overflow-hidden">
+            <div class="bg-gradient-to-r from-purple-600/20 to-indigo-600/20 px-6 py-4 border-b border-gray-700">
+                <h2 class="text-xl font-semibold flex items-center gap-2">🗺️ Services Externes</h2>
+            </div>
+            <form method="post" class="p-6">
+                {% csrf_token %}
+
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">
+                            URL OSRM (Routing) <span id="osrm-status" class="ml-2"></span>
+                        </label>
+                        <div class="flex gap-2">
+                            <input type="url" name="osrm_base_url" value="{{ config.osrm_base_url }}"
+                                class="input-field flex-1">
+                            <button type="button" onclick="testConnection('osrm')" class="btn-secondary">🧪</button>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">
+                            URL Nominatim (Géocodage) <span id="nominatim-status" class="ml-2"></span>
+                        </label>
+                        <div class="flex gap-2">
+                            <input type="url" name="nominatim_base_url" value="{{ config.nominatim_base_url }}"
+                                class="input-field flex-1">
+                            <button type="button" onclick="testConnection('nominatim')"
+                                class="btn-secondary">🧪</button>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">
+                            Redis (.env) 🔒 <span id="redis-status" class="ml-2"></span>
+                        </label>
+                        <div class="flex gap-2">
+                            <div class="input-field flex-1 bg-gray-800 text-gray-500 font-mono text-sm">
+                                {{ secrets.redis_url }}
+                            </div>
+                            <button type="button" onclick="testConnection('redis')" class="btn-secondary">🧪</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-6 flex justify-end">
+                    <button type="submit" class="btn-primary">💾 Enregistrer Services</button>
+                </div>
+            </form>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="text-center text-gray-500 text-sm py-8">
+        DELIVR-CM Backoffice • Intégrations & API
+    </footer>
+
+    <script>
+        function testConnection(service) {
+            const statusEl = document.getElementById(service + '-status');
+            if (statusEl) statusEl.innerHTML = '<span class="text-gray-400">Testing...</span>';
+
+            fetch('/backoffice/integrations/test/' + service + '/')
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    const result = data[service];
+                    if (result) {
+                        const icon = result.status === 'ok' ? '✅' : result.status === 'warning' ? '⚠️' : '❌';
+                        const colorClass = result.status === 'ok' ? 'status-ok' : result.status === 'warning' ? 'status-warning' : 'status-error';
+                        if (statusEl) {
+                            statusEl.innerHTML = '<span class="' + colorClass + '">' + icon + ' ' + result.message + '</span>';
+                        }
+                    }
+                })
+                .catch(function (e) {
+                    if (statusEl) statusEl.innerHTML = '<span class="status-error">❌ Erreur</span>';
+                });
+        }
+
+        function testAllConnections() {
+            ['osrm', 'nominatim', 'redis', 'twilio', 'meta'].forEach(function (s) { testConnection(s); });
+        }
+
+        function updateSimulation() {
+            const distance = document.getElementById('distance-slider').value;
+            document.getElementById('distance-value').textContent = distance + ' km';
+
+            const baseFare = parseInt(document.querySelector('[name=pricing_base_fare]').value) || 500;
+            const costPerKm = parseInt(document.querySelector('[name=pricing_cost_per_km]').value) || 150;
+            const minFare = parseInt(document.querySelector('[name=pricing_minimum_fare]').value) || 1000;
+            const feePercent = parseInt(document.querySelector('[name=platform_fee_percent]').value) || 20;
+
+            let totalPrice = baseFare + (costPerKm * distance);
+            totalPrice = Math.max(totalPrice, minFare);
+            const platformFee = Math.floor(totalPrice * feePercent / 100);
+            const courierEarning = totalPrice - platformFee;
+
+            document.getElementById('simulation-result').innerHTML =
+                '<div class="bg-gray-800/50 rounded-lg p-4">' +
+                '<div class="text-2xl font-bold text-white">' + totalPrice + ' FCFA</div>' +
+                '<div class="text-xs text-gray-400">Prix Total</div>' +
+                '</div>' +
+                '<div class="bg-blue-900/30 rounded-lg p-4">' +
+                '<div class="text-2xl font-bold text-blue-400">' + platformFee + ' FCFA</div>' +
+                '<div class="text-xs text-gray-400">Commission (' + feePercent + '%)</div>' +
+                '</div>' +
+                '<div class="bg-orange-900/30 rounded-lg p-4">' +
+                '<div class="text-2xl font-bold text-orange-400">' + courierEarning + ' FCFA</div>' +
+                '<div class="text-xs text-gray-400">Gain Coursier</div>' +
+                '</div>';
+        }
+    </script>
+</body>
+
+</html>

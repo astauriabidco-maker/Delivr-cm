@@ -39,3 +39,15 @@ factory-boy>=3.3.0
 # Code Quality
 black>=23.12.0
 flake8>=6.1.0
+
+# Partner Portal & API Documentation
+drf-spectacular>=0.27.0
+djangorestframework-api-key>=3.0.0
+
+# WhatsApp via Twilio
+twilio>=8.10.0
+
+# Real-time WebSocket (Django Channels)
+channels>=4.0.0
+channels-redis>=4.2.0
+daphne>=4.1.0

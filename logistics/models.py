@@ -167,6 +167,18 @@ class Delivery(models.Model):
         blank=True,
         verbose_name="Photo du colis"
     )
+    proof_photo = models.ImageField(
+        upload_to='proofs/',
+        null=True,
+        blank=True,
+        verbose_name="Photo preuve de livraison"
+    )
+    pickup_photo = models.ImageField(
+        upload_to='pickups/',
+        null=True,
+        blank=True,
+        verbose_name="Photo du colis au retrait"
+    )
     
     # Pricing (frozen at creation)
     distance_km = models.FloatField(
@@ -198,11 +210,17 @@ class Delivery(models.Model):
         blank=True,
         verbose_name="Code OTP livraison"
     )
+    pickup_otp = models.CharField(
+        max_length=4,
+        blank=True,
+        verbose_name="Code OTP retrait"
+    )
     
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     assigned_at = models.DateTimeField(null=True, blank=True)
     picked_up_at = models.DateTimeField(null=True, blank=True)
+    in_transit_at = models.DateTimeField(null=True, blank=True)
     completed_at = models.DateTimeField(null=True, blank=True)
     
     # E-commerce Reference
@@ -233,9 +251,12 @@ class Delivery(models.Model):
         return f"Livraison {str(self.id)[:8]} - {self.status}"
 
     def save(self, *args, **kwargs):
-        # Generate OTP if not set
+        # Generate delivery OTP if not set (for recipient)
         if not self.otp_code:
             self.otp_code = ''.join(random.choices(string.digits, k=4))
+        # Generate pickup OTP if not set (for sender)
+        if not self.pickup_otp:
+            self.pickup_otp = ''.join(random.choices(string.digits, k=4))
         super().save(*args, **kwargs)
 
     @property

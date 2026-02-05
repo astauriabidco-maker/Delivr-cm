@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DELIVR-CM | La Livraison E-commerce en Afrique, enfin résolue</title>
+    <meta name="description"
+        content="DELIVR-CM localise vos clients via WhatsApp et livre vos colis automatiquement. API pour développeurs et Lien Magique pour vendeurs Instagram.">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'brand-blue': '#1e3a5f',
+                        'brand-blue-dark': '#152a45',
+                        'brand-orange': '#ff6b35',
+                        'brand-orange-dark': '#e55a2b',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <style>
+        html {
+            scroll-behavior: smooth;
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #1e3a5f 0%, #ff6b35 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .code-block {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        }
+
+        .whatsapp-bubble {
+            background: #dcf8c6;
+        }
+
+        .whatsapp-bubble-received {
+            background: #fff;
+        }
+    </style>
+</head>
+
+<body class="font-sans antialiased text-gray-900 bg-white">
+
+    <!-- ========== HEADER (Sticky) ========== -->
+    <header class="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16 lg:h-20">
+                <!-- Logo -->
+                <a href="{% url 'home:home' %}" class="flex items-center gap-2">
+                    <span class="text-2xl">🚀</span>
+                    <span class="text-xl font-extrabold text-brand-blue">DELIVR<span
+                            class="text-brand-orange">-CM</span></span>
+                </a>
+
+                <!-- Desktop Nav -->
+                <nav class="hidden md:flex items-center gap-8">
+                    <a href="#fonctionnalites"
+                        class="text-gray-600 hover:text-brand-blue font-medium transition-colors">Fonctionnalités</a>
+                    <a href="#api" class="text-gray-600 hover:text-brand-blue font-medium transition-colors">API</a>
+                    <a href="#tarifs"
+                        class="text-gray-600 hover:text-brand-blue font-medium transition-colors">Tarifs</a>
+                </nav>
+
+                <!-- CTA Buttons -->
+                <div class="hidden md:flex items-center gap-3">
+                    <a href="{% url 'partners:login' %}"
+                        class="px-4 py-2 text-brand-blue font-semibold border-2 border-brand-blue rounded-lg hover:bg-brand-blue hover:text-white transition-all">
+                        Espace Partenaire
+                    </a>
+                    <a href="{% url 'partners:signup' %}"
+                        class="px-4 py-2 bg-brand-orange text-white font-semibold rounded-lg hover:bg-brand-orange-dark transition-all shadow-lg shadow-brand-orange/25">
+                        S'inscrire
+                    </a>
+                </div>
+
+                <!-- Mobile Menu Button -->
+                <button id="mobileMenuBtn" class="md:hidden p-2 text-gray-600">
+                    <i class="fas fa-bars text-xl"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile Menu -->
+        <div id="mobileMenu" class="hidden md:hidden bg-white border-t border-gray-100 pb-4">
+            <nav class="flex flex-col px-4 pt-2 gap-2">
+                <a href="#fonctionnalites" class="py-2 text-gray-600 font-medium">Fonctionnalités</a>
+                <a href="#api" class="py-2 text-gray-600 font-medium">API</a>
+                <a href="#tarifs" class="py-2 text-gray-600 font-medium">Tarifs</a>
+                <hr class="my-2">
+                <a href="{% url 'partners:login' %}" class="py-2 text-brand-blue font-semibold">Connexion</a>
+                <a href="{% url 'partners:signup' %}"
+                    class="py-3 bg-brand-orange text-white font-semibold rounded-lg text-center">S'inscrire</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- ========== HERO SECTION ========== -->
+    <section class="pt-24 lg:pt-32 pb-16 lg:pb-24 bg-gradient-to-b from-gray-50 to-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+                <!-- Left Content -->
+                <div class="text-center lg:text-left">
+                    <div
+                        class="inline-flex items-center gap-2 px-4 py-2 bg-brand-orange/10 text-brand-orange rounded-full text-sm font-semibold mb-6">
+                        <i class="fas fa-bolt"></i>
+                        Nouveau : Lien Magique pour Instagram
+                    </div>
+
+                    <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight mb-6">
+                        La Livraison E-commerce en Afrique,
+                        <span class="gradient-text">enfin résolue.</span>
+                    </h1>
+
+                    <p class="text-lg lg:text-xl text-gray-600 mb-8 max-w-xl mx-auto lg:mx-0">
+                        Ne demandez plus d'adresses introuvables. Notre technologie <strong>localise vos clients via
+                            WhatsApp</strong> et livre vos colis automatiquement.
+                    </p>
+
+                    <div class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+                        <a href="#api"
+                            class="inline-flex items-center justify-center gap-2 px-6 py-4 bg-brand-blue text-white font-semibold rounded-xl hover:bg-brand-blue-dark transition-all shadow-lg shadow-brand-blue/25">
+                            <i class="fas fa-code"></i>
+                            Intégrer l'API
+                        </a>
+                        <a href="{% url 'partners:signup' %}"
+                            class="inline-flex items-center justify-center gap-2 px-6 py-4 bg-white text-brand-blue font-semibold rounded-xl border-2 border-gray-200 hover:border-brand-blue transition-all">
+                            <i class="fas fa-magic"></i>
+                            Créer mon Lien Magique
+                        </a>
+                    </div>
+
+                    <!-- Trust Indicators -->
+                    <div
+                        class="mt-10 flex flex-wrap items-center justify-center lg:justify-start gap-6 text-gray-500 text-sm">
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-check-circle text-green-500"></i>
+                            <span>Sans engagement</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-check-circle text-green-500"></i>
+                            <span>Intégration en 5 min</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-check-circle text-green-500"></i>
+                            <span>Support WhatsApp 24/7</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Content: WhatsApp Mockup -->
+                <div class="relative">
+                    <div class="bg-white rounded-3xl shadow-2xl p-4 max-w-sm mx-auto border border-gray-100">
+                        <!-- Phone Header -->
+                        <div class="bg-[#075e54] rounded-t-2xl px-4 py-3 flex items-center gap-3">
+                            <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                                <i class="fas fa-robot text-white"></i>
+                            </div>
+                            <div class="text-white">
+                                <p class="font-semibold text-sm">DELIVR-CM Bot</p>
+                                <p class="text-xs text-white/70">en ligne</p>
+                            </div>
+                        </div>
+
+                        <!-- Chat Area -->
+                        <div class="bg-[#ece5dd] p-4 space-y-3 min-h-[300px]">
+                            <!-- Bot Message -->
+                            <div class="whatsapp-bubble-received rounded-lg p-3 max-w-[80%] shadow-sm">
+                                <p class="text-sm text-gray-800">Bonjour Jean ! 👋</p>
+                                <p class="text-sm text-gray-800 mt-1">Votre colis de <strong>Fashion Store</strong> est
+                                    prêt. Partagez votre position pour la livraison.</p>
+                                <p class="text-xs text-gray-500 text-right mt-1">14:32</p>
+                            </div>
+
+                            <!-- User Location Response -->
+                            <div class="whatsapp-bubble rounded-lg p-3 max-w-[80%] ml-auto shadow-sm">
+                                <div class="flex items-center gap-2 text-sm text-gray-800">
+                                    <i class="fas fa-map-marker-alt text-red-500"></i>
+                                    <span>📍 Position envoyée</span>
+                                </div>
+                                <p class="text-xs text-gray-600 mt-1">Akwa, Douala</p>
+                                <p class="text-xs text-gray-500 text-right mt-1">14:33 ✓✓</p>
+                            </div>
+
+                            <!-- Bot Confirmation -->
+                            <div class="whatsapp-bubble-received rounded-lg p-3 max-w-[80%] shadow-sm">
+                                <p class="text-sm text-gray-800">✅ Parfait ! Votre livreur <strong>Paul</strong> arrive
+                                    dans ~25 min.</p>
+                                <p class="text-sm text-gray-800 mt-1">💰 Montant à payer : <strong>2 500 FCFA</strong>
+                                </p>
+                                <p class="text-xs text-gray-500 text-right mt-1">14:33</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Floating Badge -->
+                    <div
+                        class="absolute -bottom-4 -right-4 bg-brand-orange text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg animate-pulse">
+                        <i class="fab fa-whatsapp mr-1"></i> 100% via WhatsApp
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========== PAIN POINTS SECTION ========== -->
+    <section class="py-16 lg:py-24 bg-white" id="problemes">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12 lg:mb-16">
+                <h2 class="text-3xl lg:text-4xl font-extrabold text-gray-900 mb-4">
+                    Pourquoi vos livraisons échouent-elles aujourd'hui ?
+                </h2>
+                <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+                    Le e-commerce africain fait face à des défis uniques que les solutions occidentales ne comprennent
+                    pas.
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-8">
+                <!-- Pain Point 1 -->
+                <div class="bg-red-50 rounded-2xl p-8 border border-red-100 hover:shadow-lg transition-shadow">
+                    <div class="w-14 h-14 bg-red-100 rounded-xl flex items-center justify-center mb-6">
+                        <i class="fas fa-map-marked-alt text-2xl text-red-500"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-3">Adresses floues</h3>
+                    <p class="text-gray-600">
+                        <em>"À côté du manguier, après le virage"</em> n'est pas une adresse fiable. Vos livreurs
+                        perdent des heures à chercher.
+                    </p>
+                </div>
+
+                <!-- Pain Point 2 -->
+                <div class="bg-amber-50 rounded-2xl p-8 border border-amber-100 hover:shadow-lg transition-shadow">
+                    <div class="w-14 h-14 bg-amber-100 rounded-xl flex items-center justify-center mb-6">
+                        <i class="fas fa-phone-volume text-2xl text-amber-500"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-3">Appels interminables</h3>
+                    <p class="text-gray-600">
+                        Vos livreurs passent <strong>plus de temps au téléphone qu'à rouler</strong>. Et quand le client
+                        ne décroche pas ? Échec.
+                    </p>
+                </div>
+
+                <!-- Pain Point 3 -->
+                <div class="bg-purple-50 rounded-2xl p-8 border border-purple-100 hover:shadow-lg transition-shadow">
+                    <div class="w-14 h-14 bg-purple-100 rounded-xl flex items-center justify-center mb-6">
+                        <i class="fas fa-money-bill-wave text-2xl text-purple-500"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-3">Cash non sécurisé</h3>
+                    <p class="text-gray-600">
+                        La gestion de la monnaie est un cauchemar. 95% des paiements sont en cash et le <strong>risque
+                            de vol est permanent</strong>.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========== SOLUTION SECTION ========== -->
+    <section class="py-16 lg:py-24 bg-gray-50" id="fonctionnalites">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12 lg:mb-16">
+                <h2 class="text-3xl lg:text-4xl font-extrabold text-gray-900 mb-4">
+                    Une technologie pour chaque vendeur
+                </h2>
+                <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+                    Que vous vendiez sur Instagram ou via un site WooCommerce, nous avons la solution adaptée.
+                </p>
+            </div>
+
+            <div class="grid lg:grid-cols-2 gap-8">
+                <!-- Solution 1: Instagram Sellers -->
+                <div
+                    class="bg-white rounded-3xl p-8 lg:p-10 shadow-lg border border-gray-100 hover:shadow-xl transition-shadow">
+                    <div class="flex items-start gap-4 mb-6">
+                        <div
+                            class="w-16 h-16 bg-gradient-to-br from-pink-500 to-purple-600 rounded-2xl flex items-center justify-center flex-shrink-0">
+                            <i class="fab fa-instagram text-3xl text-white"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-2xl font-bold text-gray-900">Pour les Vendeurs Instagram</h3>
+                            <p class="text-brand-orange font-semibold">Le Lien Magique</p>
+                        </div>
+                    </div>
+
+                    <p class="text-gray-600 mb-6">
+                        Pas de site web ? Pas de problème. Générez un <strong>lien de commande unique</strong>,
+                        partagez-le dans votre bio Instagram ou en DM. Vos clients commandent en 30 secondes.
+                    </p>
+
+                    <ul class="space-y-3 mb-8">
+                        <li class="flex items-center gap-3 text-gray-700">
+                            <i class="fas fa-check-circle text-green-500"></i>
+                            Aucune compétence technique requise
+                        </li>
+                        <li class="flex items-center gap-3 text-gray-700">
+                            <i class="fas fa-check-circle text-green-500"></i>
+                            Lien personnalisé à votre boutique
+                        </li>
+                        <li class="flex items-center gap-3 text-gray-700">
+                            <i class="fas fa-check-circle text-green-500"></i>
+                            Suivi temps réel des commandes
+                        </li>
+                    </ul>
+
+                    <a href="{% url 'partners:signup' %}"
+                        class="inline-flex items-center gap-2 text-brand-orange font-semibold hover:underline">
+                        Créer mon lien maintenant
+                        <i class="fas fa-arrow-right"></i>
+                    </a>
+                </div>
+
+                <!-- Solution 2: WooCommerce -->
+                <div
+                    class="bg-white rounded-3xl p-8 lg:p-10 shadow-lg border border-gray-100 hover:shadow-xl transition-shadow">
+                    <div class="flex items-start gap-4 mb-6">
+                        <div
+                            class="w-16 h-16 bg-gradient-to-br from-brand-blue to-blue-600 rounded-2xl flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-code text-3xl text-white"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-2xl font-bold text-gray-900">Pour les Sites E-commerce</h3>
+                            <p class="text-brand-blue font-semibold">Plugin & API REST</p>
+                        </div>
+                    </div>
+
+                    <p class="text-gray-600 mb-6">
+                        Un <strong>plugin WooCommerce</strong> ou une API REST robuste pour automatiser 100% du flux de
+                        livraison. Intégration en moins de 10 minutes.
+                    </p>
+
+                    <ul class="space-y-3 mb-8">
+                        <li class="flex items-center gap-3 text-gray-700">
+                            <i class="fas fa-check-circle text-green-500"></i>
+                            Documentation Swagger complète
+                        </li>
+                        <li class="flex items-center gap-3 text-gray-700">
+                            <i class="fas fa-check-circle text-green-500"></i>
+                            Webhooks temps réel
+                        </li>
+                        <li class="flex items-center gap-3 text-gray-700">
+                            <i class="fas fa-check-circle text-green-500"></i>
+                            Environnement Sandbox pour tests
+                        </li>
+                    </ul>
+
+                    <a href="#api" class="inline-flex items-center gap-2 text-brand-blue font-semibold hover:underline">
+                        Voir la documentation API
+                        <i class="fas fa-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========== DEVELOPER SECTION ========== -->
+    <section class="py-16 lg:py-24 code-block" id="api">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+                <!-- Left Content -->
+                <div class="text-white">
+                    <div
+                        class="inline-flex items-center gap-2 px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-sm font-mono mb-6">
+                        <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+                        API Status: Operational
+                    </div>
+
+                    <h2 class="text-3xl lg:text-4xl font-extrabold mb-6">
+                        Conçu pour les <span class="text-brand-orange">développeurs</span>
+                    </h2>
+
+                    <p class="text-gray-300 text-lg mb-8">
+                        Une API REST moderne, documentée et testable. Intégrez la livraison en quelques lignes de code.
+                    </p>
+
+                    <div class="space-y-4 mb-8">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-book text-brand-orange"></i>
+                            </div>
+                            <span class="text-gray-200">Documentation Swagger interactive</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-bolt text-brand-orange"></i>
+                            </div>
+                            <span class="text-gray-200">Webhooks pour mises à jour temps réel</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-flask text-brand-orange"></i>
+                            </div>
+                            <span class="text-gray-200">Sandbox pour tests sans risque</span>
+                        </div>
+                    </div>
+
+                    <a href="/api/docs/"
+                        class="inline-flex items-center gap-2 px-6 py-3 bg-brand-orange text-white font-semibold rounded-xl hover:bg-brand-orange-dark transition-all">
+                        <i class="fas fa-external-link-alt"></i>
+                        Explorer la Documentation
+                    </a>
+                </div>
+
+                <!-- Right Content: Code Block -->
+                <div class="bg-[#0d1117] rounded-2xl p-6 shadow-2xl border border-gray-700/50">
+                    <div class="flex items-center gap-2 mb-4">
+                        <div class="w-3 h-3 bg-red-500 rounded-full"></div>
+                        <div class="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                        <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                        <span class="ml-4 text-gray-500 text-sm font-mono">api_request.sh</span>
+                    </div>
+
+                    <pre class="text-sm overflow-x-auto"><code class="text-gray-300">
+<span class="text-purple-400">POST</span> <span class="text-blue-400">/api/public/orders/</span>
+<span class="text-gray-500">Content-Type: application/json</span>
+
+{
+  <span class="text-green-400">"shop_id"</span>: <span class="text-yellow-300">"uuid-boutique"</span>,
+  <span class="text-green-400">"client_name"</span>: <span class="text-yellow-300">"Jean Kamga"</span>,
+  <span class="text-green-400">"client_phone"</span>: <span class="text-yellow-300">"+237690123456"</span>,
+  <span class="text-green-400">"neighborhood_id"</span>: <span class="text-yellow-300">"akwa-uuid"</span>,
+  <span class="text-green-400">"package_description"</span>: <span class="text-yellow-300">"iPhone 15"</span>
+}
+
+<span class="text-gray-500">// Response 201 Created</span>
+{
+  <span class="text-green-400">"delivery_id"</span>: <span class="text-yellow-300">"abc123"</span>,
+  <span class="text-green-400">"status"</span>: <span class="text-yellow-300">"PENDING"</span>,
+  <span class="text-green-400">"total_price"</span>: <span class="text-blue-300">1500</span>,
+  <span class="text-green-400">"distance_km"</span>: <span class="text-blue-300">3.2</span>
+}
+                    </code></pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========== PRICING SECTION ========== -->
+    <section class="py-16 lg:py-24 bg-white" id="tarifs">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12 lg:mb-16">
+                <h2 class="text-3xl lg:text-4xl font-extrabold text-gray-900 mb-4">
+                    Tarifs simples et transparents
+                </h2>
+                <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+                    Payez uniquement quand vous livrez. Pas d'abonnement, pas de frais cachés.
+                </p>
+            </div>
+
+            <div class="max-w-md mx-auto">
+                <div
+                    class="bg-gradient-to-br from-brand-blue to-brand-blue-dark rounded-3xl p-8 text-white text-center">
+                    <p class="text-brand-orange font-semibold mb-2">À partir de</p>
+                    <div class="flex items-baseline justify-center gap-2 mb-4">
+                        <span class="text-5xl font-extrabold">500</span>
+                        <span class="text-xl">FCFA</span>
+                    </div>
+                    <p class="text-white/70 mb-6">par livraison réussie</p>
+
+                    <ul class="text-left space-y-3 mb-8">
+                        <li class="flex items-center gap-3">
+                            <i class="fas fa-check text-green-400"></i>
+                            <span>Géolocalisation WhatsApp incluse</span>
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <i class="fas fa-check text-green-400"></i>
+                            <span>Suivi temps réel</span>
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <i class="fas fa-check text-green-400"></i>
+                            <span>Confirmation par OTP</span>
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <i class="fas fa-check text-green-400"></i>
+                            <span>Support dédié</span>
+                        </li>
+                    </ul>
+
+                    <a href="{% url 'partners:signup' %}"
+                        class="block w-full py-4 bg-brand-orange text-white font-bold rounded-xl hover:bg-brand-orange-dark transition-all">
+                        Créer mon compte gratuit
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========== SOCIAL PROOF ========== -->
+    <section class="py-12 bg-brand-blue">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-wrap items-center justify-center gap-8 lg:gap-16 text-white">
+                <div class="text-center">
+                    <p class="text-4xl font-extrabold text-brand-orange">{{ delivery_count }}</p>
+                    <p class="text-white/70">Livraisons effectuées</p>
+                </div>
+                <div class="hidden sm:block w-px h-12 bg-white/20"></div>
+                <div class="text-center">
+                    <p class="text-4xl font-extrabold text-brand-orange">{{ stats.success_rate }}%</p>
+                    <p class="text-white/70">Taux de réussite</p>
+                </div>
+                <div class="hidden sm:block w-px h-12 bg-white/20"></div>
+                <div class="text-center">
+                    <p class="text-4xl font-extrabold text-brand-orange">{{ stats.cities }}</p>
+                    <p class="text-white/70">Villes couvertes</p>
+                </div>
+                <div class="hidden sm:block w-px h-12 bg-white/20"></div>
+                <div class="text-center">
+                    <p class="text-4xl font-extrabold text-brand-orange">~{{ stats.avg_time }} min</p>
+                    <p class="text-white/70">Délai moyen</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========== CTA SECTION ========== -->
+    <section class="py-16 lg:py-24 bg-gray-50">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 class="text-3xl lg:text-4xl font-extrabold text-gray-900 mb-6">
+                Prêt à simplifier vos livraisons ?
+            </h2>
+            <p class="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
+                Rejoignez les e-commerçants camerounais qui ont choisi une solution locale, conçue pour leurs besoins.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="{% url 'partners:signup' %}"
+                    class="inline-flex items-center justify-center gap-2 px-8 py-4 bg-brand-orange text-white font-bold rounded-xl hover:bg-brand-orange-dark transition-all shadow-lg shadow-brand-orange/25 text-lg">
+                    <i class="fas fa-rocket"></i>
+                    Commencer Gratuitement
+                </a>
+                <a href="https://wa.me/237690000000" target="_blank"
+                    class="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white text-brand-blue font-bold rounded-xl border-2 border-gray-200 hover:border-brand-blue transition-all text-lg">
+                    <i class="fab fa-whatsapp text-green-500"></i>
+                    Nous Contacter
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========== FOOTER ========== -->
+    <footer class="bg-brand-blue-dark py-12 lg:py-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-4 gap-8 mb-12">
+                <!-- Brand -->
+                <div class="md:col-span-2">
+                    <a href="{% url 'home:home' %}" class="flex items-center gap-2 mb-4">
+                        <span class="text-2xl">🚀</span>
+                        <span class="text-xl font-extrabold text-white">DELIVR<span
+                                class="text-brand-orange">-CM</span></span>
+                    </a>
+                    <p class="text-gray-400 max-w-sm mb-4">
+                        La plateforme logistique conçue pour le e-commerce africain. Livraison rapide, géolocalisation
+                        WhatsApp, intégration API.
+                    </p>
+                    <div class="flex gap-4">
+                        <a href="#"
+                            class="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/20 transition-all">
+                            <i class="fab fa-facebook-f"></i>
+                        </a>
+                        <a href="#"
+                            class="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/20 transition-all">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                        <a href="#"
+                            class="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/20 transition-all">
+                            <i class="fab fa-linkedin-in"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Quick Links -->
+                <div>
+                    <h4 class="text-white font-semibold mb-4">Liens Rapides</h4>
+                    <ul class="space-y-3">
+                        <li><a href="#fonctionnalites"
+                                class="text-gray-400 hover:text-white transition-colors">Fonctionnalités</a></li>
+                        <li><a href="#api" class="text-gray-400 hover:text-white transition-colors">Documentation
+                                API</a></li>
+                        <li><a href="#tarifs" class="text-gray-400 hover:text-white transition-colors">Tarifs</a></li>
+                        <li><a href="{% url 'partners:login' %}"
+                                class="text-gray-400 hover:text-white transition-colors">Espace Partenaire</a></li>
+                    </ul>
+                </div>
+
+                <!-- Contact -->
+                <div>
+                    <h4 class="text-white font-semibold mb-4">Contact</h4>
+                    <ul class="space-y-3">
+                        <li class="flex items-center gap-2 text-gray-400">
+                            <i class="fas fa-map-marker-alt text-brand-orange"></i>
+                            Douala & Yaoundé, Cameroun
+                        </li>
+                        <li>
+                            <a href="mailto:contact@delivr.cm"
+                                class="flex items-center gap-2 text-gray-400 hover:text-white transition-colors">
+                                <i class="fas fa-envelope text-brand-orange"></i>
+                                contact@delivr.cm
+                            </a>
+                        </li>
+                        <li>
+                            <a href="https://wa.me/237690000000"
+                                class="flex items-center gap-2 text-gray-400 hover:text-white transition-colors">
+                                <i class="fab fa-whatsapp text-green-500"></i>
+                                +237 690 000 000
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Copyright -->
+            <div class="border-t border-white/10 pt-8 text-center">
+                <p class="text-gray-500 text-sm">
+                    © 2024 DELIVR-CM. Tous droits réservés. Made with ❤️ in Cameroon.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Mobile Menu Script -->
+    <script>
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const mobileMenu = document.getElementById('mobileMenu');
+
+        mobileMenuBtn.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+            const icon = mobileMenuBtn.querySelector('i');
+            icon.classList.toggle('fa-bars');
+            icon.classList.toggle('fa-times');
+        });
+
+        // Close mobile menu when clicking a link
+        mobileMenu.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', () => {
+                mobileMenu.classList.add('hidden');
+                const icon = mobileMenuBtn.querySelector('i');
+                icon.classList.add('fa-bars');
+                icon.classList.remove('fa-times');
+            });
+        });
+    </script>
+
+</body>
+
+</html>

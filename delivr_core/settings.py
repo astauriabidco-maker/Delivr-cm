@@ -32,6 +32,11 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+    
+    # Daphne MUST be before staticfiles
+    'daphne',  # ASGI server for WebSocket support
+    'channels',  # Django Channels for real-time
+    
     'django.contrib.staticfiles',
     
     # GeoDjango (PostGIS)
@@ -47,7 +52,16 @@ INSTALLED_APPS = [
     'core.apps.CoreConfig',
     'logistics.apps.LogisticsConfig',
     'finance.apps.FinanceConfig',
+    'bot.apps.BotConfig',
+    'partners.apps.PartnersConfig',
+    'home.apps.HomeConfig',
+    'integrations.apps.IntegrationsConfig',
+    
+    # API Documentation & Keys
+    'drf_spectacular',
+    'rest_framework_api_key',
 ]
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -131,6 +145,22 @@ MEDIA_ROOT = BASE_DIR / 'media'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # ===========================================
+# DJANGO CHANNELS (WebSocket Real-time)
+# ===========================================
+ASGI_APPLICATION = 'delivr_core.asgi.application'
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            'hosts': [config('REDIS_URL', default='redis://redis:6379/1')],
+            'capacity': 1500,
+            'expiry': 10,
+        },
+    },
+}
+
+# ===========================================
 # DJANGO REST FRAMEWORK
 # ===========================================
 REST_FRAMEWORK = {
@@ -148,6 +178,17 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20,
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+# ===========================================
+# API DOCUMENTATION (drf-spectacular)
+# ===========================================
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'DELIVR-CM API',
+    'DESCRIPTION': 'API de logistique pour E-commerce au Cameroun',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
 }
 
 # ===========================================
@@ -203,12 +244,31 @@ OSRM_BASE_URL = config('OSRM_BASE_URL', default='http://osrm:5000')
 NOMINATIM_BASE_URL = config('NOMINATIM_BASE_URL', default='http://nominatim:8080')
 
 # ===========================================
-# WHATSAPP BUSINESS API
+# WHATSAPP PROVIDER CONFIGURATION
 # ===========================================
-WHATSAPP_API_URL = config('WHATSAPP_API_URL', default='https://graph.facebook.com/v18.0')
-WHATSAPP_PHONE_NUMBER_ID = config('WHATSAPP_PHONE_NUMBER_ID', default='')
-WHATSAPP_ACCESS_TOKEN = config('WHATSAPP_ACCESS_TOKEN', default='')
-WHATSAPP_WEBHOOK_VERIFY_TOKEN = config('WHATSAPP_WEBHOOK_VERIFY_TOKEN', default='')
+# Toggle between providers: 'twilio' or 'meta'
+ACTIVE_WHATSAPP_PROVIDER = config('ACTIVE_WHATSAPP_PROVIDER', default='twilio')
+
+# -------------------------------------------
+# META WHATSAPP CLOUD API
+# -------------------------------------------
+META_API_URL = config('META_API_URL', default='https://graph.facebook.com/v17.0')
+META_API_TOKEN = config('META_API_TOKEN', default='')
+META_PHONE_NUMBER_ID = config('META_PHONE_NUMBER_ID', default='')
+META_VERIFY_TOKEN = config('META_VERIFY_TOKEN', default='delivr-cm-webhook-verify-token')
+
+# Legacy aliases (for backward compatibility)
+WHATSAPP_API_URL = META_API_URL
+WHATSAPP_PHONE_NUMBER_ID = META_PHONE_NUMBER_ID
+WHATSAPP_ACCESS_TOKEN = META_API_TOKEN
+WHATSAPP_WEBHOOK_VERIFY_TOKEN = META_VERIFY_TOKEN
+
+# -------------------------------------------
+# TWILIO WHATSAPP INTEGRATION
+# -------------------------------------------
+TWILIO_ACCOUNT_SID = config('TWILIO_ACCOUNT_SID', default='')
+TWILIO_AUTH_TOKEN = config('TWILIO_AUTH_TOKEN', default='')
+TWILIO_WHATSAPP_NUMBER = config('TWILIO_WHATSAPP_NUMBER', default='whatsapp:+14155238886')  # Twilio Sandbox
 
 # ===========================================
 # BUSINESS RULES - PRICING ENGINE

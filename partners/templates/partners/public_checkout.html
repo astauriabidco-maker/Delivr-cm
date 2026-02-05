@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Commander chez {{ shop.full_name }} - DELIVR-CM</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'brand': '#00d084',
+                        'brand-dark': '#00a86b',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .loader {
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top: 3px solid #00d084;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 min-h-screen">
+    <!-- Header -->
+    <header class="py-4 px-6 border-b border-white/10">
+        <div class="max-w-lg mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <span class="text-2xl">🚀</span>
+                <span class="text-white font-bold">DELIVR<span class="text-brand">-CM</span></span>
+            </div>
+            <span class="text-white/60 text-sm">Livraison Express</span>
+        </div>
+    </header>
+
+    <main class="px-4 py-8">
+        <div class="max-w-lg mx-auto">
+            <!-- Shop Header -->
+            <div class="text-center mb-8">
+                <div
+                    class="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-brand to-brand-dark flex items-center justify-center text-3xl">
+                    🛍️
+                </div>
+                <h1 class="text-2xl font-bold text-white mb-2">{{ shop.full_name }}</h1>
+                <p class="text-white/60">Passez votre commande ci-dessous</p>
+            </div>
+
+            {% if shop_unavailable %}
+            <!-- Shop Unavailable -->
+            <div class="glass rounded-2xl p-6 text-center">
+                <div class="text-5xl mb-4">😔</div>
+                <h2 class="text-xl font-bold text-white mb-2">Boutique temporairement indisponible</h2>
+                <p class="text-white/60">
+                    Cette boutique ne peut pas accepter de commandes pour le moment.
+                    Veuillez réessayer plus tard.
+                </p>
+            </div>
+            {% else %}
+
+            <!-- Order Form -->
+            <div id="orderForm" class="glass rounded-2xl p-6">
+                <h2 class="text-lg font-semibold text-white mb-6 flex items-center gap-2">
+                    📦 Nouvelle Commande
+                </h2>
+
+                <form id="checkoutForm" class="space-y-5">
+                    <!-- Hidden shop ID -->
+                    <input type="hidden" id="shopId" value="{{ shop.id }}">
+
+                    <!-- Customer Name -->
+                    <div>
+                        <label for="clientName" class="block text-white/80 text-sm mb-2">
+                            Votre Nom Complet *
+                        </label>
+                        <input type="text" id="clientName" required
+                            class="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent transition-all"
+                            placeholder="Ex: Jean Kamga">
+                    </div>
+
+                    <!-- Phone Number -->
+                    <div>
+                        <label for="clientPhone" class="block text-white/80 text-sm mb-2">
+                            Numéro WhatsApp *
+                        </label>
+                        <div class="flex gap-2">
+                            <div
+                                class="px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white/60 flex items-center">
+                                +237
+                            </div>
+                            <input type="tel" id="clientPhone" required pattern="[0-9]{9}" maxlength="9"
+                                class="flex-1 px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent transition-all"
+                                placeholder="6XXXXXXXX">
+                        </div>
+                        <p class="text-white/40 text-xs mt-1">9 chiffres sans le +237</p>
+                    </div>
+
+                    <!-- Neighborhood Select -->
+                    <div>
+                        <label for="neighborhood" class="block text-white/80 text-sm mb-2">
+                            Quartier de Livraison *
+                        </label>
+                        <select id="neighborhood" required
+                            class="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent transition-all appearance-none cursor-pointer">
+                            <option value="" class="bg-slate-800">-- Sélectionner votre quartier --</option>
+                            {% for city, hoods in neighborhoods_by_city.items %}
+                            <optgroup label="{{ city }}" class="bg-slate-800">
+                                {% for n in hoods %}
+                                <option value="{{ n.id }}" class="bg-slate-800">{{ n.name }}</option>
+                                {% endfor %}
+                            </optgroup>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Package Description -->
+                    <div>
+                        <label for="description" class="block text-white/80 text-sm mb-2">
+                            Description du Colis *
+                        </label>
+                        <input type="text" id="description" required
+                            class="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent transition-all"
+                            placeholder="Ex: Chaussures Nike, taille 42">
+                    </div>
+
+                    <!-- Price Display -->
+                    <div class="bg-gradient-to-r from-brand/20 to-brand-dark/20 rounded-xl p-4 border border-brand/30">
+                        <div class="flex justify-between items-center">
+                            <span class="text-white/80">Frais de Livraison</span>
+                            <div id="priceDisplay" class="text-xl font-bold text-brand">
+                                --- FCFA
+                            </div>
+                        </div>
+                        <p id="priceNote" class="text-white/40 text-xs mt-2">
+                            Sélectionnez un quartier pour voir le prix
+                        </p>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" id="submitBtn"
+                        class="w-full py-4 rounded-xl bg-gradient-to-r from-brand to-brand-dark text-white font-bold text-lg transition-all hover:shadow-lg hover:shadow-brand/30 hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+                        disabled>
+                        <span id="btnText">✨ Confirmer ma Commande</span>
+                        <span id="btnLoader" class="hidden"><span class="loader"></span> Traitement...</span>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Success Message -->
+            <div id="successMessage" class="glass rounded-2xl p-8 text-center hidden">
+                <div class="text-6xl mb-4">🎉</div>
+                <h2 class="text-2xl font-bold text-white mb-3">Commande Reçue !</h2>
+                <p class="text-white/70 mb-6">
+                    Vous recevrez un message WhatsApp avec les détails de votre livraison.
+                </p>
+                <div class="bg-brand/20 rounded-xl p-4 border border-brand/30">
+                    <p class="text-brand font-medium">
+                        📱 Vérifiez votre WhatsApp
+                    </p>
+                </div>
+                <button onclick="location.reload()"
+                    class="mt-6 px-6 py-3 rounded-xl bg-white/10 text-white/80 hover:bg-white/20 transition-all">
+                    Passer une autre commande
+                </button>
+            </div>
+
+            {% endif %}
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="py-6 px-4 mt-8 border-t border-white/10">
+        <div class="max-w-lg mx-auto text-center text-white/40 text-sm">
+            <p>Propulsé par <span class="text-brand">DELIVR-CM</span></p>
+            <p class="mt-1">Livraison express à Douala & Yaoundé</p>
+        </div>
+    </footer>
+
+    <script>
+        // CSRF Token Helper
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        const csrftoken = getCookie('csrftoken');
+
+        // State
+        let currentPrice = null;
+        const shopId = document.getElementById('shopId').value;
+        const neighborhoodSelect = document.getElementById('neighborhood');
+        const priceDisplay = document.getElementById('priceDisplay');
+        const priceNote = document.getElementById('priceNote');
+        const submitBtn = document.getElementById('submitBtn');
+        const checkoutForm = document.getElementById('checkoutForm');
+        const orderFormDiv = document.getElementById('orderForm');
+        const successMessage = document.getElementById('successMessage');
+        const btnText = document.getElementById('btnText');
+        const btnLoader = document.getElementById('btnLoader');
+
+        // Fetch price when neighborhood changes
+        neighborhoodSelect.addEventListener('change', async function () {
+            const neighborhoodId = this.value;
+
+            if (!neighborhoodId) {
+                priceDisplay.textContent = '--- FCFA';
+                priceNote.textContent = 'Sélectionnez un quartier pour voir le prix';
+                submitBtn.disabled = true;
+                currentPrice = null;
+                return;
+            }
+
+            // Show loading state
+            priceDisplay.innerHTML = '<span class="loader"></span>';
+            priceNote.textContent = 'Calcul en cours...';
+
+            try {
+                const response = await fetch('/api/public/quote/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken
+                    },
+                    body: JSON.stringify({
+                        shop_id: shopId,
+                        neighborhood_id: neighborhoodId  // UUID string, not parseInt
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    currentPrice = data.total_price;
+                    priceDisplay.textContent = `${formatNumber(data.total_price)} FCFA`;
+                    priceNote.textContent = `Distance: ~${data.distance_km} km`;
+                    submitBtn.disabled = false;
+                } else {
+                    priceDisplay.textContent = 'Erreur';
+                    priceNote.textContent = data.error || 'Impossible de calculer le prix';
+                    submitBtn.disabled = true;
+                }
+            } catch (error) {
+                console.error('Quote error:', error);
+                priceDisplay.textContent = 'Erreur';
+                priceNote.textContent = 'Problème de connexion';
+                submitBtn.disabled = true;
+            }
+        });
+
+        // Format numbers with spaces (1500 → 1 500)
+        function formatNumber(num) {
+            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+        }
+
+        // Handle form submission
+        checkoutForm.addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const clientName = document.getElementById('clientName').value.trim();
+            const clientPhone = document.getElementById('clientPhone').value.trim();
+            const neighborhoodId = neighborhoodSelect.value;
+            const description = document.getElementById('description').value.trim();
+
+            // Validate phone
+            if (!/^\d{9}$/.test(clientPhone)) {
+                alert('Le numéro de téléphone doit contenir 9 chiffres');
+                return;
+            }
+
+            // Show loading
+            btnText.classList.add('hidden');
+            btnLoader.classList.remove('hidden');
+            submitBtn.disabled = true;
+
+            try {
+                const response = await fetch('/api/public/orders/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken
+                    },
+                    body: JSON.stringify({
+                        shop_id: shopId,
+                        client_name: clientName,
+                        client_phone: `+237${clientPhone}`,
+                        neighborhood_id: neighborhoodId,  // UUID string, not parseInt
+                        package_description: description,
+                        payment_method: 'CASH'
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Success - show success message
+                    orderFormDiv.classList.add('hidden');
+                    successMessage.classList.remove('hidden');
+                } else {
+                    alert(data.error || 'Erreur lors de la commande. Veuillez réessayer.');
+                    // Reset button
+                    btnText.classList.remove('hidden');
+                    btnLoader.classList.add('hidden');
+                    submitBtn.disabled = false;
+                }
+            } catch (error) {
+                console.error('Order error:', error);
+                alert('Problème de connexion. Veuillez réessayer.');
+                // Reset button
+                btnText.classList.remove('hidden');
+                btnLoader.classList.add('hidden');
+                submitBtn.disabled = false;
+            }
+        });
+    </script>
+</body>
+
+</html>

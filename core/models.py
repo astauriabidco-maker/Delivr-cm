@@ -8,6 +8,7 @@ import uuid
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.contrib.gis.db import models
 from django.core.validators import RegexValidator
+from django.utils.text import slugify
 from decimal import Decimal
 
 
@@ -53,6 +54,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     Key Business Logic:
     - wallet_balance can be NEGATIVE for couriers (debt system)
     - debt_ceiling blocks courier if wallet_balance < -debt_ceiling
+    - slug is auto-generated for BUSINESS users (public checkout URL)
     """
 
     # Phone number validator for Cameroon (+237)
@@ -78,6 +80,17 @@ class User(AbstractBaseUser, PermissionsMixin):
         verbose_name="Rôle"
     )
     
+    # Slug for public checkout URL (BUSINESS users only)
+    slug = models.SlugField(
+        max_length=100,
+        unique=True,
+        null=True,
+        blank=True,
+        db_index=True,
+        verbose_name="URL publique",
+        help_text="Ex: ma-boutique → delivr.cm/book/ma-boutique"
+    )
+    
     # Location (optional - last known position)
     last_location = models.PointField(
         null=True,
@@ -100,6 +113,33 @@ class User(AbstractBaseUser, PermissionsMixin):
         default=Decimal('2500.00'),
         verbose_name="Plafond dette (XAF)"
     )
+    
+    # Business Partner Approval
+    is_business_approved = models.BooleanField(
+        default=False,
+        verbose_name="Partenaire approuvé",
+        help_text="Doit être activé par l'admin pour accès aux clés API"
+    )
+    
+    # Branding for Public Checkout (BUSINESS users)
+    shop_logo = models.ImageField(
+        upload_to='branding/logos/',
+        null=True,
+        blank=True,
+        verbose_name="Logo boutique"
+    )
+    brand_color = models.CharField(
+        max_length=7,
+        default='#00d084',
+        verbose_name="Couleur principale",
+        help_text="Code hex, ex: #00d084"
+    )
+    welcome_message = models.TextField(
+        blank=True,
+        verbose_name="Message de bienvenue",
+        help_text="Affiché sur la page de commande publique"
+    )
+
     
     # Verification (for couriers)
     is_verified = models.BooleanField(
@@ -137,6 +177,25 @@ class User(AbstractBaseUser, PermissionsMixin):
     def __str__(self):
         return f"{self.full_name or self.phone_number} ({self.role})"
 
+    def save(self, *args, **kwargs):
+        """
+        Auto-generate slug for BUSINESS users if not set.
+        Uses full_name to create a unique URL-friendly slug.
+        """
+        if self.role == UserRole.BUSINESS and not self.slug and self.full_name:
+            base_slug = slugify(self.full_name)
+            slug = base_slug
+            counter = 1
+            
+            # Ensure uniqueness
+            while User.objects.filter(slug=slug).exclude(pk=self.pk).exists():
+                slug = f"{base_slug}-{counter}"
+                counter += 1
+            
+            self.slug = slug
+        
+        super().save(*args, **kwargs)
+
     @property
     def is_courier_blocked(self) -> bool:
         """
@@ -154,3 +213,11 @@ class User(AbstractBaseUser, PermissionsMixin):
     @property
     def is_business(self) -> bool:
         return self.role == UserRole.BUSINESS
+    
+    @property
+    def public_checkout_url(self) -> str:
+        """Returns the public checkout URL for this business."""
+        if self.slug:
+            return f"/book/{self.slug}/"
+        return ""
+

@@ -1,0 +1,709 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suivi de Livraison - DELIVR-CM</title>
+    <meta name="description" content="Suivez votre livraison en temps réel avec DELIVR-CM">
+
+    <!-- PWA Meta -->
+    <meta name="theme-color" content="#059669">
+    <link rel="manifest" href="{% static 'manifest.json' %}">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        delivr: {
+                            primary: '#059669',
+                            dark: '#047857'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Leaflet Maps -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <style>
+        #map {
+            height: 350px;
+            border-radius: 16px;
+        }
+
+        .status-dot {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .timeline-expand {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+
+        .timeline-expand.open {
+            max-height: 200px;
+        }
+
+        .proof-modal {
+            display: none;
+        }
+
+        .proof-modal.open {
+            display: flex;
+        }
+
+        /* Data saving mode - simpler tiles */
+        .data-saving .leaflet-tile {
+            filter: grayscale(100%) contrast(1.2);
+        }
+    </style>
+</head>
+
+<body
+    class="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 min-h-screen text-white transition-colors duration-300"
+    id="app-body">
+
+    <!-- Header -->
+    <header class="bg-gray-800/50 backdrop-blur-sm border-b border-gray-700 sticky top-0 z-50">
+        <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <span class="text-2xl">🚀</span>
+                <h1
+                    class="text-lg font-bold bg-gradient-to-r from-green-400 to-emerald-500 bg-clip-text text-transparent">
+                    DELIVR-CM
+                </h1>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <!-- Dark Mode Toggle -->
+                <button id="dark-mode-toggle" class="p-2 rounded-lg bg-gray-700/50 hover:bg-gray-600 transition-colors"
+                    title="Mode sombre">
+                    <span id="theme-icon">🌙</span>
+                </button>
+
+                <!-- Data Saving Toggle -->
+                <button id="data-saving-toggle"
+                    class="p-2 rounded-lg bg-gray-700/50 hover:bg-gray-600 transition-colors"
+                    title="Économie de données">
+                    <span>📶</span>
+                </button>
+
+                <!-- Share Button -->
+                <button id="share-btn"
+                    class="flex items-center gap-2 px-3 py-2 rounded-lg bg-green-600 hover:bg-green-700 transition-colors text-sm font-medium">
+                    <span>📤</span> Partager
+                </button>
+
+                <!-- Connection Status -->
+                <div id="connection-status" class="flex items-center gap-2 text-sm">
+                    <span class="status-dot w-2 h-2 rounded-full bg-yellow-500"></span>
+                    <span class="text-gray-400 hidden sm:inline">Connexion...</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto px-4 py-6 space-y-5">
+
+        <!-- Push Notification Banner -->
+        <div id="push-banner"
+            class="hidden bg-blue-900/40 border border-blue-500/30 rounded-xl p-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <span class="text-2xl">🔔</span>
+                <div>
+                    <p class="font-medium">Activer les notifications</p>
+                    <p class="text-sm text-gray-400">Recevez une alerte quand le coursier approche</p>
+                </div>
+            </div>
+            <button id="enable-push-btn"
+                class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium transition-colors">
+                Activer
+            </button>
+        </div>
+
+        <!-- Delivery Info Card -->
+        <div class="bg-gray-800/50 rounded-2xl border border-gray-700 overflow-hidden">
+            <div
+                class="bg-gradient-to-r from-green-600/20 to-emerald-600/20 px-5 py-3 border-b border-gray-700 flex items-center justify-between">
+                <h2 class="text-base font-semibold flex items-center gap-2">
+                    📦 Livraison
+                    <span id="delivery-id" class="text-green-400 font-mono text-sm">#{{ delivery_id|slice:":8" }}</span>
+                </h2>
+                <button id="expand-history-btn"
+                    class="text-sm text-gray-400 hover:text-white transition-colors flex items-center gap-1">
+                    <span>Détails</span>
+                    <span id="expand-icon">▼</span>
+                </button>
+            </div>
+
+            <div class="p-5 space-y-5">
+                <!-- Status Timeline -->
+                <div id="status-timeline" class="space-y-3">
+                    <div class="flex items-center gap-3 cursor-pointer hover:bg-gray-700/30 p-2 rounded-lg transition-colors"
+                        data-status="PENDING">
+                        <div
+                            class="w-8 h-8 rounded-full bg-green-500/20 border-2 border-green-500 flex items-center justify-center flex-shrink-0">
+                            <span class="text-green-500 text-sm">✓</span>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="font-medium text-sm">Commande créée</p>
+                            <p class="text-xs text-gray-400 truncate">En attente d'un coursier</p>
+                        </div>
+                        <span class="timeline-time text-xs text-gray-500">--:--</span>
+                    </div>
+
+                    <div class="flex items-center gap-3 opacity-40 cursor-pointer hover:bg-gray-700/30 p-2 rounded-lg transition-colors"
+                        data-status="ASSIGNED">
+                        <div
+                            class="w-8 h-8 rounded-full bg-gray-700 border-2 border-gray-600 flex items-center justify-center flex-shrink-0">
+                            <span class="text-gray-400 text-sm">2</span>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="font-medium text-sm">Coursier assigné</p>
+                            <p class="text-xs text-gray-400 truncate">Un coursier a accepté</p>
+                        </div>
+                        <span class="timeline-time text-xs text-gray-500">--:--</span>
+                    </div>
+
+                    <div class="flex items-center gap-3 opacity-40 cursor-pointer hover:bg-gray-700/30 p-2 rounded-lg transition-colors"
+                        data-status="PICKED_UP">
+                        <div
+                            class="w-8 h-8 rounded-full bg-gray-700 border-2 border-gray-600 flex items-center justify-center flex-shrink-0">
+                            <span class="text-gray-400 text-sm">3</span>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="font-medium text-sm">Colis récupéré</p>
+                            <p class="text-xs text-gray-400 truncate">Le coursier a votre colis</p>
+                        </div>
+                        <span class="timeline-time text-xs text-gray-500">--:--</span>
+                    </div>
+
+                    <div class="flex items-center gap-3 opacity-40 cursor-pointer hover:bg-gray-700/30 p-2 rounded-lg transition-colors"
+                        data-status="IN_TRANSIT">
+                        <div
+                            class="w-8 h-8 rounded-full bg-gray-700 border-2 border-gray-600 flex items-center justify-center flex-shrink-0">
+                            <span class="text-gray-400 text-sm">4</span>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="font-medium text-sm">En route</p>
+                            <p class="text-xs text-gray-400 truncate">Vers la destination</p>
+                        </div>
+                        <span class="timeline-time text-xs text-gray-500">--:--</span>
+                    </div>
+
+                    <div class="flex items-center gap-3 opacity-40 cursor-pointer hover:bg-gray-700/30 p-2 rounded-lg transition-colors"
+                        data-status="COMPLETED">
+                        <div
+                            class="w-8 h-8 rounded-full bg-gray-700 border-2 border-gray-600 flex items-center justify-center flex-shrink-0">
+                            <span class="text-gray-400 text-sm">5</span>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="font-medium text-sm">Livré</p>
+                            <p class="text-xs text-gray-400 truncate">Colis remis au destinataire</p>
+                        </div>
+                        <span class="timeline-time text-xs text-gray-500">--:--</span>
+                    </div>
+                </div>
+
+                <!-- Expanded History Details -->
+                <div id="history-details" class="timeline-expand bg-gray-700/30 rounded-xl p-4 space-y-3">
+                    <h4 class="text-sm font-semibold text-gray-300">📜 Historique détaillé</h4>
+                    <div id="history-list" class="space-y-2 text-xs">
+                        <p class="text-gray-500">Chargement...</p>
+                    </div>
+                </div>
+
+                <!-- ETA Badge -->
+                <div id="eta-container"
+                    class="hidden bg-blue-900/30 border border-blue-500/30 rounded-xl p-4 flex items-center gap-4">
+                    <div class="text-3xl">⏱️</div>
+                    <div class="flex-1">
+                        <p class="text-xs text-blue-400">Arrivée estimée</p>
+                        <p id="eta-value" class="text-xl font-bold">Calcul...</p>
+                        <p id="eta-distance" class="text-xs text-gray-400">--</p>
+                    </div>
+                    <div id="eta-refresh" class="text-xs text-gray-500">
+                        <span id="eta-countdown">30</span>s
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Map Card -->
+        <div class="bg-gray-800/50 rounded-2xl border border-gray-700 overflow-hidden">
+            <div
+                class="bg-gradient-to-r from-blue-600/20 to-indigo-600/20 px-5 py-3 border-b border-gray-700 flex items-center justify-between">
+                <h2 class="text-base font-semibold flex items-center gap-2">
+                    🗺️ Position en Temps Réel
+                </h2>
+                <span id="map-update-time" class="text-xs text-gray-500">--</span>
+            </div>
+            <div id="map" class="m-3"></div>
+        </div>
+
+        <!-- Courier Info -->
+        <div id="courier-card" class="hidden bg-gray-800/50 rounded-2xl border border-gray-700 overflow-hidden">
+            <div class="bg-gradient-to-r from-purple-600/20 to-pink-600/20 px-5 py-3 border-b border-gray-700">
+                <h2 class="text-base font-semibold">👤 Votre Coursier</h2>
+            </div>
+            <div class="p-5 flex items-center gap-4">
+                <div
+                    class="w-14 h-14 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-xl flex-shrink-0">
+                    🏍️
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p id="courier-name" class="font-semibold truncate">--</p>
+                    <p id="courier-phone" class="text-sm text-gray-400">--</p>
+                </div>
+                <a id="call-courier" href="#"
+                    class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg flex items-center gap-2 transition-colors text-sm font-medium flex-shrink-0">
+                    📞 Appeler
+                </a>
+            </div>
+        </div>
+
+        <!-- Proof Photo Card -->
+        <div id="proof-card" class="hidden bg-gray-800/50 rounded-2xl border border-gray-700 overflow-hidden">
+            <div class="bg-gradient-to-r from-emerald-600/20 to-teal-600/20 px-5 py-3 border-b border-gray-700">
+                <h2 class="text-base font-semibold flex items-center gap-2">
+                    📸 Preuve de Livraison
+                </h2>
+            </div>
+            <div class="p-5">
+                <img id="proof-image" src="" alt="Preuve de livraison"
+                    class="w-full max-h-64 object-cover rounded-xl cursor-pointer hover:opacity-90 transition-opacity"
+                    onclick="openProofModal()">
+                <p id="proof-caption" class="text-xs text-gray-500 mt-2 text-center">--</p>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center text-xs text-gray-500 pb-4">
+            <p>Powered by <span class="text-green-400">DELIVR-CM</span> • Livraison urbaine intelligente</p>
+        </div>
+
+    </main>
+
+    <!-- Proof Photo Modal -->
+    <div id="proof-modal" class="proof-modal fixed inset-0 bg-black/90 z-50 items-center justify-center p-4"
+        onclick="closeProofModal()">
+        <img id="proof-modal-image" src="" alt="Preuve de livraison"
+            class="max-w-full max-h-full object-contain rounded-lg">
+        <button class="absolute top-4 right-4 text-white text-3xl hover:text-gray-300"
+            onclick="closeProofModal()">✕</button>
+    </div>
+
+    <!-- Share Toast -->
+    <div id="share-toast"
+        class="fixed bottom-4 left-4 right-4 bg-green-600 text-white px-4 py-3 rounded-xl shadow-lg transform translate-y-20 transition-transform text-center text-sm font-medium z-50">
+        ✅ Lien copié dans le presse-papier !
+    </div>
+
+    <script>
+        // ============================================
+        // Configuration
+        // ============================================
+        const DELIVERY_ID = '{{ delivery_id }}';
+        const WS_URL = `ws://${window.location.host}/ws/delivery/${DELIVERY_ID}/`;
+        const API_BASE = `/api/track/${DELIVERY_ID}`;
+
+        // ============================================
+        // State
+        // ============================================
+        let ws = null;
+        let eventCount = 0;
+        let currentStatus = 'PENDING';
+        let etaInterval = null;
+        let etaCountdown = 30;
+        let historyData = [];
+
+        // ============================================
+        // Map Initialization
+        // ============================================
+        const dataSaving = localStorage.getItem('dataSaving') === 'true';
+        const tileUrl = dataSaving
+            ? 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png'
+            : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+
+        const map = L.map('map').setView([4.0511, 9.7679], 13);
+        L.tileLayer(tileUrl, {
+            attribution: '© OSM',
+            maxZoom: 18
+        }).addTo(map);
+
+        if (dataSaving) {
+            document.body.classList.add('data-saving');
+        }
+
+        let courierMarker = null;
+        let pickupMarker = null;
+        let dropoffMarker = null;
+
+        // ============================================
+        // Feature 1: Social Sharing
+        // ============================================
+        document.getElementById('share-btn').addEventListener('click', async () => {
+            try {
+                const response = await fetch(`${API_BASE}/share/`, { method: 'POST' });
+                const data = await response.json();
+
+                if (data.success) {
+                    // Try native share first
+                    if (navigator.share) {
+                        await navigator.share({
+                            title: 'Suivi de livraison DELIVR-CM',
+                            text: 'Suivez ma livraison en temps réel',
+                            url: data.share_url
+                        });
+                    } else {
+                        // Fallback: copy to clipboard
+                        await navigator.clipboard.writeText(data.share_url);
+                        showToast();
+                    }
+                }
+            } catch (err) {
+                console.error('Share error:', err);
+            }
+        });
+
+        function showToast() {
+            const toast = document.getElementById('share-toast');
+            toast.classList.remove('translate-y-20');
+            setTimeout(() => toast.classList.add('translate-y-20'), 3000);
+        }
+
+        // ============================================
+        // Feature 2: Browser Push Notifications
+        // ============================================
+        function initPushNotifications() {
+            if (!('Notification' in window)) return;
+
+            if (Notification.permission === 'default') {
+                document.getElementById('push-banner').classList.remove('hidden');
+            }
+        }
+
+        document.getElementById('enable-push-btn')?.addEventListener('click', async () => {
+            const permission = await Notification.requestPermission();
+            if (permission === 'granted') {
+                document.getElementById('push-banner').classList.add('hidden');
+                showPushNotification('Notifications activées', 'Vous serez alerté à chaque mise à jour');
+            }
+        });
+
+        function showPushNotification(title, body) {
+            if (Notification.permission === 'granted') {
+                new Notification(title, {
+                    body: body,
+                    icon: '/static/icons/icon-192.png',
+                    badge: '/static/icons/badge-72.png',
+                    vibrate: [200, 100, 200]
+                });
+            }
+        }
+
+        // ============================================
+        // Feature 3: Dynamic ETA with OSRM
+        // ============================================
+        async function updateETA() {
+            try {
+                const response = await fetch(`${API_BASE}/eta/`);
+                const data = await response.json();
+
+                if (data.success) {
+                    document.getElementById('eta-value').textContent = `~${data.eta_minutes} min`;
+                    document.getElementById('eta-distance').textContent = `${data.distance_km} km restants`;
+                    etaCountdown = 30;
+                }
+            } catch (err) {
+                console.log('ETA update failed');
+            }
+        }
+
+        function startETAUpdates() {
+            document.getElementById('eta-container').classList.remove('hidden');
+            updateETA();
+
+            etaInterval = setInterval(() => {
+                etaCountdown--;
+                document.getElementById('eta-countdown').textContent = etaCountdown;
+
+                if (etaCountdown <= 0) {
+                    updateETA();
+                }
+            }, 1000);
+        }
+
+        function stopETAUpdates() {
+            if (etaInterval) {
+                clearInterval(etaInterval);
+                etaInterval = null;
+            }
+        }
+
+        // ============================================
+        // Feature 4: Photo Proof Display
+        // ============================================
+        function showProofPhoto(photoUrl, timestamp) {
+            const card = document.getElementById('proof-card');
+            const img = document.getElementById('proof-image');
+            const modalImg = document.getElementById('proof-modal-image');
+            const caption = document.getElementById('proof-caption');
+
+            img.src = photoUrl;
+            modalImg.src = photoUrl;
+            caption.textContent = `Photo prise le ${timestamp}`;
+            card.classList.remove('hidden');
+        }
+
+        function openProofModal() {
+            document.getElementById('proof-modal').classList.add('open');
+        }
+
+        function closeProofModal() {
+            document.getElementById('proof-modal').classList.remove('open');
+        }
+
+        // ============================================
+        // Feature 5: Expandable Step History
+        // ============================================
+        async function loadHistory() {
+            try {
+                const response = await fetch(`${API_BASE}/history/`);
+                const data = await response.json();
+
+                if (data.success) {
+                    historyData = data.history;
+                    renderHistory(data.history);
+
+                    // Update timeline times
+                    data.history.forEach(step => {
+                        const el = document.querySelector(`[data-status="${step.step.toUpperCase()}"]`);
+                        if (el) {
+                            const timeEl = el.querySelector('.timeline-time');
+                            if (timeEl) timeEl.textContent = step.time_display;
+                        }
+                    });
+
+                    // Show proof photo if available
+                    if (data.proof_photo) {
+                        const lastStep = data.history[data.history.length - 1];
+                        showProofPhoto(data.proof_photo, lastStep?.date_display + ' ' + lastStep?.time_display);
+                    }
+                }
+            } catch (err) {
+                console.log('History load failed');
+            }
+        }
+
+        function renderHistory(history) {
+            const list = document.getElementById('history-list');
+            list.innerHTML = history.map(h => `
+                <div class="flex items-center gap-3 p-2 bg-gray-700/30 rounded-lg">
+                    <span class="text-lg">${h.icon}</span>
+                    <div class="flex-1">
+                        <p class="font-medium">${h.label}</p>
+                        <p class="text-gray-500">${h.location}</p>
+                    </div>
+                    <div class="text-right text-gray-400">
+                        <p>${h.time_display}</p>
+                        <p>${h.date_display}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        document.getElementById('expand-history-btn').addEventListener('click', () => {
+            const details = document.getElementById('history-details');
+            const icon = document.getElementById('expand-icon');
+            details.classList.toggle('open');
+            icon.textContent = details.classList.contains('open') ? '▲' : '▼';
+        });
+
+        // ============================================
+        // Feature 6: Dark Mode / Data Saving
+        // ============================================
+        function initTheme() {
+            const darkMode = localStorage.getItem('darkMode') !== 'false';
+            if (!darkMode) {
+                document.body.classList.remove('bg-gradient-to-br', 'from-gray-900', 'via-gray-800', 'to-gray-900');
+                document.body.classList.add('bg-gray-100', 'text-gray-900');
+                document.getElementById('theme-icon').textContent = '☀️';
+            }
+        }
+
+        document.getElementById('dark-mode-toggle').addEventListener('click', () => {
+            const body = document.body;
+            const isDark = body.classList.contains('from-gray-900');
+
+            if (isDark) {
+                body.classList.remove('bg-gradient-to-br', 'from-gray-900', 'via-gray-800', 'to-gray-900', 'text-white');
+                body.classList.add('bg-gray-100', 'text-gray-900');
+                document.getElementById('theme-icon').textContent = '☀️';
+                localStorage.setItem('darkMode', 'false');
+            } else {
+                body.classList.add('bg-gradient-to-br', 'from-gray-900', 'via-gray-800', 'to-gray-900', 'text-white');
+                body.classList.remove('bg-gray-100', 'text-gray-900');
+                document.getElementById('theme-icon').textContent = '🌙';
+                localStorage.setItem('darkMode', 'true');
+            }
+        });
+
+        document.getElementById('data-saving-toggle').addEventListener('click', () => {
+            const current = localStorage.getItem('dataSaving') === 'true';
+            localStorage.setItem('dataSaving', !current);
+            location.reload(); // Reload to apply tile changes
+        });
+
+        // ============================================
+        // WebSocket Connection
+        // ============================================
+        function connect() {
+            ws = new WebSocket(WS_URL);
+
+            ws.onopen = () => {
+                updateConnectionStatus(true);
+                loadHistory(); // Load history on connect
+            };
+
+            ws.onclose = () => {
+                updateConnectionStatus(false);
+                setTimeout(connect, 5000);
+            };
+
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+            };
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                handleMessage(data);
+            };
+        }
+
+        function handleMessage(data) {
+            switch (data.type) {
+                case 'connection_established':
+                    updateStatus(data.status);
+                    if (data.courier_location) {
+                        updateCourierPosition(data.courier_location.latitude, data.courier_location.longitude);
+                    }
+                    break;
+
+                case 'status_update':
+                    updateStatus(data.status);
+                    loadHistory(); // Refresh history
+                    showPushNotification('Mise à jour livraison', data.message || `Statut: ${data.status}`);
+                    break;
+
+                case 'location_update':
+                    updateCourierPosition(data.latitude, data.longitude);
+                    document.getElementById('map-update-time').textContent =
+                        `Mis à jour: ${new Date().toLocaleTimeString('fr-FR')}`;
+                    break;
+
+                case 'eta_update':
+                    document.getElementById('eta-value').textContent = `~${data.eta_minutes} min`;
+                    document.getElementById('eta-distance').textContent = `${data.distance_km} km restants`;
+                    break;
+            }
+        }
+
+        // ============================================
+        // UI Updates
+        // ============================================
+        function updateConnectionStatus(connected) {
+            const el = document.getElementById('connection-status');
+            el.innerHTML = connected
+                ? `<span class="status-dot w-2 h-2 rounded-full bg-green-500"></span><span class="text-green-400 hidden sm:inline">Connecté</span>`
+                : `<span class="status-dot w-2 h-2 rounded-full bg-red-500"></span><span class="text-red-400 hidden sm:inline">Déconnecté</span>`;
+        }
+
+        function updateStatus(status) {
+            currentStatus = status;
+            const statusOrder = ['PENDING', 'ASSIGNED', 'PICKED_UP', 'IN_TRANSIT', 'COMPLETED'];
+            const currentIndex = statusOrder.indexOf(status);
+
+            document.querySelectorAll('#status-timeline > div').forEach((el) => {
+                const elStatus = el.dataset.status;
+                const elIndex = statusOrder.indexOf(elStatus);
+
+                if (elIndex <= currentIndex) {
+                    el.classList.remove('opacity-40');
+                    el.querySelector('div:first-child').classList.remove('bg-gray-700', 'border-gray-600');
+                    el.querySelector('div:first-child').classList.add('bg-green-500/20', 'border-green-500');
+                    const span = el.querySelector('span');
+                    if (span) {
+                        span.classList.remove('text-gray-400');
+                        span.classList.add('text-green-500');
+                        span.textContent = '✓';
+                    }
+                }
+            });
+
+            // Start/stop ETA updates based on status
+            if (['ASSIGNED', 'PICKED_UP', 'IN_TRANSIT'].includes(status)) {
+                if (!etaInterval) startETAUpdates();
+            } else {
+                stopETAUpdates();
+                document.getElementById('eta-container').classList.add('hidden');
+            }
+        }
+
+        function updateCourierPosition(lat, lng) {
+            if (!courierMarker) {
+                courierMarker = L.marker([lat, lng], {
+                    icon: L.divIcon({
+                        className: 'courier-marker',
+                        html: '<div style="font-size: 28px; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);">🏍️</div>',
+                        iconSize: [35, 35],
+                        iconAnchor: [17, 17]
+                    })
+                }).addTo(map);
+            } else {
+                courierMarker.setLatLng([lat, lng]);
+            }
+
+            map.panTo([lat, lng]);
+        }
+
+        // ============================================
+        // Initialize
+        // ============================================
+        initTheme();
+        initPushNotifications();
+        connect();
+
+        // Ping to keep connection alive
+        setInterval(() => {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ type: 'ping' }));
+            }
+        }, 30000);
+    </script>
+
+</body>
+
+</html>

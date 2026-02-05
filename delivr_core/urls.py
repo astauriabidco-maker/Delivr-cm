@@ -10,6 +10,14 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
 
+# ===========================================
+# ADMIN SITE CUSTOMIZATION
+# ===========================================
+admin.site.site_header = "🚀 DELIVR-CM Control Tower"
+admin.site.site_title = "DELIVR-CM Admin"
+admin.site.index_title = "Supervision des Opérations"
+
+
 @api_view(['GET'])
 def api_root(request):
     """API Root endpoint with available routes."""
@@ -43,6 +51,9 @@ def api_root(request):
 
 
 urlpatterns = [
+    # Landing Page (Home)
+    path('', include('home.urls')),
+    
     # Admin
     path('admin/', admin.site.urls),
     
@@ -53,6 +64,21 @@ urlpatterns = [
     path('api/', include('core.urls')),
     path('api/', include('logistics.urls')),
     path('api/', include('finance.urls')),
+    
+    # Partner Portal (Developer Dashboard)
+    path('partners/', include('partners.urls')),
+    
+    # Backoffice (Admin Dashboard)
+    path('backoffice/integrations/', include('integrations.urls')),
+    
+    # Public Checkout (Magic Link - No login required)
+    path('book/<slug:shop_slug>/', 
+         # Import here to avoid circular imports
+         __import__('partners.views', fromlist=['PublicShopView']).PublicShopView.as_view(), 
+         name='public_shop'),
+    
+    # Webhooks (WhatsApp Bot)
+    path('webhooks/', include('bot.urls')),
 ]
 
 # Serve media files in development

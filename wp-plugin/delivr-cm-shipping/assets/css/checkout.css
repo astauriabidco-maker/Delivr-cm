@@ -1,0 +1,80 @@
+/**
+ * DELIVR-CM Checkout Styles
+ */
+
+/* Neighborhood select styling */
+.delivr-neighborhood-select select,
+.delivr-city-select select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #d1d1d1;
+    border-radius: 4px;
+    background-color: #fff;
+    font-size: 14px;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    cursor: pointer;
+}
+
+.delivr-neighborhood-select select:focus,
+.delivr-city-select select:focus {
+    border-color: #0073aa;
+    box-shadow: 0 0 0 1px #0073aa;
+    outline: none;
+}
+
+.delivr-neighborhood-select select:disabled,
+.delivr-city-select select:disabled {
+    background-color: #f7f7f7;
+    cursor: wait;
+    opacity: 0.7;
+}
+
+/* Loading indicator */
+.delivr-neighborhood-select.loading::after {
+    content: '';
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid #ccc;
+    border-top-color: #0073aa;
+    border-radius: 50%;
+    animation: delivr-spin 0.8s linear infinite;
+    position: absolute;
+    right: 40px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+@keyframes delivr-spin {
+    to {
+        transform: translateY(-50%) rotate(360deg);
+    }
+}
+
+/* DELIVR-CM branding on shipping method */
+.shipping_method[value*="delivr_cm"] + label::before {
+    content: '🏍️ ';
+}
+
+/* Highlight DELIVR shipping option */
+.woocommerce-shipping-methods li:has(.shipping_method[value*="delivr_cm"]) {
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    border: 1px solid #0ea5e9;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 8px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .delivr-neighborhood-select select,
+    .delivr-city-select select {
+        padding: 12px 16px;
+        font-size: 16px; /* Prevent zoom on iOS */
+    }
+}

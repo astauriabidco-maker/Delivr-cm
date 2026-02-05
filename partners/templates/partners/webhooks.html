@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Webhooks - DELIVR-CM</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #fff;
+        }
+
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 260px;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.3);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 24px 0;
+        }
+
+        .sidebar-logo {
+            padding: 0 24px 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 24px;
+        }
+
+        .sidebar-logo h1 {
+            font-size: 1.4rem;
+        }
+
+        .sidebar-logo span {
+            color: #00d084;
+        }
+
+        .sidebar-nav a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 24px;
+            color: rgba(255, 255, 255, 0.6);
+            text-decoration: none;
+            border-left: 3px solid transparent;
+        }
+
+        .sidebar-nav a:hover,
+        .sidebar-nav a.active {
+            background: rgba(0, 208, 132, 0.1);
+            color: #00d084;
+            border-left-color: #00d084;
+        }
+
+        .sidebar-user {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 20px 24px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .sidebar-user .name {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .sidebar-user .status {
+            font-size: 0.8rem;
+            color: #00d084;
+        }
+
+        .main-content {
+            margin-left: 260px;
+            padding: 32px;
+        }
+
+        .page-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 32px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .card h2 {
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9rem;
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="url"] {
+            width: 100%;
+            padding: 14px 16px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            font-size: 1rem;
+        }
+
+        .form-group input::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .secret-display {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 14px 16px;
+            border-radius: 10px;
+            font-family: monospace;
+            font-size: 0.85rem;
+            color: #00d084;
+        }
+
+        .secret-display code {
+            flex: 1;
+            word-break: break-all;
+        }
+
+        .events-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 12px;
+        }
+
+        .event-checkbox {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 16px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            cursor: pointer;
+        }
+
+        .event-checkbox:hover {
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .event-checkbox input {
+            margin-top: 4px;
+            transform: scale(1.2);
+            accent-color: #00d084;
+        }
+
+        .event-checkbox .event-info h4 {
+            font-size: 0.95rem;
+            margin-bottom: 4px;
+        }
+
+        .event-checkbox .event-info p {
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .toggle-switch {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .toggle-switch input[type="checkbox"] {
+            width: 50px;
+            height: 26px;
+            appearance: none;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 13px;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .toggle-switch input[type="checkbox"]::before {
+            content: '';
+            position: absolute;
+            width: 22px;
+            height: 22px;
+            background: #fff;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: 0.2s;
+        }
+
+        .toggle-switch input[type="checkbox"]:checked {
+            background: #00d084;
+        }
+
+        .toggle-switch input[type="checkbox"]:checked::before {
+            left: 26px;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border-radius: 10px;
+            border: none;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #00d084 0%, #00a86b 100%);
+            color: #fff;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        .btn-danger {
+            background: rgba(255, 82, 82, 0.2);
+            color: #ff5252;
+        }
+
+        .button-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 24px;
+        }
+
+        .alert {
+            padding: 16px 20px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+        }
+
+        .alert-success {
+            background: rgba(0, 208, 132, 0.15);
+            border: 1px solid rgba(0, 208, 132, 0.3);
+            color: #00d084;
+        }
+
+        .alert-error {
+            background: rgba(255, 82, 82, 0.15);
+            border: 1px solid rgba(255, 82, 82, 0.3);
+            color: #ff5252;
+        }
+
+        .status-info {
+            display: flex;
+            gap: 24px;
+            flex-wrap: wrap;
+            padding: 16px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            margin-top: 20px;
+        }
+
+        .status-info .item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .status-info .label {
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .status-info .value {
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                display: none;
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="sidebar">
+        <div class="sidebar-logo">
+            <h1>🚀 DELIVR<span>-CM</span></h1>
+        </div>
+        <div class="sidebar-nav">
+            <a href="{% url 'partners:dashboard' %}">📊 Dashboard</a>
+            <a href="{% url 'partners:orders' %}">📦 Mes Commandes</a>
+            <a href="{% url 'partners:dashboard' %}#api-keys">🔑 Clés API</a>
+            <a href="{% url 'partners:webhooks' %}" class="active">🔔 Webhooks</a>
+            <a href="{% url 'partners:branding' %}">🎨 Personnalisation</a>
+            <a href="{% url 'partners:docs' %}">📖 Documentation</a>
+        </div>
+        <div class="sidebar-user">
+            <div class="name">{{ request.user.full_name }}</div>
+            <div class="status">✓ Compte Vérifié</div>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <h1 class="page-title">🔔 Configuration Webhooks</h1>
+
+        {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="save">
+
+            <div class="card">
+                <h2>📡 URL du Webhook</h2>
+                <div class="form-group">
+                    <label>Endpoint URL</label>
+                    <input type="url" name="url" value="{{ config.url }}"
+                        placeholder="https://votre-site.com/webhook/delivr">
+                </div>
+
+                <div class="form-group">
+                    <label>Activer le webhook</label>
+                    <div class="toggle-switch">
+                        <input type="checkbox" name="is_active" {% if config.is_active %}checked{% endif %}>
+                        <span>{% if config.is_active %}Actif{% else %}Inactif{% endif %}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>🔐 Secret HMAC</h2>
+                <p style="color: rgba(255,255,255,0.6); margin-bottom: 16px;">
+                    Utilisez ce secret pour vérifier l'authenticité des webhooks reçus.
+                </p>
+                <div class="secret-display">
+                    <code>{{ config.secret }}</code>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>📋 Événements</h2>
+                <p style="color: rgba(255,255,255,0.6); margin-bottom: 20px;">
+                    Sélectionnez les événements pour lesquels vous souhaitez recevoir des notifications.
+                </p>
+                <div class="events-grid">
+                    {% for event_code, event_name, event_desc in available_events %}
+                    <label class="event-checkbox">
+                        <input type="checkbox" name="events" value="{{ event_code }}" {% if event_code in config.events %}checked{% endif %}>
+                        <div class="event-info">
+                            <h4>{{ event_name }}</h4>
+                            <p>{{ event_desc }}</p>
+                        </div>
+                    </label>
+                    {% endfor %}
+                </div>
+
+
+
+            </div>
+
+            <div class="button-row">
+                <button type="submit" class="btn btn-primary">💾 Sauvegarder</button>
+                <button type="submit" name="action" value="test" class="btn btn-secondary">🧪 Tester</button>
+                <button type="submit" name="action" value="regenerate_secret" class="btn btn-danger"
+                    onclick="return confirm('Régénérer le secret ? L\'ancien ne fonctionnera plus.')">
+                    🔄 Nouveau Secret
+                </button>
+            </div>
+        </form>
+
+        {% if config.last_triggered %}
+        <div class="card">
+            <h2>📊 Dernière Activité</h2>
+            <div class="status-info">
+                <div class="item">
+                    <span class="label">Dernier envoi</span>
+                    <span class="value">{{ config.last_triggered|date:"d/m/Y H:i" }}</span>
+                </div>
+                <div class="item">
+                    <span class="label">Code HTTP</span>
+                    <span class="value"
+                        style="color: {% if config.last_status_code < 400 %}#00d084{% else %}#ff5252{% endif %}">
+                        {{ config.last_status_code }}
+                    </span>
+                </div>
+                <div class="item">
+                    <span class="label">Échecs consécutifs</span>
+                    <span class="value">{{ config.failure_count }}</span>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </main>
+</body>
+
+</html>
