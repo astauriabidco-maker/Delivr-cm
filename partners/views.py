@@ -520,3 +520,54 @@ class PartnerBrandingView(BusinessRequiredMixin, View):
         return redirect('partners:branding')
 
 
+# ============================================
+# INVOICES / BILLING VIEW
+# ============================================
+
+class PartnerInvoicesView(BusinessRequiredMixin, View):
+    """
+    Partner invoices list with filtering and download.
+    """
+    
+    template_name = 'partners/invoices.html'
+    
+    def get(self, request):
+        from django.core.paginator import Paginator
+        from finance.models import Invoice, InvoiceType
+        
+        # Get partner's invoices
+        invoices = Invoice.objects.filter(user=request.user).order_by('-created_at')
+        
+        # Apply filters
+        type_filter = request.GET.get('type', '')
+        year_filter = request.GET.get('year', '')
+        
+        if type_filter:
+            invoices = invoices.filter(invoice_type=type_filter)
+        
+        if year_filter:
+            invoices = invoices.filter(created_at__year=int(year_filter))
+        
+        # Get available years for filter
+        years = Invoice.objects.filter(user=request.user).dates('created_at', 'year')
+        
+        # Pagination
+        paginator = Paginator(invoices, 20)
+        page = request.GET.get('page', 1)
+        invoices_page = paginator.get_page(page)
+        
+        # Summary stats
+        from django.db.models import Sum
+        total_amount = invoices.aggregate(total=Sum('amount'))['total'] or 0
+        
+        context = {
+            'invoices': invoices_page,
+            'type_filter': type_filter,
+            'year_filter': year_filter,
+            'type_choices': InvoiceType.choices,
+            'years': [y.year for y in years],
+            'total_count': paginator.count,
+            'total_amount': total_amount,
+        }
+        
+        return render(request, self.template_name, context)

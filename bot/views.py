@@ -20,6 +20,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 
 from .services import BotState, BotStateManager, BotMessageBuilder, TwilioService, MetaWhatsAppService
+from .courier_commands import CourierBotCommands
 from logistics.models import Delivery, PaymentMethod, DeliveryStatus
 from logistics.utils import get_routing_data, calculate_delivery_price
 from core.models import User, UserRole
@@ -289,7 +290,22 @@ class TwilioWebhookView(APIView):
         logger.info(f"[TWILIO] From: {phone} | State: {current_state.value} | Location: {has_location} | Body: {body[:30]}")
         
         # ============================================
-        # COMMAND HANDLING (Any state)
+        # COURIER COMMAND HANDLING (Priority)
+        # ============================================
+        
+        # Check if this is a courier command
+        courier_response, was_handled = CourierBotCommands.handle_command(phone, parsed['body'])
+        if was_handled:
+            self._send_reply(phone, courier_response)
+            return HttpResponse("OK")
+        
+        # Courier help
+        if body in ['AIDE COURSIER', 'HELP COURSIER', 'COURRIER']:
+            self._send_reply(phone, CourierBotCommands.get_courier_help_message())
+            return HttpResponse("OK")
+        
+        # ============================================
+        # CLIENT COMMAND HANDLING (Any state)
         # ============================================
         
         if body in ['NOUVEAU', '/START', 'START', 'COMMENCER', 'JOIN YOURCODE']:
@@ -521,7 +537,22 @@ class MetaWebhookView(APIView):
         logger.info(f"[META] From: {phone} | State: {current_state.value} | Location: {has_location} | Body: {body[:30]}")
         
         # ============================================
-        # COMMAND HANDLING (Any state)
+        # COURIER COMMAND HANDLING (Priority)
+        # ============================================
+        
+        # Check if this is a courier command
+        courier_response, was_handled = CourierBotCommands.handle_command(phone, parsed['body'])
+        if was_handled:
+            self._send_reply(phone, courier_response)
+            return HttpResponse("OK")
+        
+        # Courier help
+        if body in ['AIDE COURSIER', 'HELP COURSIER', 'COURRIER']:
+            self._send_reply(phone, CourierBotCommands.get_courier_help_message())
+            return HttpResponse("OK")
+        
+        # ============================================
+        # CLIENT COMMAND HANDLING (Any state)
         # ============================================
         
         if body in ['NOUVEAU', '/START', 'START', 'COMMENCER', 'BONJOUR', 'HELLO', 'HI']:

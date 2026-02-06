@@ -1,0 +1,251 @@
+{% extends "fleet/base.html" %}
+
+{% block title %}Validation Dossiers Coursiers{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>📋 Dossiers en attente</h1>
+    <p class="text-secondary">{{ pending_count }} dossier(s) à valider</p>
+</div>
+
+<!-- Stats -->
+<div class="stats-row" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 2rem;">
+    <div class="stat-card"
+        style="background: var(--bg-secondary); padding: 1.5rem; border-radius: var(--border-radius-lg); text-align: center;">
+        <div style="font-size: 2rem; font-weight: 700; color: #f59e0b;">{{ stats.pending }}</div>
+        <div style="font-size: 0.875rem; color: var(--text-tertiary);">En attente</div>
+    </div>
+    <div class="stat-card"
+        style="background: var(--bg-secondary); padding: 1.5rem; border-radius: var(--border-radius-lg); text-align: center;">
+        <div style="font-size: 2rem; font-weight: 700; color: #22c55e;">{{ stats.approved }}</div>
+        <div style="font-size: 0.875rem; color: var(--text-tertiary);">Approuvés</div>
+    </div>
+    <div class="stat-card"
+        style="background: var(--bg-secondary); padding: 1.5rem; border-radius: var(--border-radius-lg); text-align: center;">
+        <div style="font-size: 2rem; font-weight: 700; color: #ef4444;">{{ stats.rejected }}</div>
+        <div style="font-size: 0.875rem; color: var(--text-tertiary);">Rejetés</div>
+    </div>
+    <div class="stat-card"
+        style="background: var(--bg-secondary); padding: 1.5rem; border-radius: var(--border-radius-lg); text-align: center;">
+        <div style="font-size: 2rem; font-weight: 700; color: #3b82f6;">{{ stats.probation }}</div>
+        <div style="font-size: 0.875rem; color: var(--text-tertiary);">En probation</div>
+    </div>
+</div>
+
+<!-- Filters -->
+<div style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
+    <a href="?status=AWAITING" class="filter-btn {% if current_status == 'AWAITING' %}active{% endif %}">⏳ En
+        attente</a>
+    <a href="?status=APPROVED" class="filter-btn {% if current_status == 'APPROVED' %}active{% endif %}">✅ Approuvés</a>
+    <a href="?status=REJECTED" class="filter-btn {% if current_status == 'REJECTED' %}active{% endif %}">❌ Rejetés</a>
+    <a href="?" class="filter-btn {% if not current_status %}active{% endif %}">Tous</a>
+</div>
+
+<!-- Dossiers List -->
+<div style="display: flex; flex-direction: column; gap: 1rem;">
+    {% for o in onboardings %}
+    <div class="dossier-card"
+        style="background: var(--bg-secondary); border-radius: var(--border-radius-lg); overflow: hidden;">
+        <!-- Header -->
+        <div
+            style="display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.25rem; border-bottom: 1px solid var(--border-color);">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <div
+                    style="width: 50px; height: 50px; border-radius: 50%; background: var(--bg-tertiary); display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+                    {% if o.vehicle_type == 'MOTO' %}🏍️{% elif o.vehicle_type == 'BICYCLE' %}🚲{% elif o.vehicle_type
+                    == 'CAR' %}🚗{% else %}🚶{% endif %}
+                </div>
+                <div>
+                    <div style="font-weight: 600;">{{ o.courier.full_name|default:o.courier.phone_number }}</div>
+                    <div style="font-size: 0.875rem; color: var(--text-tertiary);">{{ o.courier.phone_number }}</div>
+                </div>
+            </div>
+            <div>
+                {% if o.status == 'AWAITING' %}
+                <span class="badge"
+                    style="background: #fef3c7; color: #92400e; padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.75rem; font-weight: 600;">En
+                    attente</span>
+                {% elif o.status == 'APPROVED' %}
+                <span class="badge"
+                    style="background: #d1fae5; color: #065f46; padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.75rem; font-weight: 600;">Approuvé</span>
+                {% elif o.status == 'REJECTED' %}
+                <span class="badge"
+                    style="background: #fee2e2; color: #991b1b; padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.75rem; font-weight: 600;">Rejeté</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Content -->
+        <div style="padding: 1.25rem;">
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1rem;">
+                <!-- Documents -->
+                <div>
+                    <div style="font-size: 0.75rem; color: var(--text-tertiary); margin-bottom: 0.5rem;">Documents</div>
+                    <div style="font-size: 0.875rem;">
+                        {% if o.cni_front %}✅{% else %}❌{% endif %} CNI Recto<br>
+                        {% if o.selfie_with_cni %}✅{% else %}❌{% endif %} Selfie CNI<br>
+                        {% if o.casier_judiciaire %}✅{% else %}⚠️{% endif %} Casier<br>
+                        {% if o.vehicle_type == 'MOTO' or o.vehicle_type == 'CAR' %}
+                        {% if o.driving_license %}✅{% else %}❌{% endif %} Permis<br>
+                        {% if o.carte_grise %}✅{% else %}⚠️{% endif %} Carte Grise
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Contact urgence -->
+                <div>
+                    <div style="font-size: 0.75rem; color: var(--text-tertiary); margin-bottom: 0.5rem;">Contact urgence
+                    </div>
+                    <div style="font-size: 0.875rem;">
+                        <strong>{{ o.emergency_contact_name|default:"Non renseigné" }}</strong><br>
+                        {{ o.emergency_contact_phone|default:"-" }}<br>
+                        <small>{{ o.emergency_contact_relation|default:"-" }}</small>
+                    </div>
+                </div>
+
+                <!-- Caution -->
+                <div>
+                    <div style="font-size: 0.75rem; color: var(--text-tertiary); margin-bottom: 0.5rem;">Caution</div>
+                    <div style="font-size: 0.875rem;">
+                        {% if o.caution_paid %}
+                        ✅ {{ o.caution_amount|floatformat:0 }} XAF<br>
+                        <small>{{ o.caution_payment_method }}</small><br>
+                        <small>{{ o.caution_transaction_id|truncatechars:15 }}</small>
+                        {% else %}
+                        ❌ Non payée
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Document viewer -->
+            <div style="display: flex; gap: 0.75rem; margin-bottom: 1rem;">
+                {% if o.cni_front %}
+                <a href="{{ o.cni_front.url }}" target="_blank" class="doc-thumb"
+                    style="flex: 1; height: 80px; background: var(--bg-tertiary); border-radius: var(--border-radius); display: flex; align-items: center; justify-content: center; text-decoration: none;">
+                    🪪 CNI Recto
+                </a>
+                {% endif %}
+                {% if o.selfie_with_cni %}
+                <a href="{{ o.selfie_with_cni.url }}" target="_blank" class="doc-thumb"
+                    style="flex: 1; height: 80px; background: var(--bg-tertiary); border-radius: var(--border-radius); display: flex; align-items: center; justify-content: center; text-decoration: none;">
+                    🤳 Selfie
+                </a>
+                {% endif %}
+                {% if o.casier_judiciaire %}
+                <a href="{{ o.casier_judiciaire.url }}" target="_blank" class="doc-thumb"
+                    style="flex: 1; height: 80px; background: var(--bg-tertiary); border-radius: var(--border-radius); display: flex; align-items: center; justify-content: center; text-decoration: none;">
+                    📋 Casier
+                </a>
+                {% endif %}
+                {% if o.driving_license %}
+                <a href="{{ o.driving_license.url }}" target="_blank" class="doc-thumb"
+                    style="flex: 1; height: 80px; background: var(--bg-tertiary); border-radius: var(--border-radius); display: flex; align-items: center; justify-content: center; text-decoration: none;">
+                    🪪 Permis
+                </a>
+                {% endif %}
+            </div>
+
+            <!-- Actions -->
+            {% if o.status == 'AWAITING' %}
+            <div style="display: flex; gap: 0.75rem;">
+                <form method="post" action="{% url 'fleet:onboarding-approve' o.id %}" style="flex: 1;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-approve"
+                        style="width: 100%; padding: 0.75rem; background: #22c55e; color: white; border: none; border-radius: var(--border-radius); font-weight: 600; cursor: pointer;">
+                        ✅ Approuver
+                    </button>
+                </form>
+
+                <button type="button" class="btn-reject" onclick="openRejectModal('{{ o.id }}')"
+                    style="flex: 1; padding: 0.75rem; background: #ef4444; color: white; border: none; border-radius: var(--border-radius); font-weight: 600; cursor: pointer;">
+                    ❌ Rejeter
+                </button>
+            </div>
+            {% endif %}
+
+            {% if o.admin_notes %}
+            <div
+                style="margin-top: 1rem; padding: 0.75rem; background: var(--bg-tertiary); border-radius: var(--border-radius); font-size: 0.875rem;">
+                <strong>Notes admin:</strong> {{ o.admin_notes }}
+            </div>
+            {% endif %}
+
+            {% if o.rejection_reason %}
+            <div
+                style="margin-top: 1rem; padding: 0.75rem; background: #fee2e2; border-radius: var(--border-radius); font-size: 0.875rem; color: #991b1b;">
+                <strong>Motif rejet:</strong> {{ o.rejection_reason }}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Footer -->
+        <div
+            style="padding: 0.75rem 1.25rem; background: var(--bg-tertiary); font-size: 0.75rem; color: var(--text-tertiary); display: flex; justify-content: space-between;">
+            <span>Soumis le {{ o.created_at|date:"d/m/Y" }}</span>
+            <span>CNI: {{ o.cni_number|default:"-" }} | {{ o.home_city }}</span>
+        </div>
+    </div>
+    {% empty %}
+    <div style="text-align: center; padding: 3rem; color: var(--text-tertiary);">
+        <div style="font-size: 3rem; margin-bottom: 1rem;">📭</div>
+        <p>Aucun dossier à afficher</p>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Reject Modal -->
+<div id="rejectModal"
+    style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center;">
+    <div
+        style="background: var(--bg-secondary); border-radius: var(--border-radius-lg); padding: 1.5rem; width: 100%; max-width: 400px;">
+        <h3 style="margin-bottom: 1rem;">Motif du rejet</h3>
+        <form method="post" id="rejectForm">
+            {% csrf_token %}
+            <textarea name="reason" rows="4" required placeholder="Expliquez pourquoi ce dossier est rejeté..."
+                style="width: 100%; padding: 0.75rem; border-radius: var(--border-radius); border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); margin-bottom: 1rem;"></textarea>
+            <div style="display: flex; gap: 0.75rem;">
+                <button type="button" onclick="closeRejectModal()"
+                    style="flex: 1; padding: 0.75rem; background: var(--bg-tertiary); color: var(--text-primary); border: none; border-radius: var(--border-radius); cursor: pointer;">
+                    Annuler
+                </button>
+                <button type="submit"
+                    style="flex: 1; padding: 0.75rem; background: #ef4444; color: white; border: none; border-radius: var(--border-radius); font-weight: 600; cursor: pointer;">
+                    Confirmer rejet
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    .filter-btn {
+        padding: 0.5rem 1rem;
+        background: var(--bg-secondary);
+        color: var(--text-secondary);
+        border-radius: var(--border-radius);
+        text-decoration: none;
+        font-size: 0.875rem;
+    }
+
+    .filter-btn.active {
+        background: var(--primary);
+        color: white;
+    }
+
+    .doc-thumb:hover {
+        background: var(--primary) !important;
+        color: white;
+    }
+</style>
+
+<script>
+    function openRejectModal(id) {
+        document.getElementById('rejectForm').action = '/fleet/onboarding/' + id + '/reject/';
+        document.getElementById('rejectModal').style.display = 'flex';
+    }
+    function closeRejectModal() {
+        document.getElementById('rejectModal').style.display = 'none';
+    }
+</script>
+{% endblock %}

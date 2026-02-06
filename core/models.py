@@ -159,6 +159,125 @@ class User(AbstractBaseUser, PermissionsMixin):
         verbose_name="Photo Moto"
     )
     
+    # ============================================
+    # COURIER ONBOARDING (Semi-Automatic Approval)
+    # ============================================
+    
+    class OnboardingStatus(models.TextChoices):
+        """Courier onboarding progression."""
+        PENDING = 'PENDING', 'Documents en attente'
+        PROBATION = 'PROBATION', 'Période d\'essai'
+        APPROVED = 'APPROVED', 'Approuvé'
+        REJECTED = 'REJECTED', 'Rejeté'
+    
+    onboarding_status = models.CharField(
+        max_length=20,
+        choices=OnboardingStatus.choices,
+        default=OnboardingStatus.PENDING,
+        verbose_name="Statut onboarding"
+    )
+    probation_start_date = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name="Début période d'essai"
+    )
+    probation_end_date = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name="Fin période d'essai"
+    )
+    probation_delivery_limit = models.PositiveIntegerField(
+        default=10,
+        verbose_name="Limite livraisons/jour (probation)"
+    )
+    probation_deliveries_count = models.PositiveIntegerField(
+        default=0,
+        verbose_name="Livraisons pendant probation"
+    )
+    trust_score = models.FloatField(
+        default=0.5,
+        verbose_name="Score de confiance",
+        help_text="0.0 à 1.0, calculé automatiquement"
+    )
+    
+    # ============================================
+    # COURIER EXTENDED PROFILE (Fleet Management)
+    # ============================================
+
+    
+    class CourierLevel(models.TextChoices):
+        """Courier progression levels for gamification."""
+        BRONZE = 'BRONZE', 'Bronze'
+        SILVER = 'SILVER', 'Silver'
+        GOLD = 'GOLD', 'Gold'
+        PLATINUM = 'PLATINUM', 'Platine'
+    
+    # Online Status & Availability
+    is_online = models.BooleanField(
+        default=False,
+        verbose_name="En ligne",
+        help_text="Le coursier est-il disponible pour recevoir des commandes?"
+    )
+    last_online_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name="Dernière connexion"
+    )
+    
+    # Courier Level & Gamification
+    courier_level = models.CharField(
+        max_length=20,
+        choices=CourierLevel.choices,
+        default=CourierLevel.BRONZE,
+        verbose_name="Niveau coursier"
+    )
+    
+    # Performance Statistics (denormalized for fast access)
+    total_deliveries_completed = models.PositiveIntegerField(
+        default=0,
+        verbose_name="Livraisons complétées"
+    )
+    total_distance_km = models.FloatField(
+        default=0.0,
+        verbose_name="Distance totale (km)"
+    )
+    average_rating = models.FloatField(
+        default=5.0,
+        verbose_name="Note moyenne",
+        help_text="Note sur 5 étoiles"
+    )
+    total_ratings_count = models.PositiveIntegerField(
+        default=0,
+        verbose_name="Nombre d'évaluations"
+    )
+    
+    # Reliability Metrics
+    acceptance_rate = models.FloatField(
+        default=100.0,
+        verbose_name="Taux d'acceptation (%)",
+        help_text="Pourcentage de commandes acceptées"
+    )
+    cancellation_count = models.PositiveIntegerField(
+        default=0,
+        verbose_name="Annulations"
+    )
+    consecutive_success_streak = models.PositiveIntegerField(
+        default=0,
+        verbose_name="Série de succès",
+        help_text="Livraisons consécutives sans incident"
+    )
+    best_streak = models.PositiveIntegerField(
+        default=0,
+        verbose_name="Meilleure série"
+    )
+    
+    # Response Time Tracking
+    average_response_seconds = models.PositiveIntegerField(
+        default=0,
+        verbose_name="Temps de réponse moyen (sec)",
+        help_text="Délai moyen pour accepter une commande"
+    )
+    
     # Django Auth Fields
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)

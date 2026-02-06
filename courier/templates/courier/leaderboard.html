@@ -1,0 +1,303 @@
+{% extends 'courier/base.html' %}
+
+{% block title %}Classement{% endblock %}
+{% block page_title %}Classement{% endblock %}
+
+{% block content %}
+<!-- My Rank Card -->
+<div class="my-rank-card card">
+    <div class="rank-badge">
+        <span class="rank-number">#{{ my_rank.rank }}</span>
+    </div>
+    <div class="rank-info">
+        <span class="rank-title">Votre Position</span>
+        <span class="rank-detail">Top {{ my_rank.top_percent|floatformat:0 }}% sur {{ my_rank.total_couriers }}
+            coursiers</span>
+    </div>
+    <div class="rank-stats">
+        <div class="rank-stat">
+            <span class="stat-value">{{ courier.total_deliveries_completed }}</span>
+            <span class="stat-label">Courses</span>
+        </div>
+        <div class="rank-stat">
+            <span class="stat-value">{{ courier.average_rating|floatformat:1 }}</span>
+            <span class="stat-label">Note</span>
+        </div>
+    </div>
+</div>
+
+<!-- Period Filter -->
+<div class="period-tabs">
+    <button class="period-tab {% if period == 'week' %}active{% endif %}"
+        onclick="window.location.href='?period=week'">Semaine</button>
+    <button class="period-tab {% if period == 'month' %}active{% endif %}"
+        onclick="window.location.href='?period=month'">Mois</button>
+    <button class="period-tab {% if period == 'all' %}active{% endif %}"
+        onclick="window.location.href='?period=all'">Total</button>
+</div>
+
+<!-- Leaderboard -->
+<div class="card">
+    <div class="card-header">
+        <h2>🏆 Top Coursiers</h2>
+    </div>
+    <div class="card-body" style="padding: 0;">
+        <div class="leaderboard">
+            {% for c in leaderboard %}
+            <div class="leaderboard-item {% if c.id == courier.id %}is-me{% endif %}">
+                <div class="leaderboard-rank">
+                    {% if forloop.counter == 1 %}
+                    <span class="trophy gold">🥇</span>
+                    {% elif forloop.counter == 2 %}
+                    <span class="trophy silver">🥈</span>
+                    {% elif forloop.counter == 3 %}
+                    <span class="trophy bronze">🥉</span>
+                    {% else %}
+                    <span class="rank-num">#{{ forloop.counter }}</span>
+                    {% endif %}
+                </div>
+                <div class="leaderboard-info">
+                    <span class="leaderboard-name">
+                        {{ c.level_icon }} {{ c.name }}
+                        {% if c.id == courier.id %}<span class="me-badge">Vous</span>{% endif %}
+                    </span>
+                    <span class="leaderboard-stats">
+                        {{ c.deliveries }} courses • ⭐ {{ c.rating|floatformat:1 }}
+                    </span>
+                </div>
+                <div class="leaderboard-score">
+                    {{ c.score|floatformat:0 }}
+                    <span class="score-label">pts</span>
+                </div>
+            </div>
+            {% empty %}
+            <div class="empty-state">
+                <span class="empty-icon">📊</span>
+                <p>Pas encore de classement</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- How Scoring Works -->
+<div class="card info-card">
+    <div class="card-header">
+        <h2>ℹ️ Comment ça marche ?</h2>
+    </div>
+    <div class="card-body">
+        <div class="scoring-info">
+            <p>Le score est calculé selon :</p>
+            <ul>
+                <li>📦 <strong>Nombre de livraisons</strong> complétées</li>
+                <li>⭐ <strong>Note moyenne</strong> des clients</li>
+                <li>🔥 <strong>Séries consécutives</strong> sans annulation</li>
+                <li>📈 <strong>Taux d'acceptation</strong> des courses</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .my-rank-card {
+        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+        color: white;
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .rank-badge {
+        width: 80px;
+        height: 80px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1rem;
+    }
+
+    .rank-number {
+        font-size: 2rem;
+        font-weight: 700;
+    }
+
+    .rank-title {
+        display: block;
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+
+    .rank-detail {
+        font-size: 0.875rem;
+        opacity: 0.9;
+    }
+
+    .rank-stats {
+        display: flex;
+        gap: 2rem;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .rank-stat {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .rank-stat .stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+    }
+
+    .rank-stat .stat-label {
+        font-size: 0.75rem;
+        opacity: 0.9;
+    }
+
+    .period-tabs {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+        background: var(--card-bg);
+        padding: 0.25rem;
+        border-radius: 12px;
+    }
+
+    .period-tab {
+        flex: 1;
+        padding: 0.75rem;
+        border: none;
+        background: transparent;
+        border-radius: 10px;
+        font-weight: 500;
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .period-tab.active {
+        background: var(--primary);
+        color: white;
+    }
+
+    .leaderboard {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .leaderboard-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 1rem;
+        border-bottom: 1px solid var(--border-color);
+        transition: background 0.2s;
+    }
+
+    .leaderboard-item:last-child {
+        border-bottom: none;
+    }
+
+    .leaderboard-item.is-me {
+        background: rgba(0, 208, 132, 0.1);
+    }
+
+    .leaderboard-rank {
+        width: 40px;
+        text-align: center;
+    }
+
+    .trophy {
+        font-size: 1.5rem;
+    }
+
+    .rank-num {
+        font-weight: 600;
+        color: var(--text-secondary);
+    }
+
+    .leaderboard-info {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 0.125rem;
+    }
+
+    .leaderboard-name {
+        font-weight: 500;
+    }
+
+    .me-badge {
+        display: inline-block;
+        padding: 0.125rem 0.5rem;
+        background: var(--primary);
+        color: white;
+        font-size: 0.625rem;
+        border-radius: 10px;
+        margin-left: 0.5rem;
+        text-transform: uppercase;
+    }
+
+    .leaderboard-stats {
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+    }
+
+    .leaderboard-score {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--primary);
+    }
+
+    .score-label {
+        font-size: 0.625rem;
+        font-weight: 500;
+        color: var(--text-secondary);
+    }
+
+    .info-card {
+        margin-top: 1rem;
+    }
+
+    .scoring-info p {
+        margin-bottom: 0.75rem;
+        color: var(--text-secondary);
+    }
+
+    .scoring-info ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .scoring-info li {
+        padding: 0.5rem 0;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .scoring-info li:last-child {
+        border-bottom: none;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+        color: var(--text-secondary);
+    }
+
+    .empty-icon {
+        font-size: 3rem;
+        display: block;
+        margin-bottom: 1rem;
+    }
+</style>
+{% endblock %}

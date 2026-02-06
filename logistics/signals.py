@@ -171,6 +171,54 @@ def _handle_delivery_completed(delivery: Delivery):
     except Exception as e:
         logger.error(f"[SIGNAL] Financial processing failed for {delivery.id}: {e}")
     
+    # Generate receipt PDF
+    try:
+        from finance.invoice_service import InvoiceService
+        
+        invoice = InvoiceService.generate_delivery_receipt(delivery)
+        logger.info(f"[SIGNAL] Receipt generated: {invoice.invoice_number}")
+        
+        # Send receipt via WhatsApp to recipient
+        try:
+            InvoiceService.send_receipt_via_whatsapp(invoice)
+            logger.info(f"[SIGNAL] Receipt sent via WhatsApp for {invoice.invoice_number}")
+        except Exception as wa_error:
+            logger.warning(f"[SIGNAL] WhatsApp send failed: {wa_error}")
+    
+    except Exception as e:
+        logger.warning(f"[SIGNAL] Receipt generation failed for {delivery.id}: {e}")
+    
+    # Send rating request via WhatsApp
+    try:
+        from logistics.rating_service import RatingService
+        RatingService.send_rating_request_via_whatsapp(delivery)
+        logger.info(f"[SIGNAL] Rating request sent for delivery {delivery.id}")
+    except Exception as e:
+        logger.warning(f"[SIGNAL] Rating request failed for {delivery.id}: {e}")
+    
+    # Track probation progress for courier onboarding
+    if delivery.courier:
+        try:
+            from core.onboarding_service import OnboardingService
+            from core.models import User
+            
+            courier = delivery.courier
+            
+            if courier.onboarding_status == User.OnboardingStatus.PROBATION:
+                result = OnboardingService.record_probation_delivery(courier)
+                
+                if result.get('auto_approved'):
+                    logger.info(f"[SIGNAL] Courier {courier.id} auto-approved after probation!")
+                else:
+                    logger.info(
+                        f"[SIGNAL] Probation delivery {result.get('count', 0)}/"
+                        f"{result.get('needed', 20)} for courier {courier.id}"
+                    )
+        except Exception as e:
+            logger.warning(f"[SIGNAL] Onboarding tracking failed: {e}")
+
+
+    
     # Invalidate courier cache for updated stats
     if delivery.courier:
         try:

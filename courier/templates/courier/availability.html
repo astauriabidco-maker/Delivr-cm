@@ -1,0 +1,132 @@
+{% extends 'courier/base.html' %}
+
+{% block title %}Disponibilité{% endblock %}
+
+{% block content %}
+<header class="header">
+    <div class="header-top">
+        <h1 style="font-size: 1.25rem;">Gestion Disponibilité</h1>
+    </div>
+</header>
+
+<div class="container" style="padding-top: 1rem;">
+    <!-- Online Status Control -->
+    <div class="card" style="text-align: center;">
+        <div style="font-size: 3rem; margin-bottom: 1rem;">
+            {% if is_online %}🟢{% else %}🔴{% endif %}
+        </div>
+        <div style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem;">
+            {% if is_online %}En Ligne{% else %}Hors Ligne{% endif %}
+        </div>
+        <div style="color: var(--gray-500); font-size: 0.875rem; margin-bottom: 1.5rem;">
+            {% if is_online %}
+            Vous recevez des commandes
+            {% else %}
+            Vous ne recevez pas de commandes
+            {% endif %}
+        </div>
+
+        <form action="{% url 'courier:toggle-online' %}" method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn {% if is_online %}btn-outline{% else %}btn-primary{% endif %} btn-block">
+                {% if is_online %}
+                Passer Hors Ligne
+                {% else %}
+                Passer En Ligne
+                {% endif %}
+            </button>
+        </form>
+
+        {% if last_online %}
+        <div style="margin-top: 1rem; font-size: 0.75rem; color: var(--gray-500);">
+            Dernière connexion: {{ last_online|date:"d/m/Y H:i" }}
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Weekly Schedule -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">Planning Hebdomadaire</h2>
+        </div>
+
+        {% if schedule %}
+        <ul class="delivery-list">
+            {% for slot in schedule %}
+            <li class="delivery-item">
+                <div class="delivery-info">
+                    <div class="delivery-route">{{ slot.day_name }}</div>
+                    <div class="delivery-meta">{{ slot.start_time }} - {{ slot.end_time }} ({{
+                        slot.duration_hours|floatformat:1 }}h)</div>
+                </div>
+                <form action="{% url 'courier:delete-slot' slot.id %}" method="post" style="margin: 0;">
+                    {% csrf_token %}
+                    <button type="submit"
+                        style="background: none; border: none; color: var(--danger); cursor: pointer; font-size: 1.25rem;">✕</button>
+                </form>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <div style="text-align: center; padding: 2rem; color: var(--gray-500);">
+            Aucun créneau défini
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Add Slot Form -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">Ajouter un Créneau</h2>
+        </div>
+
+        <form action="{% url 'courier:add-slot' %}" method="post">
+            {% csrf_token %}
+
+            <div style="margin-bottom: 1rem;">
+                <label
+                    style="display: block; font-size: 0.875rem; color: var(--gray-700); margin-bottom: 0.5rem;">Jour</label>
+                <select name="day_of_week"
+                    style="width: 100%; padding: 0.75rem; border: 1px solid var(--gray-300); border-radius: var(--radius); font-size: 1rem;">
+                    {% for day in days_of_week %}
+                    <option value="{{ day.value }}">{{ day.label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                <div>
+                    <label
+                        style="display: block; font-size: 0.875rem; color: var(--gray-700); margin-bottom: 0.5rem;">Début</label>
+                    <input type="time" name="start_time" value="08:00"
+                        style="width: 100%; padding: 0.75rem; border: 1px solid var(--gray-300); border-radius: var(--radius); font-size: 1rem;">
+                </div>
+                <div>
+                    <label
+                        style="display: block; font-size: 0.875rem; color: var(--gray-700); margin-bottom: 0.5rem;">Fin</label>
+                    <input type="time" name="end_time" value="18:00"
+                        style="width: 100%; padding: 0.75rem; border: 1px solid var(--gray-300); border-radius: var(--radius); font-size: 1rem;">
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block">
+                Ajouter le Créneau
+            </button>
+        </form>
+    </div>
+
+    <!-- Tips -->
+    <div class="card" style="background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); border: none;">
+        <div style="display: flex; gap: 1rem;">
+            <div style="font-size: 1.5rem;">💡</div>
+            <div>
+                <div style="font-weight: 600; margin-bottom: 0.5rem;">Conseil</div>
+                <div style="font-size: 0.875rem; color: var(--gray-700);">
+                    Définir vos créneaux habituels nous aide à mieux planifier les livraisons et vous proposer des
+                    courses dans vos zones préférées.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

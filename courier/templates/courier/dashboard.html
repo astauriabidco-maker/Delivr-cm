@@ -1,0 +1,231 @@
+{% extends 'courier/base.html' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<!-- Header with courier info -->
+<header class="header">
+    <div class="header-top">
+        <div class="courier-info">
+            <div class="courier-avatar">
+                {{ request.user.full_name|slice:":1"|upper|default:"C" }}
+            </div>
+            <div>
+                <div class="courier-name">{{ request.user.full_name|default:"Coursier" }}</div>
+                <div class="courier-level">
+                    <span class="level-badge level-{{ request.user.courier_level }}">
+                        {{ level_info.icon }} {{ level_info.label }}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Online Toggle -->
+        <form action="{% url 'courier:toggle-online' %}" method="post" class="online-toggle">
+            {% csrf_token %}
+            <div class="toggle-label">{{ today.is_online|yesno:"En ligne,Hors ligne" }}</div>
+            <button type="submit" class="toggle-switch {% if today.is_online %}active{% endif %}"
+                aria-label="Toggle online status"></button>
+        </form>
+    </div>
+</header>
+
+<!-- Today's Stats -->
+<div class="stats-row">
+    <div class="stat-card">
+        <div class="stat-value">{{ today.deliveries_count }}</div>
+        <div class="stat-label">Courses</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ today.earnings|floatformat:0 }}</div>
+        <div class="stat-label">XAF gagnés</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ today.distance_km }}</div>
+        <div class="stat-label">km</div>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Wallet Card -->
+    <div class="card wallet-card">
+        <div class="wallet-label">Solde Wallet</div>
+        <div class="wallet-balance {% if wallet.balance < 0 %}negative{% endif %}">
+            {{ wallet.balance|floatformat:0 }} XAF
+        </div>
+
+        {% if wallet.debt_used > 0 %}
+        <div class="debt-bar">
+            <div class="debt-fill" style="width: {{ wallet.debt_percentage }}%"></div>
+        </div>
+        <div class="debt-info">
+            <span>Dette: {{ wallet.debt_used|floatformat:0 }} XAF</span>
+            <span>Plafond: {{ wallet.debt_ceiling|floatformat:0 }} XAF</span>
+        </div>
+        {% endif %}
+
+        {% if wallet.is_blocked %}
+        <div class="mt-2" style="background: var(--accent); padding: 0.5rem; border-radius: 8px; text-align: center;">
+            ⚠️ Compte bloqué - Remboursez votre dette pour continuer
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Week Performance Chart -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">Cette Semaine</h2>
+            <span class="text-success">+{{ week.total_earnings|floatformat:0 }} XAF</span>
+        </div>
+
+        <div class="week-chart" id="weekChart">
+            {% for day in week.daily_breakdown %}
+            <div class="chart-bar-wrapper">
+                <div class="chart-value">{% if day.earnings > 0 %}{{ day.earnings|floatformat:0 }}{% endif %}</div>
+                <div class="chart-bar" style="height: 80px;">
+                    <div class="chart-bar-fill"
+                        style="height: {% if week.total_earnings > 0 %}{{ day.earnings|divisibleby:week.total_earnings|default:0 }}{% else %}0{% endif %}%;">
+                    </div>
+                </div>
+                <div class="chart-day">{{ day.day_name }}</div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div
+            style="display: flex; justify-content: space-around; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--gray-200);">
+            <div class="text-center">
+                <div style="font-size: 1.25rem; font-weight: 700;">{{ week.total_deliveries }}</div>
+                <div style="font-size: 0.75rem; color: var(--gray-500);">Courses</div>
+            </div>
+            <div class="text-center">
+                <div style="font-size: 1.25rem; font-weight: 700;">{{ week.total_distance }}</div>
+                <div style="font-size: 0.75rem; color: var(--gray-500);">km</div>
+            </div>
+            <div class="text-center">
+                <div style="font-size: 1.25rem; font-weight: 700; color: var(--primary);">{{
+                    week.total_earnings|floatformat:0 }}</div>
+                <div style="font-size: 0.75rem; color: var(--gray-500);">XAF</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Level Progress -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">Progression</h2>
+            <a href="{% url 'courier:performance' %}" class="card-link">Détails →</a>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+            <div style="font-size: 2rem;">{{ level_info.icon }}</div>
+            <div>
+                <div style="font-weight: 600;">{{ level_info.label }}</div>
+                <div style="font-size: 0.875rem; color: var(--gray-500);">
+                    {{ performance.total_deliveries }} livraisons • ⭐ {{ performance.average_rating }}
+                </div>
+            </div>
+        </div>
+
+        {% if next_level.next_level %}
+        <div class="progress-section">
+            <div class="progress-header">
+                <span class="progress-label">Vers {{ next_level.next_level_info.label }} {{
+                    next_level.next_level_info.icon }}</span>
+                <span class="progress-value">{{ next_level.progress_percent }}%</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: {{ next_level.progress_percent }}%"></div>
+            </div>
+            <div style="font-size: 0.75rem; color: var(--gray-500); margin-top: 0.5rem;">
+                Encore {{ next_level.deliveries_needed }} courses et note ≥ {{ next_level.rating_needed }}
+            </div>
+        </div>
+        {% else %}
+        <div
+            style="text-align: center; padding: 1rem; background: linear-gradient(135deg, #E5E4E2, #B4B4B4); border-radius: 8px;">
+            <div style="font-size: 1.5rem;">💎</div>
+            <div style="font-weight: 600;">Niveau Maximum Atteint!</div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Current Streak -->
+    {% if today.current_streak > 0 %}
+    <div class="card" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: none;">
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <div style="font-size: 2.5rem;">🔥</div>
+            <div>
+                <div style="font-size: 1.5rem; font-weight: 700;">{{ today.current_streak }} courses</div>
+                <div style="font-size: 0.875rem; color: var(--gray-700);">Série en cours sans annulation</div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Ranking -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">Classement</h2>
+            <a href="{% url 'courier:leaderboard' %}" class="card-link">Voir tout →</a>
+        </div>
+
+        <div style="display: flex; align-items: center; justify-content: center; gap: 2rem;">
+            <div class="text-center">
+                <div style="font-size: 2.5rem; font-weight: 700; color: var(--primary);">#{{ rank.rank }}</div>
+                <div style="font-size: 0.875rem; color: var(--gray-500);">sur {{ rank.total_couriers }} coursiers</div>
+            </div>
+            <div class="text-center">
+                <div style="font-size: 1.5rem; font-weight: 600;">Top {{ rank.top_percent|floatformat:0 }}%</div>
+                <div style="font-size: 0.75rem; color: var(--gray-500);">Performance</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Deliveries -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">Courses Récentes</h2>
+            <a href="{% url 'courier:earnings' %}" class="card-link">Historique →</a>
+        </div>
+
+        <ul class="delivery-list">
+            {% for delivery in recent_deliveries %}
+            <li class="delivery-item">
+                <div class="delivery-info">
+                    <div class="delivery-route">
+                        {{ delivery.pickup_address|truncatechars:20 }} → {{ delivery.dropoff_address|truncatechars:20 }}
+                    </div>
+                    <div class="delivery-meta">
+                        {{ delivery.distance_km }} km •
+                        <span class="status-badge status-{{ delivery.status }}">{{ delivery.status_display }}</span>
+                    </div>
+                </div>
+                <div class="delivery-amount">+{{ delivery.earning|floatformat:0 }}</div>
+            </li>
+            {% empty %}
+            <li style="text-align: center; padding: 2rem; color: var(--gray-500);">
+                Aucune course pour le moment
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Calculate chart bar heights based on max earnings
+    document.addEventListener('DOMContentLoaded', function () {
+        const weekData = {{ week_data_json| safe
+    }};
+    const maxEarnings = Math.max(...weekData.map(d => d.earnings), 1);
+
+    const bars = document.querySelectorAll('.chart-bar-fill');
+    bars.forEach((bar, index) => {
+        const height = (weekData[index].earnings / maxEarnings) * 100;
+        bar.style.height = height + '%';
+    });
+});
+</script>
+{% endblock %}

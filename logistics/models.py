@@ -27,6 +27,8 @@ class PaymentMethod(models.TextChoices):
     """Payment method enumeration."""
     CASH_P2P = 'CASH_P2P', 'Cash (Client → Coursier)'
     PREPAID_WALLET = 'PREPAID_WALLET', 'Prépayé (Wallet Marchand)'
+    MOBILE_MONEY = 'MOBILE_MONEY', 'Mobile Money (MTN/Orange)'
+
 
 
 class City(models.TextChoices):
@@ -271,3 +273,98 @@ class Delivery(models.Model):
     def has_exact_dropoff(self) -> bool:
         """Check if we have exact GPS for dropoff."""
         return self.dropoff_geo is not None
+
+
+class RatingType(models.TextChoices):
+    """Who is being rated."""
+    COURIER = 'COURIER', 'Client → Coursier'
+    SENDER = 'SENDER', 'Coursier → Client'
+
+
+class Rating(models.Model):
+    """
+    Rating model for delivery feedback.
+    
+    Allows clients to rate couriers and vice-versa after delivery completion.
+    Used for quality control and gamification.
+    """
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    
+    delivery = models.ForeignKey(
+        Delivery,
+        on_delete=models.CASCADE,
+        related_name='ratings',
+        verbose_name="Livraison"
+    )
+    
+    # Who gave the rating
+    rater = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='ratings_given',
+        verbose_name="Évaluateur"
+    )
+    
+    # Who received the rating
+    rated = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='ratings_received',
+        verbose_name="Évalué"
+    )
+    
+    rating_type = models.CharField(
+        max_length=20,
+        choices=RatingType.choices,
+        verbose_name="Type"
+    )
+    
+    score = models.PositiveSmallIntegerField(
+        verbose_name="Note (1-5)",
+        help_text="Note de 1 (mauvais) à 5 (excellent)"
+    )
+    
+    comment = models.TextField(
+        blank=True,
+        verbose_name="Commentaire"
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = "Évaluation"
+        verbose_name_plural = "Évaluations"
+        ordering = ['-created_at']
+        # One rating per delivery per direction
+        unique_together = ['delivery', 'rater', 'rated']
+        indexes = [
+            models.Index(fields=['rated', 'created_at']),
+        ]
+    
+    def __str__(self):
+        return f"{self.rater} → {self.rated}: {self.score}⭐"
+    
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        if not 1 <= self.score <= 5:
+            raise ValidationError("La note doit être entre 1 et 5")
+    
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+        # Update rated user's average rating
+        self._update_user_rating()
+    
+    def _update_user_rating(self):
+        """Update the rated user's average rating."""
+        from django.db.models import Avg, Count
+        
+        stats = Rating.objects.filter(rated=self.rated).aggregate(
+            avg=Avg('score'),
+            count=Count('id')
+        )
+        
+        self.rated.average_rating = round(stats['avg'] or 5.0, 2)
+        self.rated.total_ratings_count = stats['count'] or 0
+        self.rated.save(update_fields=['average_rating', 'total_ratings_count'])

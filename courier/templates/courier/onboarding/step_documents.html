@@ -1,0 +1,181 @@
+{% extends "courier/onboarding/base.html" %}
+
+{% block step_content %}
+<form method="post" action="{% url 'courier:onboarding-documents' %}" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    <div class="onboarding-card">
+        <h2 class="card-title">🪪 Pièce d'Identité</h2>
+        <p class="card-subtitle">Carte Nationale d'Identité camerounaise en cours de validité</p>
+
+        <div class="form-group">
+            <label>CNI - Recto *</label>
+            <label class="file-upload {% if onboarding.cni_front %}has-file{% endif %}" for="cni_front">
+                <input type="file" name="cni_front" id="cni_front" accept="image/*" capture="environment">
+                <div class="file-upload-icon">📷</div>
+                <div class="file-upload-text">Cliquez ou prenez une photo</div>
+                {% if onboarding.cni_front %}
+                <div class="file-upload-name">✓ Fichier uploadé</div>
+                {% endif %}
+            </label>
+        </div>
+
+        <div class="form-group">
+            <label>CNI - Verso</label>
+            <label class="file-upload {% if onboarding.cni_back %}has-file{% endif %}" for="cni_back">
+                <input type="file" name="cni_back" id="cni_back" accept="image/*" capture="environment">
+                <div class="file-upload-icon">📷</div>
+                <div class="file-upload-text">Photo du verso</div>
+                {% if onboarding.cni_back %}
+                <div class="file-upload-name">✓ Fichier uploadé</div>
+                {% endif %}
+            </label>
+        </div>
+
+        <div class="form-group">
+            <label>Numéro CNI</label>
+            <input type="text" name="cni_number" value="{{ onboarding.cni_number }}" placeholder="Ex: 123456789">
+        </div>
+
+        <div class="form-group">
+            <label>Date d'expiration</label>
+            <input type="date" name="cni_expiry_date" value="{{ onboarding.cni_expiry_date|date:'Y-m-d' }}">
+        </div>
+    </div>
+
+    <div class="onboarding-card">
+        <h2 class="card-title">🤳 Selfie avec CNI</h2>
+        <p class="card-subtitle">Photo de vous tenant votre CNI à côté de votre visage (anti-fraude)</p>
+
+        <div class="form-group">
+            <label class="file-upload {% if onboarding.selfie_with_cni %}has-file{% endif %}" for="selfie_with_cni">
+                <input type="file" name="selfie_with_cni" id="selfie_with_cni" accept="image/*" capture="user">
+                <div class="file-upload-icon">🤳</div>
+                <div class="file-upload-text">Prenez une photo de vous avec votre CNI visible</div>
+                {% if onboarding.selfie_with_cni %}
+                <div class="file-upload-name">✓ Selfie uploadé</div>
+                {% endif %}
+            </label>
+        </div>
+
+        <div class="alert info">
+            💡 Conseil: Tenez votre CNI à hauteur de votre visage, bien visible
+        </div>
+    </div>
+
+    <div class="onboarding-card">
+        <h2 class="card-title">📋 Casier Judiciaire</h2>
+        <p class="card-subtitle">Bulletin n°3 - doit être récent (moins de 3 mois)</p>
+
+        <div class="form-group">
+            <label class="file-upload {% if onboarding.casier_judiciaire %}has-file{% endif %}" for="casier_judiciaire">
+                <input type="file" name="casier_judiciaire" id="casier_judiciaire" accept="image/*,application/pdf">
+                <div class="file-upload-icon">📄</div>
+                <div class="file-upload-text">Photo ou scan du casier judiciaire</div>
+                {% if onboarding.casier_judiciaire %}
+                <div class="file-upload-name">✓ Document uploadé</div>
+                {% endif %}
+            </label>
+        </div>
+
+        <div class="form-group">
+            <label>Date d'émission</label>
+            <input type="date" name="casier_issue_date" value="{{ onboarding.casier_issue_date|date:'Y-m-d' }}">
+        </div>
+    </div>
+
+    <div class="onboarding-card">
+        <h2 class="card-title">🏍️ Véhicule</h2>
+        <p class="card-subtitle">Informations sur votre moyen de transport</p>
+
+        <div class="form-group">
+            <label>Type de véhicule</label>
+            <select name="vehicle_type">
+                <option value="MOTO" {% if onboarding.vehicle_type=='MOTO' %}selected{% endif %}>🏍️ Moto</option>
+                <option value="BICYCLE" {% if onboarding.vehicle_type=='BICYCLE' %}selected{% endif %}>🚲 Vélo</option>
+                <option value="FOOT" {% if onboarding.vehicle_type=='FOOT' %}selected{% endif %}>🚶 À pied</option>
+                <option value="CAR" {% if onboarding.vehicle_type=='CAR' %}selected{% endif %}>🚗 Voiture</option>
+            </select>
+        </div>
+
+        <div id="motorVehicleFields">
+            <div class="form-group">
+                <label>Permis de conduire</label>
+                <label class="file-upload {% if onboarding.driving_license %}has-file{% endif %}" for="driving_license">
+                    <input type="file" name="driving_license" id="driving_license" accept="image/*">
+                    <div class="file-upload-icon">🪪</div>
+                    <div class="file-upload-text">Photo du permis de conduire</div>
+                    {% if onboarding.driving_license %}
+                    <div class="file-upload-name">✓ Permis uploadé</div>
+                    {% endif %}
+                </label>
+            </div>
+
+            <div class="form-group">
+                <label>Catégorie permis</label>
+                <input type="text" name="driving_license_category" value="{{ onboarding.driving_license_category }}"
+                    placeholder="A, B, etc.">
+            </div>
+
+            <div class="form-group">
+                <label>Carte Grise</label>
+                <label class="file-upload {% if onboarding.carte_grise %}has-file{% endif %}" for="carte_grise">
+                    <input type="file" name="carte_grise" id="carte_grise" accept="image/*">
+                    <div class="file-upload-icon">📄</div>
+                    <div class="file-upload-text">Photo de la carte grise</div>
+                    {% if onboarding.carte_grise %}
+                    <div class="file-upload-name">✓ Carte grise uploadée</div>
+                    {% endif %}
+                </label>
+            </div>
+
+            <div class="form-group">
+                <label>Immatriculation</label>
+                <input type="text" name="vehicle_plate" value="{{ onboarding.vehicle_plate }}"
+                    placeholder="Ex: CE 123 AB">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Photo du véhicule</label>
+            <label class="file-upload {% if onboarding.vehicle_photo %}has-file{% endif %}" for="vehicle_photo">
+                <input type="file" name="vehicle_photo" id="vehicle_photo" accept="image/*" capture="environment">
+                <div class="file-upload-icon">🏍️</div>
+                <div class="file-upload-text">Photo de votre véhicule</div>
+                {% if onboarding.vehicle_photo %}
+                <div class="file-upload-name">✓ Photo uploadée</div>
+                {% endif %}
+            </label>
+        </div>
+    </div>
+
+    <button type="submit" class="btn-primary">
+        Continuer →
+    </button>
+</form>
+
+<script>
+    // Show/hide motor vehicle fields
+    document.querySelector('[name="vehicle_type"]').addEventListener('change', function () {
+        const motorFields = document.getElementById('motorVehicleFields');
+        motorFields.style.display = (this.value === 'MOTO' || this.value === 'CAR') ? 'block' : 'none';
+    });
+
+    // Update file upload labels
+    document.querySelectorAll('.file-upload input').forEach(input => {
+        input.addEventListener('change', function () {
+            const label = this.closest('.file-upload');
+            if (this.files.length > 0) {
+                label.classList.add('has-file');
+                let nameEl = label.querySelector('.file-upload-name');
+                if (!nameEl) {
+                    nameEl = document.createElement('div');
+                    nameEl.className = 'file-upload-name';
+                    label.appendChild(nameEl);
+                }
+                nameEl.textContent = '✓ ' + this.files[0].name;
+            }
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,136 @@
+{% extends "finance/pdf/base_invoice.html" %}
+
+{% block title %}Relevé Coursier - {{ period_start|date:"F Y" }}{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .summary-grid {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 30px;
+    }
+
+    .summary-card {
+        width: 30%;
+        background: #f5f5f5;
+        border-radius: 8px;
+        padding: 15px;
+        text-align: center;
+    }
+
+    .summary-card .value {
+        font-size: 18pt;
+        font-weight: 700;
+        color: #1a1a2e;
+    }
+
+    .summary-card .label {
+        font-size: 9pt;
+        color: #666;
+        margin-top: 5px;
+    }
+
+    .summary-card.highlight {
+        background: linear-gradient(135deg, #00d084 0%, #00a86b 100%);
+    }
+
+    .summary-card.highlight .value,
+    .summary-card.highlight .label {
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block invoice_info %}
+<div class="invoice-number">RELEVÉ COURSIER</div>
+<div class="invoice-date">Période: {{ period_start|date:"d/m/Y" }} - {{ period_end|date:"d/m/Y" }}</div>
+{% endblock %}
+
+{% block parties %}
+<div class="parties">
+    <div class="party">
+        <div class="party-label">Coursier</div>
+        <div class="party-name">{{ courier.full_name|default:courier.phone_number }}</div>
+        <div class="party-details">
+            📞 {{ courier.phone_number }}<br>
+            🏍️ Tier: {{ courier.get_tier_display|default:"Standard" }}
+        </div>
+    </div>
+    <div class="party">
+        <div class="party-label">Émis par</div>
+        <div class="party-name">DELIVR-CM</div>
+        <div class="party-details">
+            Plateforme de livraison<br>
+            Douala & Yaoundé, Cameroun
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="summary-grid">
+    <div class="summary-card highlight">
+        <div class="value">{{ total_earnings|floatformat:0 }} XAF</div>
+        <div class="label">Gains Totaux</div>
+    </div>
+    <div class="summary-card">
+        <div class="value">{{ total_deliveries }}</div>
+        <div class="label">Livraisons</div>
+    </div>
+    <div class="summary-card">
+        <div class="value">{{ total_distance|floatformat:1 }} km</div>
+        <div class="label">Distance Parcourue</div>
+    </div>
+</div>
+
+<h3 style="margin-bottom: 15px; color: #1a1a2e;">📋 Détail des Livraisons</h3>
+
+<table>
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Référence</th>
+            <th class="text-center">Distance</th>
+            <th class="text-right">Gain</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for d in deliveries %}
+        <tr>
+            <td>{{ d.completed_at|date:"d/m H:i" }}</td>
+            <td>
+                #{{ d.id|slice:":8"|upper }}<br>
+                <span style="color: #666; font-size: 8pt;">
+                    {{ d.dropoff_neighborhood.name|default:"GPS Direct" }}
+                </span>
+            </td>
+            <td class="text-center">{{ d.distance_km|floatformat:1 }} km</td>
+            <td class="text-right currency">{{ d.courier_earning|floatformat:0 }} XAF</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="4" class="text-center" style="color: #999;">
+                Aucune livraison pour cette période
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
+
+{% block totals %}
+<div class="totals">
+    <div class="total-row">
+        <span class="total-label">Total Courses</span>
+        <span class="total-value">{{ total_deliveries }}</span>
+    </div>
+    <div class="total-row">
+        <span class="total-label">Distance Totale</span>
+        <span class="total-value">{{ total_distance|floatformat:1 }} km</span>
+    </div>
+    <div class="total-row grand-total">
+        <span class="total-label">GAINS NETS</span>
+        <span class="total-value highlight">{{ total_earnings|floatformat:0 }} XAF</span>
+    </div>
+</div>
+{% endblock %}

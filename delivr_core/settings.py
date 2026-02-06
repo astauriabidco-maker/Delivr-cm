@@ -56,6 +56,9 @@ INSTALLED_APPS = [
     'partners.apps.PartnersConfig',
     'home.apps.HomeConfig',
     'integrations.apps.IntegrationsConfig',
+    'courier.apps.CourierConfig',      # Courier dashboard
+    'fleet.apps.FleetConfig',          # Fleet management admin
+    'reports.apps.ReportsConfig',      # PDF reports
     
     # API Documentation & Keys
     'drf_spectacular',
@@ -205,9 +208,10 @@ SIMPLE_JWT = {
 # ===========================================
 # CORS (Cross-Origin Resource Sharing)
 # ===========================================
+CORS_ALLOW_ALL_ORIGINS = True  # Development only - allow all origins
 CORS_ALLOWED_ORIGINS = config(
     'CORS_ALLOWED_ORIGINS',
-    default='http://localhost:3000,http://127.0.0.1:3000',
+    default='http://localhost:3000,http://127.0.0.1:3000,http://localhost:5050',
     cast=Csv()
 )
 CORS_ALLOW_CREDENTIALS = True
@@ -232,6 +236,27 @@ CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = TIME_ZONE
+
+# Celery Beat Schedule (Periodic Tasks)
+from celery.schedules import crontab
+
+CELERY_BEAT_SCHEDULE = {
+    # Send daily summary to couriers at 21:00 local time
+    'send-daily-summaries': {
+        'task': 'bot.tasks.send_all_daily_summaries',
+        'schedule': crontab(hour=21, minute=0),
+    },
+    # Check for pending pickup reminders every 15 minutes
+    'check-pending-reminders': {
+        'task': 'bot.tasks.check_pending_reminders',
+        'schedule': crontab(minute='*/15'),
+    },
+    # Check for high debt warnings every hour
+    'check-debt-warnings': {
+        'task': 'bot.tasks.check_debt_warnings',
+        'schedule': crontab(minute=0),  # Every hour at :00
+    },
+}
 
 # ===========================================
 # EXTERNAL SERVICES (Self-Hosted)
@@ -269,6 +294,34 @@ WHATSAPP_WEBHOOK_VERIFY_TOKEN = META_VERIFY_TOKEN
 TWILIO_ACCOUNT_SID = config('TWILIO_ACCOUNT_SID', default='')
 TWILIO_AUTH_TOKEN = config('TWILIO_AUTH_TOKEN', default='')
 TWILIO_WHATSAPP_NUMBER = config('TWILIO_WHATSAPP_NUMBER', default='whatsapp:+14155238886')  # Twilio Sandbox
+
+# -------------------------------------------
+# ORANGE CAMEROUN SMS API (Fallback)
+# -------------------------------------------
+ORANGE_SMS_CLIENT_ID = config('ORANGE_SMS_CLIENT_ID', default='')
+ORANGE_SMS_CLIENT_SECRET = config('ORANGE_SMS_CLIENT_SECRET', default='')
+ORANGE_SMS_SENDER = config('ORANGE_SMS_SENDER', default='DELIVR-CM')
+SMS_FALLBACK_ENABLED = config('SMS_FALLBACK_ENABLED', default=False, cast=bool)
+
+# -------------------------------------------
+# MTN MOBILE MONEY API
+# -------------------------------------------
+MTN_MOMO_SUBSCRIPTION_KEY = config('MTN_MOMO_SUBSCRIPTION_KEY', default='')
+MTN_MOMO_API_USER = config('MTN_MOMO_API_USER', default='')
+MTN_MOMO_API_KEY = config('MTN_MOMO_API_KEY', default='')
+MTN_MOMO_ENVIRONMENT = config('MTN_MOMO_ENVIRONMENT', default='sandbox')
+MTN_MOMO_CALLBACK_URL = config('MTN_MOMO_CALLBACK_URL', default='')
+MTN_MOMO_WEBHOOK_SECRET = config('MTN_MOMO_WEBHOOK_SECRET', default='')
+
+# -------------------------------------------
+# ORANGE MONEY WEBPAYMENT API
+# -------------------------------------------
+ORANGE_MONEY_MERCHANT_KEY = config('ORANGE_MONEY_MERCHANT_KEY', default='')
+ORANGE_MONEY_MERCHANT_SECRET = config('ORANGE_MONEY_MERCHANT_SECRET', default='')
+ORANGE_MONEY_ENVIRONMENT = config('ORANGE_MONEY_ENVIRONMENT', default='sandbox')
+ORANGE_MONEY_CALLBACK_URL = config('ORANGE_MONEY_CALLBACK_URL', default='')
+ORANGE_MONEY_RETURN_URL = config('ORANGE_MONEY_RETURN_URL', default='')
+
 
 # ===========================================
 # BUSINESS RULES - PRICING ENGINE

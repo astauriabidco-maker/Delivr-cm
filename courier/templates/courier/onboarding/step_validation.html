@@ -1,0 +1,92 @@
+{% extends "courier/onboarding/base.html" %}
+
+{% block step_content %}
+<div class="onboarding-card" style="text-align: center;">
+    {% if onboarding.status == 'AWAITING' %}
+    <div style="font-size: 4rem; margin-bottom: 1rem;">⏳</div>
+    <h2 class="card-title">Dossier en cours de validation</h2>
+    <p class="card-subtitle">Notre équipe examine votre candidature. Vous recevrez une réponse sous 24-48h.</p>
+
+    <span class="status-badge awaiting">En attente de validation</span>
+
+    <div style="margin-top: 2rem; padding: 1rem; background: var(--bg-tertiary); border-radius: var(--border-radius);">
+        <h4 style="margin-bottom: 0.5rem;">📋 Récapitulatif</h4>
+        <p style="font-size: 0.875rem; color: var(--text-secondary);">
+            ✅ Téléphone vérifié<br>
+            ✅ Documents soumis<br>
+            ✅ Contact d'urgence renseigné<br>
+            ✅ Caution payée: {{ onboarding.caution_amount|floatformat:0 }} XAF<br>
+            ✅ Contrat signé le {{ onboarding.contract_signed_at|date:"d/m/Y à H:i" }}
+        </p>
+    </div>
+
+    <div class="alert info" style="margin-top: 1rem; text-align: left;">
+        💡 Nous vous contacterons par WhatsApp dès que votre dossier sera validé.
+    </div>
+
+    {% elif onboarding.status == 'APPROVED' and not onboarding.probation_completed_at %}
+    <!-- Probation Period -->
+    <div style="font-size: 4rem; margin-bottom: 1rem;">🎉</div>
+    <h2 class="card-title">Félicitations, vous êtes approuvé!</h2>
+    <p class="card-subtitle">Période probatoire en cours</p>
+
+    <span class="status-badge approved">Approuvé</span>
+
+    <div class="probation-progress" style="margin-top: 1.5rem;">
+        <div class="probation-circle" style="--progress: {{ onboarding.probation_deliveries_completed|default:0 }}%;">
+            <div>
+                <span class="probation-count">{{ onboarding.probation_deliveries_completed }}/{{
+                    onboarding.probation_deliveries_required }}</span>
+                <br>
+                <small style="color: var(--text-tertiary);">courses</small>
+            </div>
+        </div>
+        <p>Complétez {{ onboarding.probation_deliveries_required }} courses pour activer votre compte complet</p>
+    </div>
+
+    <a href="{% url 'courier:dashboard' %}" class="btn-primary"
+        style="display: block; text-decoration: none; margin-top: 1rem;">
+        🚀 Commencer à livrer
+    </a>
+
+    {% elif onboarding.status == 'APPROVED' and onboarding.probation_completed_at %}
+    <!-- Fully Activated -->
+    <div style="font-size: 4rem; margin-bottom: 1rem;">🌟</div>
+    <h2 class="card-title">Compte pleinement activé!</h2>
+    <p class="card-subtitle">Vous avez terminé votre onboarding avec succès</p>
+
+    <span class="status-badge approved">Actif</span>
+
+    <div style="margin-top: 1.5rem;">
+        <p>✅ Accès complet au tableau de bord</p>
+        <p>✅ Éligible aux bonus et niveaux</p>
+        <p>✅ Retrait Mobile Money débloqué</p>
+    </div>
+
+    <a href="{% url 'courier:dashboard' %}" class="btn-primary"
+        style="display: block; text-decoration: none; margin-top: 1rem;">
+        📊 Aller au tableau de bord
+    </a>
+
+    {% elif onboarding.status == 'REJECTED' %}
+    <!-- Rejected -->
+    <div style="font-size: 4rem; margin-bottom: 1rem;">❌</div>
+    <h2 class="card-title">Candidature non retenue</h2>
+    <p class="card-subtitle">Nous ne pouvons pas valider votre dossier pour le moment</p>
+
+    <span class="status-badge rejected">Rejeté</span>
+
+    {% if onboarding.rejection_reason %}
+    <div class="alert error" style="margin-top: 1.5rem; text-align: left;">
+        <strong>Motif:</strong><br>
+        {{ onboarding.rejection_reason }}
+    </div>
+    {% endif %}
+
+    <div class="alert info" style="margin-top: 1rem; text-align: left;">
+        Si vous pensez qu'il s'agit d'une erreur, contactez notre support par WhatsApp.
+    </div>
+
+    {% endif %}
+</div>
+{% endblock %}

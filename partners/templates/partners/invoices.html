@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mes Factures - DELIVR-CM</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #fff;
+        }
+
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 260px;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.3);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 24px 0;
+        }
+
+        .sidebar-logo {
+            padding: 0 24px 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 24px;
+        }
+
+        .sidebar-logo h1 {
+            font-size: 1.4rem;
+        }
+
+        .sidebar-logo span {
+            color: #00d084;
+        }
+
+        .sidebar-nav a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 24px;
+            color: rgba(255, 255, 255, 0.6);
+            text-decoration: none;
+            border-left: 3px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .sidebar-nav a:hover,
+        .sidebar-nav a.active {
+            background: rgba(0, 208, 132, 0.1);
+            color: #00d084;
+            border-left-color: #00d084;
+        }
+
+        .sidebar-user {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 20px 24px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .sidebar-user .name {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .sidebar-user .status {
+            font-size: 0.8rem;
+            color: #00d084;
+        }
+
+        .main-content {
+            margin-left: 260px;
+            padding: 32px;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+        }
+
+        .page-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+
+        .summary-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            text-align: center;
+        }
+
+        .summary-card .value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #00d084;
+        }
+
+        .summary-card .label {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.5);
+            margin-top: 4px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .filters {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .filter-group label {
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .filter-group select {
+            padding: 10px 14px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            min-width: 150px;
+        }
+
+        .btn {
+            padding: 10px 18px;
+            border-radius: 8px;
+            border: none;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #00d084 0%, #00a86b 100%);
+            color: #fff;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        .btn-download {
+            background: rgba(66, 165, 245, 0.2);
+            color: #42a5f5;
+            padding: 6px 12px;
+            font-size: 0.8rem;
+        }
+
+        .invoices-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .invoices-table th {
+            text-align: left;
+            padding: 14px 16px;
+            color: rgba(255, 255, 255, 0.5);
+            font-weight: 500;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .invoices-table td {
+            padding: 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .invoices-table tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .type-badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .type-delivery_receipt {
+            background: rgba(0, 208, 132, 0.15);
+            color: #00d084;
+        }
+
+        .type-courier_statement {
+            background: rgba(156, 39, 176, 0.15);
+            color: #9c27b0;
+        }
+
+        .type-b2b_invoice {
+            background: rgba(66, 165, 245, 0.15);
+            color: #42a5f5;
+        }
+
+        .invoice-number {
+            font-family: monospace;
+            color: #00d084;
+            font-weight: 600;
+        }
+
+        .pagination {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-top: 24px;
+        }
+
+        .pagination a,
+        .pagination span {
+            padding: 8px 14px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            text-decoration: none;
+        }
+
+        .pagination a:hover {
+            background: rgba(0, 208, 132, 0.2);
+        }
+
+        .pagination .current {
+            background: #00d084;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .empty-state .icon {
+            font-size: 4rem;
+            margin-bottom: 16px;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                display: none;
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Sidebar -->
+    <nav class="sidebar">
+        <div class="sidebar-logo">
+            <h1>🚀 DELIVR<span>-CM</span></h1>
+        </div>
+        <div class="sidebar-nav">
+            <a href="{% url 'partners:dashboard' %}">📊 Dashboard</a>
+            <a href="{% url 'partners:orders' %}">📦 Mes Commandes</a>
+            <a href="{% url 'partners:invoices' %}" class="active">📄 Mes Factures</a>
+            <a href="{% url 'partners:webhooks' %}">🔔 Webhooks</a>
+            <a href="{% url 'partners:branding' %}">🎨 Personnalisation</a>
+            <a href="{% url 'partners:docs' %}">📖 Documentation</a>
+        </div>
+        <div class="sidebar-user">
+            <div class="name">{{ request.user.full_name }}</div>
+            <div class="status">✓ Compte Vérifié</div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="page-header">
+            <h1 class="page-title">📄 Mes Factures</h1>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="summary-cards">
+            <div class="summary-card">
+                <div class="value">{{ total_count }}</div>
+                <div class="label">Documents</div>
+            </div>
+            <div class="summary-card">
+                <div class="value">{{ total_amount|floatformat:0 }}</div>
+                <div class="label">Total XAF</div>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="card">
+            <form method="get" class="filters">
+                <div class="filter-group">
+                    <label>Type</label>
+                    <select name="type" onchange="this.form.submit()">
+                        <option value="">Tous les types</option>
+                        {% for value, label in type_choices %}
+                        <option value="{{ value }}" {% if type_filter==value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Année</label>
+                    <select name="year" onchange="this.form.submit()">
+                        <option value="">Toutes</option>
+                        {% for year in years %}
+                        <option value="{{ year }}" {% if year_filter==year|stringformat:"d" %}selected{% endif %}>{{
+                            year }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="filter-group" style="align-self: flex-end;">
+                    <button type="submit" class="btn btn-primary">🔍 Filtrer</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Results -->
+        <div class="card">
+            {% if invoices %}
+            <table class="invoices-table">
+                <thead>
+                    <tr>
+                        <th>N° Facture</th>
+                        <th>Date</th>
+                        <th>Type</th>
+                        <th>Période</th>
+                        <th>Montant</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for invoice in invoices %}
+                    <tr>
+                        <td><span class="invoice-number">{{ invoice.invoice_number }}</span></td>
+                        <td>{{ invoice.created_at|date:"d/m/Y" }}</td>
+                        <td>
+                            <span class="type-badge type-{{ invoice.invoice_type|lower }}">
+                                {{ invoice.get_invoice_type_display }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if invoice.period_start and invoice.period_end %}
+                            {{ invoice.period_start|date:"d/m" }} - {{ invoice.period_end|date:"d/m/Y" }}
+                            {% elif invoice.delivery %}
+                            Livraison #{{ invoice.delivery.id|slice:":8" }}
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
+                        <td>{{ invoice.amount|floatformat:0 }} XAF</td>
+                        <td>
+                            {% if invoice.pdf_file %}
+                            <a href="{{ invoice.pdf_file.url }}" target="_blank" class="btn btn-download">
+                                📥 PDF
+                            </a>
+                            {% else %}
+                            <span style="color: rgba(255,255,255,0.3);">Non disponible</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <!-- Pagination -->
+            {% if invoices.has_other_pages %}
+            <div class="pagination">
+                {% if invoices.has_previous %}
+                <a href="?page={{ invoices.previous_page_number }}&type={{ type_filter }}&year={{ year_filter }}">←</a>
+                {% endif %}
+
+                {% for num in invoices.paginator.page_range %}
+                {% if num == invoices.number %}
+                <span class="current">{{ num }}</span>
+                {% elif num > invoices.number|add:'-3' and num < invoices.number|add:'3' %} <a
+                    href="?page={{ num }}&type={{ type_filter }}&year={{ year_filter }}">{{ num }}</a>
+                    {% endif %}
+                    {% endfor %}
+
+                    {% if invoices.has_next %}
+                    <a href="?page={{ invoices.next_page_number }}&type={{ type_filter }}&year={{ year_filter }}">→</a>
+                    {% endif %}
+            </div>
+            {% endif %}
+
+            {% else %}
+            <div class="empty-state">
+                <div class="icon">📄</div>
+                <p>Aucune facture disponible.</p>
+                <p style="margin-top: 8px; font-size: 0.9rem;">Les factures seront générées automatiquement après vos
+                    livraisons.</p>
+            </div>
+            {% endif %}
+        </div>
+    </main>
+</body>
+
+</html>

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Rapport de Performance - {{ courier.first_name }}</title>
+</head>
+
+<body>
+    <div class="header">
+        <div class="logo">DELIVR-CM</div>
+        <h1>Rapport de Performance</h1>
+        <p>{{ courier.first_name or courier.phone_number }} | {{ start_date|date:"d/m/Y" }} - {{ end_date|date:"d/m/Y"
+            }}</p>
+    </div>
+
+    <!-- Courier Info -->
+    <h2>📋 Informations Coursier</h2>
+    <table>
+        <tr>
+            <td><strong>Téléphone</strong></td>
+            <td>{{ courier.phone_number }}</td>
+            <td><strong>Niveau</strong></td>
+            <td>{{ level_info.current }}</td>
+        </tr>
+        <tr>
+            <td><strong>Livraisons totales</strong></td>
+            <td>{{ level_info.total_deliveries }}</td>
+            <td><strong>Note moyenne</strong></td>
+            <td>{% if level_info.rating %}{{ level_info.rating|floatformat:1 }}/5{% else %}N/A{% endif %}</td>
+        </tr>
+        <tr>
+            <td><strong>Série actuelle</strong></td>
+            <td>{{ level_info.streak }} consécutives</td>
+            <td><strong>Généré le</strong></td>
+            <td>{{ generated_at|date:"d/m/Y H:i" }}</td>
+        </tr>
+    </table>
+
+    <!-- Summary Stats -->
+    <h2>📊 Résumé de Période</h2>
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-value">{{ stats.completed|default:0 }}</div>
+            <div class="stat-label">Livraisons complétées</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ stats.total_earnings|default:0|floatformat:0 }} XAF</div>
+            <div class="stat-label">Gains totaux</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ stats.total_distance|default:0|floatformat:1 }} km</div>
+            <div class="stat-label">Distance parcourue</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{% widthratio stats.completed stats.total 100 %}%</div>
+            <div class="stat-label">Taux de succès</div>
+        </div>
+    </div>
+
+    <!-- Daily Breakdown -->
+    {% if daily_breakdown %}
+    <h2>📅 Détail par Jour</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Livraisons</th>
+                <th>Gains</th>
+                <th>Distance</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for day in daily_breakdown %}
+            <tr>
+                <td>{{ day.day|date:"d/m/Y" }}</td>
+                <td>{{ day.count }}</td>
+                <td>{{ day.earnings|floatformat:0 }} XAF</td>
+                <td>{{ day.distance|floatformat:1 }} km</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+
+    <div class="footer">
+        <p>DELIVR-CM - Plateforme de livraison urbaine | Généré automatiquement</p>
+        <p>Ce rapport est confidentiel et destiné uniquement au coursier concerné.</p>
+    </div>
+</body>
+
+</html>

@@ -1,0 +1,76 @@
+{% extends "courier/onboarding/base.html" %}
+
+{% block step_content %}
+<form method="post" action="{% url 'courier:onboarding-emergency' %}">
+    {% csrf_token %}
+
+    <div class="onboarding-card">
+        <h2 class="card-title">👤 Contact d'urgence</h2>
+        <p class="card-subtitle">Personne à contacter en cas de problème</p>
+
+        <div class="form-group">
+            <label>Nom complet *</label>
+            <input type="text" name="emergency_name" required value="{{ onboarding.emergency_contact_name }}"
+                placeholder="Ex: NGONO Marie">
+        </div>
+
+        <div class="form-group">
+            <label>Numéro de téléphone *</label>
+            <input type="tel" name="emergency_phone" required value="{{ onboarding.emergency_contact_phone }}"
+                placeholder="+237XXXXXXXXX">
+        </div>
+
+        <div class="form-group">
+            <label>Relation *</label>
+            <select name="emergency_relation" required>
+                <option value="">Sélectionnez...</option>
+                <option value="Père" {% if onboarding.emergency_contact_relation=='Père' %}selected{% endif %}>Père
+                </option>
+                <option value="Mère" {% if onboarding.emergency_contact_relation=='Mère' %}selected{% endif %}>Mère
+                </option>
+                <option value="Frère" {% if onboarding.emergency_contact_relation=='Frère' %}selected{% endif %}>Frère
+                </option>
+                <option value="Soeur" {% if onboarding.emergency_contact_relation=='Soeur' %}selected{% endif %}>Sœur
+                </option>
+                <option value="Époux/Épouse" {% if onboarding.emergency_contact_relation=='Époux/Épouse' %}selected{%
+                    endif %}>Époux/Épouse</option>
+                <option value="Ami(e)" {% if onboarding.emergency_contact_relation=='Ami(e)' %}selected{% endif %}>
+                    Ami(e)</option>
+                <option value="Autre" {% if onboarding.emergency_contact_relation=='Autre' %}selected{% endif %}>Autre
+                </option>
+            </select>
+        </div>
+    </div>
+
+    <div class="onboarding-card">
+        <h2 class="card-title">🏠 Adresse domicile</h2>
+        <p class="card-subtitle">Pour notre base de données (confidentiel)</p>
+
+        <div class="form-group">
+            <label>Ville *</label>
+            <select name="home_city" required>
+                <option value="Douala" {% if onboarding.home_city=='Douala' %}selected{% endif %}>Douala</option>
+                <option value="Yaoundé" {% if onboarding.home_city=='Yaoundé' %}selected{% endif %}>Yaoundé</option>
+                <option value="Bafoussam" {% if onboarding.home_city=='Bafoussam' %}selected{% endif %}>Bafoussam
+                </option>
+                <option value="Kribi" {% if onboarding.home_city=='Kribi' %}selected{% endif %}>Kribi</option>
+                <option value="Autre" {% if onboarding.home_city=='Autre' %}selected{% endif %}>Autre</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Adresse complète *</label>
+            <textarea name="home_address" rows="3" required
+                placeholder="Quartier, rue, repère (ex: Logbessou, rue de la pharmacie, face station Total)">{{ onboarding.home_address }}</textarea>
+        </div>
+
+        <div class="alert info">
+            🔒 Ces informations sont confidentielles et ne seront utilisées qu'en cas d'urgence
+        </div>
+    </div>
+
+    <button type="submit" class="btn-primary">
+        Continuer →
+    </button>
+</form>
+{% endblock %}

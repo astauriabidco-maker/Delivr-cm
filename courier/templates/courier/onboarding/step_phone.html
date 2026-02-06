@@ -1,0 +1,113 @@
+{% extends "courier/onboarding/base.html" %}
+
+{% block step_content %}
+<div class="onboarding-card">
+    <h2 class="card-title">📱 Vérification du téléphone</h2>
+    <p class="card-subtitle">Nous vous envoyons un code par SMS pour vérifier votre numéro</p>
+
+    {% if not otp_sent %}
+    <!-- Send OTP Form -->
+    <form method="post" action="{% url 'courier:onboarding-send-otp' %}">
+        {% csrf_token %}
+
+        <div class="form-group">
+            <label>Numéro WhatsApp</label>
+            <input type="text" value="{{ user.phone_number }}" disabled>
+        </div>
+
+        <div class="alert info">
+            📲 Un code à 6 chiffres sera envoyé par SMS (Orange/MTN) ou WhatsApp
+        </div>
+
+        <button type="submit" class="btn-primary">
+            Envoyer le code
+        </button>
+    </form>
+    {% else %}
+    <!-- Verify OTP Form -->
+    <form method="post" action="{% url 'courier:onboarding-verify-otp' %}" id="otpForm">
+        {% csrf_token %}
+
+        <p style="text-align: center; margin-bottom: 0.5rem;">
+            Code envoyé au <strong>{{ user.phone_number }}</strong>
+        </p>
+
+        <div class="otp-inputs">
+            <input type="text" class="otp-input" maxlength="1" data-index="0" autofocus>
+            <input type="text" class="otp-input" maxlength="1" data-index="1">
+            <input type="text" class="otp-input" maxlength="1" data-index="2">
+            <input type="text" class="otp-input" maxlength="1" data-index="3">
+            <input type="text" class="otp-input" maxlength="1" data-index="4">
+            <input type="text" class="otp-input" maxlength="1" data-index="5">
+        </div>
+
+        <input type="hidden" name="otp_code" id="otpCode">
+
+        <p style="text-align: center; color: var(--text-tertiary); font-size: 0.875rem;">
+            Le code expire dans <span id="countdown">10:00</span>
+        </p>
+
+        <button type="submit" class="btn-primary" id="verifyBtn" disabled>
+            Vérifier
+        </button>
+
+        <button type="button" class="btn-secondary" onclick="location.reload()">
+            Renvoyer le code
+        </button>
+    </form>
+
+    <script>
+        // OTP Input handling
+        const inputs = document.querySelectorAll('.otp-input');
+        const otpCode = document.getElementById('otpCode');
+        const verifyBtn = document.getElementById('verifyBtn');
+
+        inputs.forEach((input, index) => {
+            input.addEventListener('input', (e) => {
+                if (e.target.value.length === 1 && index < 5) {
+                    inputs[index + 1].focus();
+                }
+                updateOtpValue();
+            });
+
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Backspace' && !e.target.value && index > 0) {
+                    inputs[index - 1].focus();
+                }
+            });
+
+            input.addEventListener('paste', (e) => {
+                e.preventDefault();
+                const pasteData = e.clipboardData.getData('text').slice(0, 6);
+                pasteData.split('').forEach((char, i) => {
+                    if (inputs[i]) inputs[i].value = char;
+                });
+                updateOtpValue();
+            });
+        });
+
+        function updateOtpValue() {
+            const code = Array.from(inputs).map(i => i.value).join('');
+            otpCode.value = code;
+            verifyBtn.disabled = code.length !== 6;
+        }
+
+        // Countdown
+        let timeLeft = 600; // 10 minutes
+        const countdownEl = document.getElementById('countdown');
+
+        setInterval(() => {
+            timeLeft--;
+            if (timeLeft <= 0) {
+                countdownEl.textContent = 'Expiré';
+                verifyBtn.disabled = true;
+            } else {
+                const min = Math.floor(timeLeft / 60);
+                const sec = timeLeft % 60;
+                countdownEl.textContent = `${min}:${sec.toString().padStart(2, '0')}`;
+            }
+        }, 1000);
+    </script>
+    {% endif %}
+</div>
+{% endblock %}

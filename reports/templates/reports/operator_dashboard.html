@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Opérateur - DELIVR-CM</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0d0d1a 0%, #1a1a2e 100%);
+            min-height: 100vh;
+            color: #fff;
+        }
+
+        .header {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 16px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+        }
+
+        .header h1 span {
+            color: #00d084;
+        }
+
+        .live-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            color: #00d084;
+        }
+
+        .live-dot {
+            width: 10px;
+            height: 10px;
+            background: #00d084;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.3;
+            }
+        }
+
+        .container {
+            padding: 32px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .filters {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .filters select {
+            padding: 10px 16px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+        }
+
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+
+        .kpi-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 24px;
+            text-align: center;
+            transition: transform 0.2s;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-4px);
+        }
+
+        .kpi-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .kpi-value.pending {
+            color: #ffc107;
+        }
+
+        .kpi-value.progress {
+            color: #42a5f5;
+        }
+
+        .kpi-value.completed {
+            color: #00d084;
+        }
+
+        .kpi-value.revenue {
+            color: #9c27b0;
+        }
+
+        .kpi-value.online {
+            color: #00bcd4;
+        }
+
+        .kpi-label {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.85rem;
+        }
+
+        .panels {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 24px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 24px;
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .alert-badge {
+            background: #ff5252;
+            color: #fff;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+        }
+
+        .chart-container {
+            height: 200px;
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+            padding-top: 20px;
+        }
+
+        .chart-bar {
+            flex: 1;
+            background: linear-gradient(to top, #00d084, rgba(0, 208, 132, 0.3));
+            border-radius: 8px 8px 0 0;
+            min-height: 4px;
+            position: relative;
+            transition: height 0.3s;
+        }
+
+        .chart-bar::after {
+            content: attr(data-count);
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .chart-label {
+            text-align: center;
+            font-size: 0.7rem;
+            color: rgba(255, 255, 255, 0.5);
+            margin-top: 8px;
+        }
+
+        .alert-list {
+            list-style: none;
+        }
+
+        .alert-item {
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .alert-item:last-child {
+            border-bottom: none;
+        }
+
+        .alert-type {
+            font-size: 0.75rem;
+            padding: 4px 10px;
+            border-radius: 12px;
+        }
+
+        .alert-type.stuck {
+            background: rgba(255, 82, 82, 0.15);
+            color: #ff5252;
+        }
+
+        .alert-type.debt {
+            background: rgba(255, 152, 0, 0.15);
+            color: #ff9800;
+        }
+
+        .courier-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .courier-avatar {
+            width: 32px;
+            height: 32px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: rgba(255, 255, 255, 0.3);
+        }
+
+        @media (max-width: 1024px) {
+            .panels {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header class="header">
+        <h1>🚀 DELIVR<span>-CM</span> Opérations</h1>
+        <div class="live-indicator">
+            <div class="live-dot"></div>
+            <span id="last-update">Mise à jour...</span>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Filters -->
+        <form method="get" class="filters">
+            <select name="city" onchange="this.form.submit()">
+                <option value="">Toutes les villes</option>
+                {% for value, label in cities %}
+                <option value="{{ value }}" {% if city_filter==value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </form>
+
+        <!-- KPIs -->
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-value pending" id="kpi-pending">{{ kpis.pending }}</div>
+                <div class="kpi-label">En attente</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-value progress" id="kpi-progress">{{ kpis.in_progress }}</div>
+                <div class="kpi-label">En cours</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-value completed" id="kpi-completed">{{ kpis.completed_today }}</div>
+                <div class="kpi-label">Complétées (aujourd'hui)</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-value revenue">{{ kpis.revenue_today|floatformat:0 }}</div>
+                <div class="kpi-label">Revenu XAF (aujourd'hui)</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-value online" id="kpi-online">{{ kpis.couriers_online }}/{{ kpis.couriers_total }}</div>
+                <div class="kpi-label">Coursiers en ligne</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-value">{{ kpis.avg_delivery_time }} min</div>
+                <div class="kpi-label">Temps moyen</div>
+            </div>
+        </div>
+
+        <!-- Panels -->
+        <div class="panels">
+            <!-- Chart -->
+            <div class="card">
+                <h3 class="card-title">📊 Livraisons par heure</h3>
+                <div class="chart-container">
+                    {% for item in chart_data %}
+                    <div style="flex: 1;">
+                        <div class="chart-bar"
+                            style="height: {% if item.count %}{{ item.count|add:2 }}0{% else %}4{% endif %}px;"
+                            data-count="{{ item.count }}"></div>
+                        <div class="chart-label">{{ item.hour }}</div>
+                    </div>
+                    {% empty %}
+                    <div class="empty-state">Aucune donnée</div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Alerts -->
+            <div class="card">
+                <h3 class="card-title">
+                    ⚠️ Alertes
+                    {% if stuck_deliveries or high_debt_couriers %}
+                    <span class="alert-badge">{{ stuck_deliveries|length|add:high_debt_couriers|length }}</span>
+                    {% endif %}
+                </h3>
+                <ul class="alert-list">
+                    {% for d in stuck_deliveries %}
+                    <li class="alert-item">
+                        <div>
+                            <span class="alert-type stuck">Bloquée</span>
+                            <span style="margin-left: 8px;">#{{ d.id|slice:":8" }}</span>
+                        </div>
+                        <div class="courier-info">
+                            <span>{{ d.courier.full_name|default:d.courier.phone_number }}</span>
+                        </div>
+                    </li>
+                    {% endfor %}
+                    {% for c in high_debt_couriers %}
+                    <li class="alert-item">
+                        <div>
+                            <span class="alert-type debt">Dette</span>
+                            <span style="margin-left: 8px;">{{ c.full_name|default:c.phone_number }}</span>
+                        </div>
+                        <div>
+                            {{ c.wallet_balance|floatformat:0 }} XAF
+                        </div>
+                    </li>
+                    {% endfor %}
+                    {% if not stuck_deliveries and not high_debt_couriers %}
+                    <li class="empty-state">✅ Aucune alerte</li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Auto-refresh every 30 seconds
+        function updateStats() {
+            fetch('{% url "reports:live-stats" %}')
+                .then(r => r.json())
+                .then(data => {
+                    document.getElementById('kpi-pending').textContent = data.pending;
+                    document.getElementById('kpi-progress').textContent = data.in_progress;
+                    document.getElementById('kpi-completed').textContent = data.completed_today;
+                    document.getElementById('kpi-online').textContent = data.couriers_online;
+                    document.getElementById('last-update').textContent =
+                        'Mise à jour: ' + new Date().toLocaleTimeString('fr-FR');
+                })
+                .catch(console.error);
+        }
+
+        setInterval(updateStats, 30000);
+        updateStats();
+    </script>
+</body>
+
+</html>

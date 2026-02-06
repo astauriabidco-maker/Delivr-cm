@@ -1,0 +1,449 @@
+{% extends "fleet/base.html" %}
+{% load static %}
+
+{% block title %}Demandes de Retrait - Fleet Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+    .withdrawals-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: var(--bg-secondary);
+        padding: 1.25rem;
+        border-radius: var(--border-radius-lg);
+        text-align: center;
+    }
+
+    .stat-card.pending {
+        border-left: 4px solid #f59e0b;
+    }
+
+    .stat-card.processing {
+        border-left: 4px solid #3b82f6;
+    }
+
+    .stat-card.completed {
+        border-left: 4px solid #22c55e;
+    }
+
+    .stat-card.total {
+        border-left: 4px solid #8b5cf6;
+    }
+
+    .stat-value {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+
+    .stat-label {
+        font-size: 0.75rem;
+        color: var(--text-tertiary);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    /* Filters */
+    .filters-bar {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+    }
+
+    .filter-group {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .filter-btn {
+        padding: 0.5rem 1rem;
+        border-radius: var(--border-radius-full);
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: 2px solid var(--border-color);
+        background: var(--bg-secondary);
+        color: var(--text-secondary);
+    }
+
+    .filter-btn:hover {
+        background: var(--bg-tertiary);
+    }
+
+    .filter-btn.active {
+        background: var(--primary);
+        color: white;
+        border-color: var(--primary);
+    }
+
+    /* Table */
+    .withdrawals-table {
+        width: 100%;
+        background: var(--bg-secondary);
+        border-radius: var(--border-radius-lg);
+        overflow: hidden;
+    }
+
+    .withdrawals-table th,
+    .withdrawals-table td {
+        padding: 1rem;
+        text-align: left;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .withdrawals-table th {
+        background: var(--bg-tertiary);
+        font-weight: 600;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--text-secondary);
+    }
+
+    .withdrawals-table tbody tr:hover {
+        background: var(--bg-tertiary);
+    }
+
+    /* Status badges */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.25rem 0.75rem;
+        border-radius: var(--border-radius-full);
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .status-badge.pending {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .status-badge.processing {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+    .status-badge.completed {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .status-badge.failed {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .status-badge.rejected {
+        background: #f3f4f6;
+        color: #374151;
+    }
+
+    /* Provider badges */
+    .provider-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: var(--border-radius);
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+
+    .provider-badge.mtn {
+        background: #fef08a;
+        color: #854d0e;
+    }
+
+    .provider-badge.orange {
+        background: #fed7aa;
+        color: #9a3412;
+    }
+
+    /* Actions */
+    .action-btn {
+        padding: 0.375rem 0.75rem;
+        border-radius: var(--border-radius);
+        font-size: 0.75rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: none;
+    }
+
+    .action-btn.approve {
+        background: #22c55e;
+        color: white;
+    }
+
+    .action-btn.approve:hover {
+        background: #16a34a;
+    }
+
+    .action-btn.reject {
+        background: #ef4444;
+        color: white;
+    }
+
+    .action-btn.reject:hover {
+        background: #dc2626;
+    }
+
+    .action-btn.complete {
+        background: #3b82f6;
+        color: white;
+    }
+
+    .action-btn.complete:hover {
+        background: #2563eb;
+    }
+
+    .actions-cell {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    /* Amount */
+    .amount {
+        font-weight: 600;
+        font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Modal */
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal-overlay.active {
+        display: flex;
+    }
+
+    .modal-content {
+        background: var(--bg-primary);
+        border-radius: var(--border-radius-lg);
+        padding: 1.5rem;
+        max-width: 400px;
+        width: 90%;
+    }
+
+    .modal-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+    }
+
+    .modal-actions {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: flex-end;
+        margin-top: 1rem;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: var(--text-tertiary);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="withdrawals-header">
+    <div>
+        <h1>💸 Demandes de Retrait</h1>
+        <p class="text-secondary">Gérer les retraits Mobile Money des coursiers</p>
+    </div>
+</div>
+
+<!-- Stats Row -->
+<div class="stats-row">
+    <div class="stat-card pending">
+        <div class="stat-value">{{ stats.pending }}</div>
+        <div class="stat-label">⏳ En attente</div>
+    </div>
+    <div class="stat-card processing">
+        <div class="stat-value">{{ stats.processing }}</div>
+        <div class="stat-label">🔄 En cours</div>
+    </div>
+    <div class="stat-card completed">
+        <div class="stat-value">{{ stats.completed }}</div>
+        <div class="stat-label">✅ Terminés</div>
+    </div>
+    <div class="stat-card total">
+        <div class="stat-value">{{ stats.total_amount|floatformat:0 }} XAF</div>
+        <div class="stat-label">💰 Total traité</div>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="filters-bar">
+    <div class="filter-group">
+        <a href="?status=" class="filter-btn {% if not current_status %}active{% endif %}">Tous</a>
+        <a href="?status=PENDING" class="filter-btn {% if current_status == 'PENDING' %}active{% endif %}">En
+            attente</a>
+        <a href="?status=PROCESSING" class="filter-btn {% if current_status == 'PROCESSING' %}active{% endif %}">En
+            cours</a>
+        <a href="?status=COMPLETED"
+            class="filter-btn {% if current_status == 'COMPLETED' %}active{% endif %}">Terminés</a>
+    </div>
+    <div class="filter-group">
+        <a href="?provider=MTN_MOMO" class="filter-btn {% if current_provider == 'MTN_MOMO' %}active{% endif %}">MTN</a>
+        <a href="?provider=ORANGE_MONEY"
+            class="filter-btn {% if current_provider == 'ORANGE_MONEY' %}active{% endif %}">Orange</a>
+    </div>
+</div>
+
+<!-- Withdrawals Table -->
+<table class="withdrawals-table">
+    <thead>
+        <tr>
+            <th>Coursier</th>
+            <th>Montant</th>
+            <th>Fournisseur</th>
+            <th>Numéro</th>
+            <th>Statut</th>
+            <th>Date</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for w in withdrawals %}
+        <tr data-id="{{ w.id }}">
+            <td>
+                <strong>{{ w.courier.first_name|default:w.courier.phone_number }}</strong>
+                <br><small class="text-secondary">{{ w.courier.phone_number }}</small>
+            </td>
+            <td class="amount">{{ w.amount|floatformat:0 }} XAF</td>
+            <td>
+                <span class="provider-badge {% if w.provider == 'MTN_MOMO' %}mtn{% else %}orange{% endif %}">
+                    {% if w.provider == 'MTN_MOMO' %}📱 MTN{% else %}📱 Orange{% endif %}
+                </span>
+            </td>
+            <td>{{ w.phone_number }}</td>
+            <td>
+                <span class="status-badge {{ w.status|lower }}">
+                    {% if w.status == 'PENDING' %}⏳ En attente
+                    {% elif w.status == 'PROCESSING' %}🔄 En cours
+                    {% elif w.status == 'COMPLETED' %}✅ Terminé
+                    {% elif w.status == 'FAILED' %}❌ Échoué
+                    {% else %}🚫 Rejeté{% endif %}
+                </span>
+            </td>
+            <td>
+                {{ w.created_at|date:"d/m/Y H:i" }}
+                {% if w.processed_at %}
+                <br><small class="text-secondary">Traité: {{ w.processed_at|date:"d/m H:i" }}</small>
+                {% endif %}
+            </td>
+            <td class="actions-cell">
+                {% if w.status == 'PENDING' %}
+                <form method="post" action="{% url 'fleet:approve-withdrawal' w.id %}" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="action-btn approve">✓ Approuver</button>
+                </form>
+                <button type="button" class="action-btn reject" onclick="showRejectModal('{{ w.id }}')">✗
+                    Rejeter</button>
+                {% elif w.status == 'PROCESSING' %}
+                <button type="button" class="action-btn complete" onclick="showCompleteModal('{{ w.id }}')">Marquer
+                    terminé</button>
+                {% else %}
+                <span class="text-secondary">—</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="7" class="empty-state">
+                Aucune demande de retrait
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!-- Reject Modal -->
+<div class="modal-overlay" id="rejectModal">
+    <div class="modal-content">
+        <div class="modal-title">🚫 Rejeter la demande</div>
+        <form method="post" id="rejectForm">
+            {% csrf_token %}
+            <div class="form-group">
+                <label>Raison du rejet</label>
+                <textarea name="reason" rows="3" required placeholder="Ex: Solde insuffisant"></textarea>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeModals()">Annuler</button>
+                <button type="submit" class="action-btn reject">Rejeter</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Complete Modal -->
+<div class="modal-overlay" id="completeModal">
+    <div class="modal-content">
+        <div class="modal-title">✅ Marquer comme terminé</div>
+        <form method="post" id="completeForm">
+            {% csrf_token %}
+            <div class="form-group">
+                <label>ID Transaction Mobile Money</label>
+                <input type="text" name="transaction_id" required placeholder="Ex: MOMO123456789">
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeModals()">Annuler</button>
+                <button type="submit" class="action-btn complete">Confirmer</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function showRejectModal(id) {
+        document.getElementById('rejectForm').action = '/fleet/withdrawals/' + id + '/reject/';
+        document.getElementById('rejectModal').classList.add('active');
+    }
+
+    function showCompleteModal(id) {
+        document.getElementById('completeForm').action = '/fleet/withdrawals/' + id + '/complete/';
+        document.getElementById('completeModal').classList.add('active');
+    }
+
+    function closeModals() {
+        document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active'));
+    }
+
+    // Close on backdrop click
+    document.querySelectorAll('.modal-overlay').forEach(modal => {
+        modal.addEventListener('click', function (e) {
+            if (e.target === this) closeModals();
+        });
+    });
+</script>
+{% endblock %}

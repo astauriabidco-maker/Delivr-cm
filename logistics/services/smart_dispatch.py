@@ -394,40 +394,49 @@ def _notify_scored_couriers(
     """
     Notify scored couriers of the available delivery.
     
-    Sends WhatsApp notifications and broadcasts via WebSocket.
+    Uses Celery tasks for async WhatsApp notifications.
     
     Returns:
         Number of couriers notified
     """
-    from bot.services import send_whatsapp_notification
+    from bot.tasks import (
+        send_new_delivery_notification,
+        send_urgent_delivery_notification
+    )
     
     notified = 0
     
     for score in scored_couriers[:5]:  # Notify top 5 only
         courier = score.courier
         
-        # Build notification message
-        message = (
-            f"🚀 *Nouvelle Course Disponible!*\n\n"
-            f"📍 Distance: {score.distance_km:.1f} km\n"
-            f"💰 Gain: {delivery.courier_earning} XAF\n"
-            f"📦 ID: #{str(delivery.id)[:8]}\n\n"
-            f"Répondez 'OUI {str(delivery.id)[:8]}' pour accepter"
-        )
-        
         try:
-            # Send WhatsApp notification
-            result = send_whatsapp_notification(courier.phone_number, message)
-            
-            if result:
-                notified += 1
-                logger.info(
-                    f"[SMART_DISPATCH] Notified {courier.phone_number} "
-                    f"(score: {score.score:.1f})"
+            # Use urgent notification if very close (< 500m)
+            if score.distance_km < 0.5:
+                send_urgent_delivery_notification.delay(
+                    courier_phone=courier.phone_number,
+                    delivery_id=str(delivery.id),
+                    distance_meters=int(score.distance_km * 1000),
+                    distance_km=delivery.distance_km,
+                    earning=str(delivery.courier_earning)
                 )
+            else:
+                send_new_delivery_notification.delay(
+                    courier_phone=courier.phone_number,
+                    delivery_id=str(delivery.id),
+                    pickup_address=delivery.pickup_address or "À déterminer",
+                    dropoff_address=delivery.dropoff_address or "À déterminer",
+                    distance_km=delivery.distance_km,
+                    earning=str(delivery.courier_earning)
+                )
+            
+            notified += 1
+            logger.info(
+                f"[SMART_DISPATCH] Queued notification for {courier.phone_number} "
+                f"(score: {score.score:.1f})"
+            )
         except Exception as e:
             logger.error(
-                f"[SMART_DISPATCH] Failed to notify {courier.phone_number}: {e}"
+                f"[SMART_DISPATCH] Failed to queue notification for {courier.phone_number}: {e}"
             )
     
     # Also broadcast via WebSocket to connected couriers

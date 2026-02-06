@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Relevé de Gains - {{ month_name }} {{ year }}</title>
+</head>
+
+<body>
+    <div class="header">
+        <div class="logo">DELIVR-CM</div>
+        <h1>Relevé de Gains</h1>
+        <p>{{ courier.first_name or courier.phone_number }} | {{ month_name }} {{ year }}</p>
+    </div>
+
+    <!-- Wallet Summary -->
+    <h2>💰 Résumé Financier</h2>
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-value">{{ earnings.total_earnings|default:0|floatformat:0 }} XAF</div>
+            <div class="stat-label">Gains du mois</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ earnings.total_deliveries|default:0 }}</div>
+            <div class="stat-label">Courses complétées</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ earnings.total_distance|default:0|floatformat:1 }} km</div>
+            <div class="stat-label">Distance totale</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ wallet_balance|floatformat:0 }} XAF</div>
+            <div class="stat-label">Solde actuel</div>
+        </div>
+    </div>
+
+    <!-- Weekly Breakdown -->
+    <h2>📅 Répartition par Semaine</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Semaine</th>
+                <th>Période</th>
+                <th>Courses</th>
+                <th>Gains</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for week in weekly_breakdown %}
+            <tr>
+                <td>Semaine {{ week.week }}</td>
+                <td>{{ week.start|date:"d/m" }} - {{ week.end|date:"d/m" }}</td>
+                <td>{{ week.count }}</td>
+                <td>{{ week.earnings|floatformat:0 }} XAF</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Transactions -->
+    {% if transactions %}
+    <h2>📝 Dernières Transactions</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Type</th>
+                <th>Description</th>
+                <th>Montant</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for tx in transactions %}
+            <tr>
+                <td>{{ tx.created_at|date:"d/m H:i" }}</td>
+                <td>{{ tx.get_transaction_type_display }}</td>
+                <td>{{ tx.description|truncatechars:40 }}</td>
+                <td style="color: {% if tx.amount >= 0 %}#22c55e{% else %}#ef4444{% endif %}">
+                    {% if tx.amount >= 0 %}+{% endif %}{{ tx.amount|floatformat:0 }} XAF
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+
+    <div class="footer">
+        <p>DELIVR-CM - Plateforme de livraison urbaine</p>
+        <p>Plafond dette: {{ debt_ceiling|floatformat:0 }} XAF | Généré le {{ generated_at|date:"d/m/Y H:i" }}</p>
+    </div>
+</body>
+
+</html>

@@ -314,6 +314,129 @@ def send_whatsapp_notification(to_number: str, text: str) -> Optional[str]:
         return TwilioService.send_message(to_number, text)
 
 
+def send_notification_with_fallback(to_number: str, text: str) -> tuple[Optional[str], str]:
+    """
+    Send notification with SMS fallback if WhatsApp fails.
+    
+    Flow:
+    1. Try WhatsApp (active provider)
+    2. If fails and SMS_FALLBACK_ENABLED -> try Orange SMS
+    
+    Args:
+        to_number: Recipient phone number
+        text: Message text to send
+        
+    Returns:
+        Tuple of (message_id, channel_used) where channel is 'whatsapp' or 'sms'
+    """
+    # Try WhatsApp first
+    result = send_whatsapp_notification(to_number, text)
+    
+    if result:
+        logger.info(f"[NOTIFICATION] Sent via WhatsApp: {result}")
+        return (result, 'whatsapp')
+    
+    # Check if SMS fallback is enabled
+    sms_fallback_enabled = getattr(settings, 'SMS_FALLBACK_ENABLED', False)
+    
+    if not sms_fallback_enabled:
+        logger.warning(f"[NOTIFICATION] WhatsApp failed, SMS fallback disabled")
+        return (None, 'failed')
+    
+    # Fallback to SMS
+    logger.info(f"[NOTIFICATION] WhatsApp failed, trying SMS fallback for {to_number}")
+    
+    try:
+        from bot.sms_service import OrangeSMSService
+        sms_result = OrangeSMSService.send_sms(to_number, text)
+        
+        if sms_result:
+            logger.info(f"[NOTIFICATION] Sent via SMS: {sms_result}")
+            return (sms_result, 'sms')
+        else:
+            logger.error(f"[NOTIFICATION] Both WhatsApp and SMS failed for {to_number}")
+            return (None, 'failed')
+            
+    except Exception as e:
+        logger.error(f"[NOTIFICATION] SMS fallback error: {e}")
+        return (None, 'failed')
+
+
+def send_whatsapp_message(to_number: str, text: str) -> Optional[str]:
+    """
+    Alias for send_notification_with_fallback (for backward compatibility).
+    
+    Returns just the message ID (discards channel info).
+    """
+    result, _ = send_notification_with_fallback(to_number, text)
+    return result
+
+
+def send_whatsapp_document(
+    phone: str,
+    document_url: str,
+    filename: str,
+    caption: str = ""
+) -> Optional[str]:
+    """
+    Send a document (PDF) via WhatsApp using Meta Cloud API.
+    
+    Args:
+        phone: Recipient phone number
+        document_url: Public URL to the document
+        filename: Display filename for the document
+        caption: Optional caption text
+        
+    Returns:
+        Message ID if successful, None if failed
+    """
+    import requests
+    
+    # Clean phone number
+    phone_clean = phone.replace('+', '').replace('whatsapp:', '').strip()
+    
+    phone_number_id = getattr(settings, 'META_PHONE_NUMBER_ID', None)
+    access_token = getattr(settings, 'META_API_TOKEN', None)
+    api_url = getattr(settings, 'META_API_URL', 'https://graph.facebook.com/v17.0')
+    
+    if not phone_number_id or not access_token:
+        logger.error("[META] Missing META_PHONE_NUMBER_ID or META_API_TOKEN for document send")
+        return None
+    
+    url = f"{api_url}/{phone_number_id}/messages"
+    
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json"
+    }
+    
+    payload = {
+        "messaging_product": "whatsapp",
+        "recipient_type": "individual",
+        "to": phone_clean,
+        "type": "document",
+        "document": {
+            "link": document_url,
+            "filename": filename,
+            "caption": caption
+        }
+    }
+    
+    try:
+        response = requests.post(url, headers=headers, json=payload, timeout=30)
+        response.raise_for_status()
+        
+        data = response.json()
+        message_id = data.get('messages', [{}])[0].get('id')
+        
+        logger.info(f"[META] Document sent: ID={message_id} to={phone_clean} file={filename}")
+        return message_id
+        
+    except requests.exceptions.RequestException as e:
+        logger.error(f"[META] Failed to send document to {phone_clean}: {e}")
+        return None
+
+
 
 class BotState(str, Enum):
     """Conversation state enumeration for the WhatsApp bot."""

@@ -1,0 +1,395 @@
+{% extends "courier/base.html" %}
+{% load static %}
+
+{% block title %}Inscription Coursier - DELIVR-CM{% endblock %}
+
+{% block extra_css %}
+<style>
+    .onboarding-container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 1rem;
+    }
+
+    /* Progress Bar */
+    .progress-steps {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 2rem;
+        position: relative;
+    }
+
+    .progress-steps::before {
+        content: '';
+        position: absolute;
+        top: 20px;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: var(--bg-tertiary);
+        z-index: 0;
+    }
+
+    .step {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        z-index: 1;
+        flex: 1;
+    }
+
+    .step-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        background: var(--bg-tertiary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.125rem;
+        margin-bottom: 0.5rem;
+        border: 3px solid var(--bg-primary);
+    }
+
+    .step.completed .step-icon {
+        background: #22c55e;
+    }
+
+    .step.active .step-icon {
+        background: var(--primary);
+        box-shadow: 0 0 0 4px rgba(0, 208, 132, 0.2);
+    }
+
+    .step-label {
+        font-size: 0.625rem;
+        text-align: center;
+        color: var(--text-tertiary);
+        max-width: 60px;
+    }
+
+    .step.active .step-label {
+        color: var(--primary);
+        font-weight: 600;
+    }
+
+    .step.completed .step-label {
+        color: #22c55e;
+    }
+
+    /* Card */
+    .onboarding-card {
+        background: var(--bg-secondary);
+        border-radius: var(--border-radius-lg);
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .card-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+
+    .card-subtitle {
+        font-size: 0.875rem;
+        color: var(--text-tertiary);
+        margin-bottom: 1.5rem;
+    }
+
+    /* Form Groups */
+    .form-group {
+        margin-bottom: 1.25rem;
+    }
+
+    .form-group label {
+        display: block;
+        font-size: 0.875rem;
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        width: 100%;
+        padding: 0.75rem;
+        border-radius: var(--border-radius);
+        border: 1px solid var(--border-color);
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        font-size: 1rem;
+    }
+
+    .form-group input:focus {
+        border-color: var(--primary);
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(0, 208, 132, 0.1);
+    }
+
+    /* File Upload */
+    .file-upload {
+        border: 2px dashed var(--border-color);
+        border-radius: var(--border-radius);
+        padding: 1.5rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .file-upload:hover {
+        border-color: var(--primary);
+    }
+
+    .file-upload.has-file {
+        border-color: #22c55e;
+        background: rgba(34, 197, 94, 0.1);
+    }
+
+    .file-upload input {
+        display: none;
+    }
+
+    .file-upload-icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .file-upload-text {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+    }
+
+    .file-upload-name {
+        font-size: 0.75rem;
+        color: #22c55e;
+        margin-top: 0.5rem;
+    }
+
+    /* OTP Input */
+    .otp-inputs {
+        display: flex;
+        gap: 0.75rem;
+        justify-content: center;
+        margin: 1.5rem 0;
+    }
+
+    .otp-input {
+        width: 50px;
+        height: 60px;
+        text-align: center;
+        font-size: 1.5rem;
+        font-weight: 700;
+        border: 2px solid var(--border-color);
+        border-radius: var(--border-radius);
+        background: var(--bg-primary);
+        color: var(--text-primary);
+    }
+
+    .otp-input:focus {
+        border-color: var(--primary);
+        outline: none;
+    }
+
+    /* Buttons */
+    .btn-primary {
+        width: 100%;
+        padding: 1rem;
+        border-radius: var(--border-radius);
+        background: var(--primary);
+        color: white;
+        font-weight: 600;
+        font-size: 1rem;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .btn-primary:hover {
+        background: #00b872;
+    }
+
+    .btn-primary:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .btn-secondary {
+        width: 100%;
+        padding: 0.75rem;
+        border-radius: var(--border-radius);
+        background: var(--bg-tertiary);
+        color: var(--text-secondary);
+        font-weight: 500;
+        border: none;
+        cursor: pointer;
+        margin-top: 0.75rem;
+    }
+
+    /* Contract */
+    .contract-box {
+        max-height: 300px;
+        overflow-y: auto;
+        padding: 1rem;
+        background: var(--bg-tertiary);
+        border-radius: var(--border-radius);
+        font-size: 0.75rem;
+        line-height: 1.6;
+        margin-bottom: 1rem;
+    }
+
+    .contract-box h4 {
+        margin-top: 1rem;
+    }
+
+    .checkbox-label {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        cursor: pointer;
+    }
+
+    .checkbox-label input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+        flex-shrink: 0;
+    }
+
+    /* Status Badge */
+    .status-badge {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        border-radius: var(--border-radius-full);
+        font-weight: 600;
+        font-size: 0.875rem;
+    }
+
+    .status-badge.pending {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .status-badge.awaiting {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+    .status-badge.approved {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .status-badge.rejected {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    /* Caution Amount */
+    .caution-amount {
+        text-align: center;
+        padding: 1.5rem;
+        background: var(--bg-tertiary);
+        border-radius: var(--border-radius-lg);
+        margin-bottom: 1rem;
+    }
+
+    .caution-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--primary);
+    }
+
+    .caution-label {
+        color: var(--text-tertiary);
+    }
+
+    /* Probation Progress */
+    .probation-progress {
+        text-align: center;
+        padding: 1.5rem;
+    }
+
+    .probation-circle {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        border: 8px solid var(--bg-tertiary);
+        border-top-color: var(--primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+    }
+
+    .probation-count {
+        font-size: 2rem;
+        font-weight: 700;
+    }
+
+    .alert {
+        padding: 1rem;
+        border-radius: var(--border-radius);
+        margin-bottom: 1rem;
+    }
+
+    .alert.info {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+    .alert.warning {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .alert.success {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .alert.error {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="onboarding-container">
+    <!-- Progress Steps -->
+    <div class="progress-steps">
+        <div class="step {% if step >= 1 %}{% if step > 1 %}completed{% else %}active{% endif %}{% endif %}">
+            <div class="step-icon">📱</div>
+            <span class="step-label">Téléphone</span>
+        </div>
+        <div class="step {% if step >= 2 %}{% if step > 2 %}completed{% else %}active{% endif %}{% endif %}">
+            <div class="step-icon">📄</div>
+            <span class="step-label">Documents</span>
+        </div>
+        <div class="step {% if step >= 3 %}{% if step > 3 %}completed{% else %}active{% endif %}{% endif %}">
+            <div class="step-icon">👤</div>
+            <span class="step-label">Contact</span>
+        </div>
+        <div class="step {% if step >= 4 %}{% if step > 4 %}completed{% else %}active{% endif %}{% endif %}">
+            <div class="step-icon">💰</div>
+            <span class="step-label">Caution</span>
+        </div>
+        <div class="step {% if step >= 5 %}{% if step > 5 %}completed{% else %}active{% endif %}{% endif %}">
+            <div class="step-icon">✍️</div>
+            <span class="step-label">Contrat</span>
+        </div>
+        <div class="step {% if step >= 6 %}{% if step > 6 %}completed{% else %}active{% endif %}{% endif %}">
+            <div class="step-icon">✅</div>
+            <span class="step-label">Validation</span>
+        </div>
+    </div>
+
+    {% if messages %}
+    {% for message in messages %}
+    <div class="alert {{ message.tags }}">{{ message }}</div>
+    {% endfor %}
+    {% endif %}
+
+    <!-- Step Content -->
+    {% block step_content %}{% endblock %}
+</div>
+{% endblock %}

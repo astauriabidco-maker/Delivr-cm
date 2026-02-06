@@ -1,0 +1,378 @@
+{% extends 'courier/base.html' %}
+
+{% block title %}Mon Portefeuille{% endblock %}
+{% block page_title %}Portefeuille{% endblock %}
+
+{% block content %}
+<!-- Balance Card -->
+<div class="balance-card card">
+    <div class="balance-header">
+        <span class="balance-label">Solde Actuel</span>
+        {% if wallet.is_blocked %}
+        <span class="balance-badge danger">🚫 Bloqué</span>
+        {% elif wallet.balance < 0 %} <span class="balance-badge warning">Dette</span>
+            {% else %}
+            <span class="balance-badge success">Actif</span>
+            {% endif %}
+    </div>
+    <div class="balance-amount {% if wallet.balance < 0 %}negative{% endif %}">
+        {{ wallet.balance|floatformat:0 }} <small>XAF</small>
+    </div>
+
+    {% if wallet.balance < 0 %} <div class="debt-progress">
+        <div class="debt-info">
+            <span>Dette: {{ wallet.debt_used|floatformat:0 }} / {{ wallet.debt_ceiling|floatformat:0 }} XAF</span>
+            <span>{{ wallet.debt_percentage|floatformat:0 }}%</span>
+        </div>
+        <div class="progress-bar">
+            <div class="progress-fill {% if wallet.debt_percentage > 80 %}danger{% elif wallet.debt_percentage > 50 %}warning{% endif %}"
+                style="width: {{ wallet.debt_percentage }}%"></div>
+        </div>
+</div>
+{% endif %}
+</div>
+
+{% if wallet.is_blocked %}
+<div class="alert alert-danger">
+    <span class="alert-icon">⚠️</span>
+    <div class="alert-content">
+        <strong>Compte Bloqué</strong>
+        <p>Votre plafond de dette est atteint. Remboursez pour continuer à recevoir des courses.</p>
+    </div>
+</div>
+{% endif %}
+
+<!-- Quick Stats -->
+<div class="stats-row">
+    <div class="stat-mini card">
+        <span class="stat-mini-icon">💵</span>
+        <div class="stat-mini-content">
+            <span class="stat-mini-value">{{ wallet.total_earned|floatformat:0 }}</span>
+            <span class="stat-mini-label">Total Gagné</span>
+        </div>
+    </div>
+    <div class="stat-mini card">
+        <span class="stat-mini-icon">💸</span>
+        <div class="stat-mini-content">
+            <span class="stat-mini-value">{{ wallet.total_commission|floatformat:0 }}</span>
+            <span class="stat-mini-label">Commissions</span>
+        </div>
+    </div>
+</div>
+
+<!-- Available for Withdrawal -->
+{% if wallet.available_for_withdrawal > 0 %}
+<div class="card withdrawal-card">
+    <div class="withdrawal-content">
+        <div class="withdrawal-info">
+            <span class="withdrawal-icon">✅</span>
+            <div>
+                <div class="withdrawal-label">Disponible au Retrait</div>
+                <div class="withdrawal-amount">{{ wallet.available_for_withdrawal|floatformat:0 }} XAF</div>
+            </div>
+        </div>
+        <button class="btn btn-primary" onclick="alert('Contactez le support pour effectuer un retrait.')">
+            Retirer
+        </button>
+    </div>
+</div>
+{% endif %}
+
+<!-- Recent Transactions -->
+<div class="card">
+    <div class="card-header">
+        <h2>📝 Transactions Récentes</h2>
+        <a href="{% url 'courier:earnings' %}" class="link-small">Tout voir →</a>
+    </div>
+    <div class="card-body" style="padding: 0;">
+        {% if transactions %}
+        <div class="transactions-list">
+            {% for tx in transactions %}
+            <div class="transaction-item">
+                <div class="transaction-icon {% if tx.amount > 0 %}credit{% else %}debit{% endif %}">
+                    {% if tx.amount > 0 %}+{% else %}-{% endif %}
+                </div>
+                <div class="transaction-info">
+                    <span class="transaction-label">{{ tx.description }}</span>
+                    <span class="transaction-date">{{ tx.created_at|date:"d/m H:i" }}</span>
+                </div>
+                <div class="transaction-amount {% if tx.amount > 0 %}credit{% else %}debit{% endif %}">
+                    {% if tx.amount > 0 %}+{% endif %}{{ tx.amount|floatformat:0 }} XAF
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <span class="empty-icon">📭</span>
+            <p>Aucune transaction</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .balance-card {
+        background: linear-gradient(135deg, #1a1a2e, #16213e);
+        color: white;
+        padding: 1.5rem;
+        text-align: center;
+    }
+
+    .balance-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+
+    .balance-label {
+        font-size: 0.875rem;
+        opacity: 0.8;
+    }
+
+    .balance-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .balance-badge.success {
+        background: var(--success);
+    }
+
+    .balance-badge.warning {
+        background: var(--warning);
+        color: #333;
+    }
+
+    .balance-badge.danger {
+        background: var(--danger);
+    }
+
+    .balance-amount {
+        font-size: 3rem;
+        font-weight: 700;
+        margin: 1rem 0;
+    }
+
+    .balance-amount.negative {
+        color: #ff6b6b;
+    }
+
+    .balance-amount small {
+        font-size: 1.25rem;
+        opacity: 0.7;
+    }
+
+    .debt-progress {
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .debt-info {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.75rem;
+        margin-bottom: 0.5rem;
+        opacity: 0.9;
+    }
+
+    .progress-bar {
+        height: 8px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: var(--warning);
+        border-radius: 4px;
+        transition: width 0.3s;
+    }
+
+    .progress-fill.warning {
+        background: #f59e0b;
+    }
+
+    .progress-fill.danger {
+        background: #ef4444;
+    }
+
+    .alert {
+        display: flex;
+        gap: 0.75rem;
+        padding: 1rem;
+        border-radius: 12px;
+        margin-bottom: 1rem;
+    }
+
+    .alert-danger {
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid var(--danger);
+    }
+
+    .alert-icon {
+        font-size: 1.5rem;
+    }
+
+    .alert-content strong {
+        display: block;
+        margin-bottom: 0.25rem;
+    }
+
+    .alert-content p {
+        font-size: 0.875rem;
+        margin: 0;
+        opacity: 0.9;
+    }
+
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .stat-mini {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 1rem;
+    }
+
+    .stat-mini-icon {
+        font-size: 1.5rem;
+    }
+
+    .stat-mini-value {
+        display: block;
+        font-size: 1.25rem;
+        font-weight: 700;
+    }
+
+    .stat-mini-label {
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+    }
+
+    .withdrawal-card {
+        background: linear-gradient(135deg, var(--success), #059669);
+        color: white;
+    }
+
+    .withdrawal-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem;
+    }
+
+    .withdrawal-info {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .withdrawal-icon {
+        font-size: 2rem;
+    }
+
+    .withdrawal-label {
+        font-size: 0.75rem;
+        opacity: 0.9;
+    }
+
+    .withdrawal-amount {
+        font-size: 1.5rem;
+        font-weight: 700;
+    }
+
+    .withdrawal-card .btn {
+        background: white;
+        color: var(--success);
+    }
+
+    .transactions-list {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .transaction-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 1rem;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .transaction-item:last-child {
+        border-bottom: none;
+    }
+
+    .transaction-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+    }
+
+    .transaction-icon.credit {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--success);
+    }
+
+    .transaction-icon.debit {
+        background: rgba(239, 68, 68, 0.1);
+        color: var(--danger);
+    }
+
+    .transaction-info {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 0.125rem;
+    }
+
+    .transaction-label {
+        font-weight: 500;
+    }
+
+    .transaction-date {
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+    }
+
+    .transaction-amount {
+        font-weight: 600;
+    }
+
+    .transaction-amount.credit {
+        color: var(--success);
+    }
+
+    .transaction-amount.debit {
+        color: var(--danger);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+        color: var(--text-secondary);
+    }
+
+    .empty-icon {
+        font-size: 3rem;
+        display: block;
+        margin-bottom: 1rem;
+    }
+</style>
+{% endblock %}

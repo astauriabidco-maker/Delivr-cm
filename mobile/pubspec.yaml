@@ -1,0 +1,77 @@
+name: delivr_courier
+description: "DELIVR-CM Courier Mobile App - Android"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.7.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  # State Management
+  flutter_riverpod: ^2.6.1
+  riverpod_annotation: ^2.6.1
+  
+  # Navigation
+  go_router: ^14.8.1
+  
+  # HTTP & API
+  dio: ^5.8.0
+  
+  # WebSocket (Push Notifications)
+  web_socket_channel: ^3.0.2
+  
+  # Local Storage
+  hive_flutter: ^1.1.0
+  flutter_secure_storage: ^9.2.4
+  shared_preferences: ^2.3.3
+  
+  # Location & Background
+  geolocator: ^13.0.2
+  flutter_background_service: ^5.1.0
+  flutter_background_service_android: ^6.3.0
+  battery_plus: ^6.2.1
+  permission_handler: ^11.4.0
+  
+  # Maps (OpenStreetMap - pas Google)
+  flutter_map: ^7.0.2
+  latlong2: ^0.9.1
+  
+  # Notifications
+  flutter_local_notifications: ^18.0.1
+  
+  # Camera & Files
+  image_picker: ^1.1.2
+  
+  # UI Components
+  cached_network_image: ^3.4.1
+  fl_chart: ^0.70.2
+  shimmer: ^3.0.0
+  google_fonts: ^6.2.1
+  
+  # Utilities
+  intl: ^0.20.2
+  connectivity_plus: ^6.1.4
+  uuid: ^4.5.1
+  url_launcher: ^6.3.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  riverpod_generator: ^2.6.5
+  build_runner: ^2.4.15
+  mocktail: ^1.0.4
+  integration_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
+  
+  assets:
+    - assets/images/
+    - assets/icons/
+  
+  # Using google_fonts package instead of local fonts

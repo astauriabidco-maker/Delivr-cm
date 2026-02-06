@@ -1,0 +1,404 @@
+{% extends "courier/base.html" %}
+{% load static %}
+
+{% block title %}Historique Courses - Mon Tableau de Bord{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+    .history-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    /* Filters */
+    .filters-bar {
+        display: flex;
+        gap: 0.75rem;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .filter-select,
+    .filter-input {
+        padding: 0.5rem 1rem;
+        border-radius: var(--border-radius);
+        border: 1px solid var(--border-color);
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        font-size: 0.875rem;
+    }
+
+    .filter-btn {
+        padding: 0.5rem 1rem;
+        border-radius: var(--border-radius);
+        background: var(--primary);
+        color: white;
+        border: none;
+        font-weight: 500;
+        cursor: pointer;
+    }
+
+    .export-btn {
+        padding: 0.5rem 1rem;
+        border-radius: var(--border-radius);
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+        border: 1px solid var(--border-color);
+        font-size: 0.875rem;
+        cursor: pointer;
+    }
+
+    /* Map */
+    .map-container {
+        background: var(--bg-secondary);
+        border-radius: var(--border-radius-lg);
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+    }
+
+    #deliveries-map {
+        height: 350px;
+    }
+
+    .map-legend {
+        padding: 1rem;
+        display: flex;
+        gap: 1.5rem;
+        background: var(--bg-tertiary);
+        font-size: 0.875rem;
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .legend-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+    }
+
+    .legend-dot.pickup {
+        background: #22c55e;
+    }
+
+    .legend-dot.dropoff {
+        background: #ef4444;
+    }
+
+    /* Deliveries List */
+    .deliveries-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .delivery-card {
+        background: var(--bg-secondary);
+        border-radius: var(--border-radius-lg);
+        padding: 1.25rem;
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        border-left: 4px solid transparent;
+    }
+
+    .delivery-card:hover {
+        background: var(--bg-tertiary);
+        transform: translateX(4px);
+    }
+
+    .delivery-card.selected {
+        border-left-color: var(--primary);
+        background: var(--bg-tertiary);
+    }
+
+    .delivery-card.COMPLETED {
+        border-left-color: #22c55e;
+    }
+
+    .delivery-card.CANCELLED {
+        border-left-color: #ef4444;
+    }
+
+    .delivery-card.FAILED {
+        border-left-color: #f59e0b;
+    }
+
+    .delivery-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: var(--border-radius);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        background: var(--bg-tertiary);
+    }
+
+    .delivery-info {
+        flex: 1;
+    }
+
+    .delivery-route {
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+
+    .delivery-meta {
+        font-size: 0.75rem;
+        color: var(--text-tertiary);
+    }
+
+    .delivery-stats {
+        text-align: right;
+    }
+
+    .delivery-earning {
+        font-weight: 700;
+        font-size: 1.125rem;
+        color: #22c55e;
+    }
+
+    .delivery-distance {
+        font-size: 0.75rem;
+        color: var(--text-tertiary);
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        border-radius: var(--border-radius-full);
+        font-size: 0.625rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .status-badge.COMPLETED {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .status-badge.CANCELLED {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .status-badge.FAILED {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: var(--text-tertiary);
+    }
+
+    /* Stats row */
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .stat-card {
+        background: var(--bg-secondary);
+        padding: 1rem;
+        border-radius: var(--border-radius-lg);
+        text-align: center;
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+    }
+
+    .stat-label {
+        font-size: 0.75rem;
+        color: var(--text-tertiary);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="history-header">
+    <div>
+        <h1>🗺️ Historique Courses</h1>
+        <p class="text-secondary">Vos livraisons avec trajet GPS</p>
+    </div>
+    <form method="get" class="filters-bar">
+        <select name="status" class="filter-select">
+            <option value="">Tous statuts</option>
+            <option value="COMPLETED" {% if current_status=='COMPLETED' %}selected{% endif %}>✅ Terminées</option>
+            <option value="CANCELLED" {% if current_status=='CANCELLED' %}selected{% endif %}>❌ Annulées</option>
+            <option value="FAILED" {% if current_status=='FAILED' %}selected{% endif %}>⚠️ Échouées</option>
+        </select>
+        <input type="date" name="start_date" class="filter-input" value="{{ start_date|date:'Y-m-d' }}"
+            placeholder="Début">
+        <input type="date" name="end_date" class="filter-input" value="{{ end_date|date:'Y-m-d' }}" placeholder="Fin">
+        <button type="submit" class="filter-btn">Filtrer</button>
+        <a href="{% url 'courier:delivery-history-csv' %}?{{ request.GET.urlencode }}" class="export-btn">📥 Export
+            CSV</a>
+    </form>
+</div>
+
+<!-- Stats Row -->
+<div class="stats-row">
+    <div class="stat-card">
+        <div class="stat-value">{{ stats.total }}</div>
+        <div class="stat-label">Total courses</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ stats.completed }}</div>
+        <div class="stat-label">Terminées</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ stats.earnings|floatformat:0 }} XAF</div>
+        <div class="stat-label">Gains</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ stats.distance|floatformat:1 }} km</div>
+        <div class="stat-label">Distance</div>
+    </div>
+</div>
+
+<!-- Map -->
+<div class="map-container">
+    <div id="deliveries-map"></div>
+    <div class="map-legend">
+        <div class="legend-item">
+            <span class="legend-dot pickup"></span> Point de pickup
+        </div>
+        <div class="legend-item">
+            <span class="legend-dot dropoff"></span> Point de dropoff
+        </div>
+        <span class="text-secondary">Cliquez sur une course pour voir le trajet</span>
+    </div>
+</div>
+
+<!-- Deliveries List -->
+<div class="deliveries-list">
+    {% for d in deliveries %}
+    <div class="delivery-card {{ d.status }}" data-id="{{ d.id }}"
+        data-pickup-lat="{{ d.pickup_location.y|default:'' }}" data-pickup-lng="{{ d.pickup_location.x|default:'' }}"
+        data-dropoff-lat="{{ d.dropoff_location.y|default:'' }}"
+        data-dropoff-lng="{{ d.dropoff_location.x|default:'' }}">
+        <div class="delivery-icon">
+            {% if d.status == 'COMPLETED' %}✅{% elif d.status == 'CANCELLED' %}❌{% else %}⚠️{% endif %}
+        </div>
+        <div class="delivery-info">
+            <div class="delivery-route">
+                {{ d.pickup_neighborhood.name|default:"N/A" }} → {{ d.dropoff_neighborhood.name|default:"N/A" }}
+            </div>
+            <div class="delivery-meta">
+                <span class="status-badge {{ d.status }}">{{ d.get_status_display }}</span>
+                {{ d.created_at|date:"d/m/Y H:i" }}
+                {% if d.completed_at %}• Terminée {{ d.completed_at|date:"H:i" }}{% endif %}
+            </div>
+        </div>
+        <div class="delivery-stats">
+            <div class="delivery-earning">+{{ d.courier_earning|floatformat:0 }} XAF</div>
+            <div class="delivery-distance">{{ d.distance_km|floatformat:1 }} km</div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="empty-state">
+        <p>🗺️ Aucune course trouvée pour cette période</p>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    // Initialize map centered on Douala
+    const map = L.map('deliveries-map').setView([4.05, 9.7], 12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap'
+    }).addTo(map);
+
+    // Markers and polyline
+    let pickupMarker = null;
+    let dropoffMarker = null;
+    let routeLine = null;
+
+    const pickupIcon = L.divIcon({
+        className: 'custom-marker',
+        html: '<div style="background:#22c55e;width:24px;height:24px;border-radius:50%;border:3px solid white;display:flex;align-items:center;justify-content:center;font-size:12px;">📍</div>',
+        iconSize: [24, 24],
+        iconAnchor: [12, 12]
+    });
+
+    const dropoffIcon = L.divIcon({
+        className: 'custom-marker',
+        html: '<div style="background:#ef4444;width:24px;height:24px;border-radius:50%;border:3px solid white;display:flex;align-items:center;justify-content:center;font-size:12px;">🏁</div>',
+        iconSize: [24, 24],
+        iconAnchor: [12, 12]
+    });
+
+    // Click handler for delivery cards
+    document.querySelectorAll('.delivery-card').forEach(card => {
+        card.addEventListener('click', function () {
+            // Remove previous selection
+            document.querySelectorAll('.delivery-card').forEach(c => c.classList.remove('selected'));
+            this.classList.add('selected');
+
+            // Get coordinates
+            const pickupLat = parseFloat(this.dataset.pickupLat);
+            const pickupLng = parseFloat(this.dataset.pickupLng);
+            const dropoffLat = parseFloat(this.dataset.dropoffLat);
+            const dropoffLng = parseFloat(this.dataset.dropoffLng);
+
+            // Clear previous markers
+            if (pickupMarker) map.removeLayer(pickupMarker);
+            if (dropoffMarker) map.removeLayer(dropoffMarker);
+            if (routeLine) map.removeLayer(routeLine);
+
+            // Add markers if coordinates exist
+            if (pickupLat && pickupLng) {
+                pickupMarker = L.marker([pickupLat, pickupLng], { icon: pickupIcon }).addTo(map);
+            }
+            if (dropoffLat && dropoffLng) {
+                dropoffMarker = L.marker([dropoffLat, dropoffLng], { icon: dropoffIcon }).addTo(map);
+            }
+
+            // Draw line between points
+            if (pickupLat && pickupLng && dropoffLat && dropoffLng) {
+                routeLine = L.polyline([
+                    [pickupLat, pickupLng],
+                    [dropoffLat, dropoffLng]
+                ], {
+                    color: '#3b82f6',
+                    weight: 4,
+                    opacity: 0.8,
+                    dashArray: '10, 10'
+                }).addTo(map);
+
+                // Fit map to bounds
+                map.fitBounds([
+                    [pickupLat, pickupLng],
+                    [dropoffLat, dropoffLng]
+                ], { padding: [50, 50] });
+            } else if (pickupLat && pickupLng) {
+                map.setView([pickupLat, pickupLng], 14);
+            }
+        });
+    });
+
+    // Show first delivery on load
+    const firstCard = document.querySelector('.delivery-card');
+    if (firstCard) firstCard.click();
+</script>
+{% endblock %}

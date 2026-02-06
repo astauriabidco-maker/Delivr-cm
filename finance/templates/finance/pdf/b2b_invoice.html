@@ -1,0 +1,186 @@
+{% extends "finance/pdf/base_invoice.html" %}
+
+{% block title %}Facture Partenaire - {{ period_start|date:"F Y" }}{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .invoice-badge {
+        display: inline-block;
+        background: #1a1a2e;
+        color: white;
+        padding: 8px 20px;
+        border-radius: 4px;
+        font-size: 12pt;
+        font-weight: 700;
+        margin-top: 10px;
+    }
+
+    .summary-grid {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 30px;
+    }
+
+    .summary-card {
+        width: 23%;
+        background: #f5f5f5;
+        border-radius: 8px;
+        padding: 15px;
+        text-align: center;
+    }
+
+    .summary-card .value {
+        font-size: 16pt;
+        font-weight: 700;
+        color: #1a1a2e;
+    }
+
+    .summary-card .label {
+        font-size: 8pt;
+        color: #666;
+        margin-top: 5px;
+    }
+
+    .legal-notice {
+        margin-top: 30px;
+        padding: 15px;
+        background: #f9f9f9;
+        border: 1px solid #eee;
+        font-size: 8pt;
+        color: #666;
+    }
+
+    .legal-notice h5 {
+        font-size: 9pt;
+        color: #333;
+        margin-bottom: 8px;
+    }
+</style>
+{% endblock %}
+
+{% block invoice_info %}
+<div class="invoice-number">FACTURE</div>
+<div class="invoice-badge">
+    N° {{ generated_at|date:"Ymd" }}-{{ partner.id|slice:":4"|upper }}
+</div>
+<div class="invoice-date" style="margin-top: 10px;">
+    Période: {{ period_start|date:"d/m/Y" }} - {{ period_end|date:"d/m/Y" }}
+</div>
+{% endblock %}
+
+{% block parties %}
+<div class="parties">
+    <div class="party">
+        <div class="party-label">Émetteur</div>
+        <div class="party-name">DELIVR-CM SAS</div>
+        <div class="party-details">
+            Plateforme de Livraison Express<br>
+            Douala, Cameroun<br>
+            RCCM: CM-DLA-001234<br>
+            NIU: M026700000001A
+        </div>
+    </div>
+    <div class="party">
+        <div class="party-label">Client</div>
+        <div class="party-name">{{ partner.company_name|default:partner.full_name }}</div>
+        <div class="party-details">
+            📞 {{ partner.phone_number }}<br>
+            📧 {{ partner.email|default:"N/A" }}<br>
+            {% if partner.company_address %}
+            📍 {{ partner.company_address }}
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="summary-grid">
+    <div class="summary-card">
+        <div class="value">{{ total_deliveries }}</div>
+        <div class="label">Total Commandes</div>
+    </div>
+    <div class="summary-card">
+        <div class="value" style="color: #00a86b;">{{ completed_count }}</div>
+        <div class="label">Livrées ✓</div>
+    </div>
+    <div class="summary-card">
+        <div class="value" style="color: #c79100;">{{ pending_count }}</div>
+        <div class="label">En Cours</div>
+    </div>
+    <div class="summary-card">
+        <div class="value highlight">{{ total_amount|floatformat:0 }}</div>
+        <div class="label">Total XAF</div>
+    </div>
+</div>
+
+<h3 style="margin-bottom: 15px; color: #1a1a2e;">📦 Détail des Commandes</h3>
+
+<table>
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Référence</th>
+            <th>Destinataire</th>
+            <th class="text-center">Statut</th>
+            <th class="text-right">Montant</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for d in deliveries %}
+        <tr>
+            <td>{{ d.created_at|date:"d/m" }}</td>
+            <td>
+                #{{ d.id|slice:":8"|upper }}
+                {% if d.external_order_id %}
+                <br><span style="color: #666; font-size: 8pt;">Ext: {{ d.external_order_id }}</span>
+                {% endif %}
+            </td>
+            <td>
+                {{ d.recipient_name|default:"N/A" }}<br>
+                <span style="color: #666; font-size: 8pt;">{{ d.recipient_phone }}</span>
+            </td>
+            <td class="text-center">
+                <span
+                    class="status-badge {% if d.status == 'COMPLETED' %}status-completed{% else %}status-pending{% endif %}">
+                    {{ d.get_status_display }}
+                </span>
+            </td>
+            <td class="text-right currency">{{ d.total_price|floatformat:0 }} XAF</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="5" class="text-center" style="color: #999;">
+                Aucune commande pour cette période
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
+
+{% block totals %}
+<div class="totals">
+    <div class="total-row">
+        <span class="total-label">Sous-total HT</span>
+        <span class="total-value">{{ total_amount|floatformat:0 }} XAF</span>
+    </div>
+    <div class="total-row">
+        <span class="total-label">TVA (19.25%)</span>
+        <span class="total-value">Incl.</span>
+    </div>
+    <div class="total-row grand-total">
+        <span class="total-label">TOTAL TTC</span>
+        <span class="total-value highlight">{{ total_amount|floatformat:0 }} XAF</span>
+    </div>
+</div>
+
+<div class="legal-notice">
+    <h5>Conditions de Paiement</h5>
+    <p>
+        Paiement par prélèvement sur wallet prépayé DELIVR-CM.<br>
+        En cas de litige, merci de contacter support@delivr.cm dans les 48h suivant la réception de cette facture.<br>
+        TVA non applicable selon l'article 128 du CGI du Cameroun pour les prestations de services.
+    </p>
+</div>
+{% endblock %}

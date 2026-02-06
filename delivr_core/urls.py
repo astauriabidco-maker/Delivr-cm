@@ -77,6 +77,18 @@ urlpatterns = [
          __import__('partners.views', fromlist=['PublicShopView']).PublicShopView.as_view(), 
          name='public_shop'),
     
+    # Courier Dashboard (Mobile-first for couriers)
+    path('courier/', include('courier.urls')),
+    
+    # Mobile API (Flutter App)
+    path('api/mobile/', include('courier.urls_mobile')),
+    
+    # Fleet Management Admin Dashboard
+    path('fleet/', include('fleet.urls')),
+    
+    # PDF Reports
+    path('reports/', include('reports.urls')),
+    
     # Webhooks (WhatsApp Bot)
     path('webhooks/', include('bot.urls')),
 ]

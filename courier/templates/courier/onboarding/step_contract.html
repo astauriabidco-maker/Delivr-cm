@@ -1,0 +1,100 @@
+{% extends "courier/onboarding/base.html" %}
+
+{% block step_content %}
+<form method="post" action="{% url 'courier:onboarding-contract' %}">
+    {% csrf_token %}
+
+    <div class="onboarding-card">
+        <h2 class="card-title">✍️ Contrat de Partenariat</h2>
+        <p class="card-subtitle">Lisez attentivement et signez électroniquement</p>
+
+        <div class="contract-box">
+            <h3>CONTRAT DE PARTENARIAT COURSIER</h3>
+            <p><strong>Version {{ onboarding.contract_version }}</strong> - Date: {% now "d F Y" %}</p>
+
+            <h4>ARTICLE 1 - OBJET</h4>
+            <p>Le présent contrat définit les conditions dans lesquelles le Coursier s'engage à effectuer des livraisons
+                pour le compte de DELIVR-CM.</p>
+
+            <h4>ARTICLE 2 - OBLIGATIONS DU COURSIER</h4>
+            <p>Le Coursier s'engage à :</p>
+            <ul>
+                <li>Respecter les délais de livraison communiqués</li>
+                <li>Traiter les colis avec soin et diligence</li>
+                <li>Maintenir une communication professionnelle avec les clients</li>
+                <li>Respecter le code de la route et disposer de documents valides</li>
+                <li>Ne pas sous-traiter les livraisons sans autorisation</li>
+                <li>Signaler immédiatement tout incident ou retard</li>
+            </ul>
+
+            <h4>ARTICLE 3 - RÉMUNÉRATION</h4>
+            <p>Le Coursier perçoit une commission sur chaque livraison effectuée. Le montant est déterminé selon la
+                distance et le type de colis. Les gains sont crédités sur le wallet du Coursier et peuvent être retirés
+                via Mobile Money.</p>
+
+            <h4>ARTICLE 4 - CAUTION</h4>
+            <p>Une caution de {{ onboarding.caution_amount|floatformat:0 }} XAF est versée par le Coursier à titre de
+                garantie. Cette caution est intégralement remboursable à la fin de la collaboration, déduction faite
+                d'éventuels dommages ou impayés.</p>
+
+            <h4>ARTICLE 5 - PÉRIODE PROBATOIRE</h4>
+            <p>Les {{ onboarding.probation_deliveries_required }} premières livraisons constituent une période
+                probatoire. Durant cette période, DELIVR-CM se réserve le droit de mettre fin au partenariat sans
+                préavis.</p>
+
+            <h4>ARTICLE 6 - RESPONSABILITÉ</h4>
+            <p>Le Coursier est responsable des colis depuis leur prise en charge jusqu'à leur livraison. En cas de perte
+                ou dommage imputable au Coursier, le montant sera déduit de son wallet.</p>
+
+            <h4>ARTICLE 7 - RÉSILIATION</h4>
+            <p>Chaque partie peut résilier ce contrat avec un préavis de 7 jours. En cas de faute grave, la résiliation
+                peut être immédiate.</p>
+
+            <h4>ARTICLE 8 - PROTECTION DES DONNÉES</h4>
+            <p>Les données personnelles du Coursier sont traitées conformément à la réglementation en vigueur au
+                Cameroun et ne sont utilisées que pour les besoins du service.</p>
+
+            <h4>ARTICLE 9 - DROIT APPLICABLE</h4>
+            <p>Ce contrat est régi par le droit camerounais. Tout litige sera soumis aux tribunaux compétents de Douala.
+            </p>
+        </div>
+
+        <div class="form-group" style="margin-top: 1rem;">
+            <label class="checkbox-label">
+                <input type="checkbox" name="accept_terms" required>
+                <span>J'ai lu et j'accepte les termes du contrat de partenariat. Je reconnais que cette acceptation
+                    électronique a la même valeur qu'une signature manuscrite.</span>
+            </label>
+        </div>
+
+        <div class="form-group">
+            <label class="checkbox-label">
+                <input type="checkbox" name="accept_data" required>
+                <span>J'autorise DELIVR-CM à collecter et traiter mes données personnelles conformément à l'article
+                    8.</span>
+            </label>
+        </div>
+
+        <input type="hidden" name="signature_text"
+            value="Accepté par {{ user.full_name }} ({{ user.phone_number }}) le {% now 'Y-m-d H:i:s' %}">
+
+        <button type="submit" class="btn-primary" id="signBtn">
+            ✍️ Signer le contrat
+        </button>
+    </div>
+</form>
+
+<script>
+    // Disable button until checkboxes are checked
+    const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+    const signBtn = document.getElementById('signBtn');
+
+    function updateButton() {
+        const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+        signBtn.disabled = !allChecked;
+    }
+
+    checkboxes.forEach(cb => cb.addEventListener('change', updateButton));
+    updateButton();
+</script>
+{% endblock %}

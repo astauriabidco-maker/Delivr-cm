@@ -1,0 +1,544 @@
+{% extends "fleet/base.html" %}
+{% load static %}
+
+{% block title %}Carte Temps Réel - Fleet Admin{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
+<style>
+    .live-map-container {
+        height: calc(100vh - 180px);
+        min-height: 500px;
+        border-radius: var(--border-radius-lg);
+        overflow: hidden;
+        box-shadow: var(--shadow-lg);
+    }
+
+    #live-map {
+        height: 100%;
+        width: 100%;
+    }
+
+    /* Map Controls */
+    .map-controls {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .map-filters {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .filter-btn {
+        padding: 0.5rem 1rem;
+        border-radius: var(--border-radius-full);
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: 2px solid transparent;
+        background: var(--bg-secondary);
+        color: var(--text-secondary);
+    }
+
+    .filter-btn:hover {
+        background: var(--bg-tertiary);
+    }
+
+    .filter-btn.active {
+        background: var(--primary);
+        color: white;
+        border-color: var(--primary);
+    }
+
+    .filter-btn.online {
+        --filter-color: #22c55e;
+    }
+
+    .filter-btn.busy {
+        --filter-color: #f59e0b;
+    }
+
+    .filter-btn.offline {
+        --filter-color: #94a3b8;
+    }
+
+    .filter-btn.active.online {
+        background: var(--filter-color);
+        border-color: var(--filter-color);
+    }
+
+    .filter-btn.active.busy {
+        background: var(--filter-color);
+        border-color: var(--filter-color);
+    }
+
+    .filter-btn.active.offline {
+        background: var(--filter-color);
+        border-color: var(--filter-color);
+    }
+
+    .map-stats {
+        display: flex;
+        gap: 1.5rem;
+        align-items: center;
+    }
+
+    .stat-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.875rem;
+    }
+
+    .stat-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+    }
+
+    .stat-dot.online {
+        background: #22c55e;
+    }
+
+    .stat-dot.busy {
+        background: #f59e0b;
+    }
+
+    .stat-dot.offline {
+        background: #94a3b8;
+    }
+
+    /* Custom Markers */
+    .courier-marker {
+        background-color: #22c55e;
+        border: 3px solid white;
+        border-radius: 50%;
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        font-weight: 600;
+        color: white;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    .courier-marker.busy {
+        background-color: #f59e0b;
+    }
+
+    .courier-marker.offline {
+        background-color: #94a3b8;
+    }
+
+    .courier-marker.platinum {
+        border-color: #f59e0b;
+        box-shadow: 0 0 12px rgba(245, 158, 11, 0.5);
+    }
+
+    .delivery-marker {
+        background-color: #3b82f6;
+        border: 2px dashed white;
+        border-radius: 50%;
+        width: 28px;
+        height: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+
+        0%,
+        100% {
+            transform: scale(1);
+        }
+
+        50% {
+            transform: scale(1.1);
+        }
+    }
+
+    /* Popup Styling */
+    .leaflet-popup-content-wrapper {
+        border-radius: var(--border-radius-lg);
+        box-shadow: var(--shadow-lg);
+    }
+
+    .courier-popup {
+        min-width: 200px;
+    }
+
+    .courier-popup h4 {
+        margin: 0 0 0.5rem;
+        font-size: 1rem;
+        font-weight: 600;
+    }
+
+    .courier-popup .level-badge {
+        display: inline-block;
+        padding: 0.125rem 0.5rem;
+        border-radius: var(--border-radius-full);
+        font-size: 0.75rem;
+        font-weight: 500;
+        background: var(--bg-secondary);
+    }
+
+    .courier-popup .stats {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.5rem;
+        margin-top: 0.75rem;
+        font-size: 0.875rem;
+    }
+
+    .courier-popup .stats span {
+        color: var(--text-secondary);
+    }
+
+    .courier-popup .actions {
+        margin-top: 0.75rem;
+        padding-top: 0.75rem;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .courier-popup .actions a {
+        color: var(--primary);
+        font-weight: 500;
+        text-decoration: none;
+        font-size: 0.875rem;
+    }
+
+    /* Legend */
+    .map-legend {
+        background: var(--bg-primary);
+        padding: 1rem;
+        border-radius: var(--border-radius-lg);
+        box-shadow: var(--shadow-md);
+        position: absolute;
+        bottom: 20px;
+        left: 20px;
+        z-index: 1000;
+    }
+
+    .legend-title {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        font-size: 0.875rem;
+    }
+
+    .legend-items {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+    }
+
+    /* Last Update */
+    .last-update {
+        font-size: 0.75rem;
+        color: var(--text-tertiary);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .update-indicator {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #22c55e;
+        animation: blink 2s infinite;
+    }
+
+    @keyframes blink {
+
+        0%,
+        100% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: 0.5;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>🗺️ Carte Temps Réel</h1>
+        <p class="text-secondary">Positions des coursiers en direct</p>
+    </div>
+    <div class="last-update">
+        <span class="update-indicator"></span>
+        <span id="last-update-time">Mise à jour...</span>
+    </div>
+</div>
+
+<!-- Map Controls -->
+<div class="map-controls">
+    <div class="map-filters">
+        <button class="filter-btn online active" data-filter="online">
+            🟢 En ligne
+        </button>
+        <button class="filter-btn busy active" data-filter="busy">
+            🟡 En course
+        </button>
+        <button class="filter-btn active" data-filter="deliveries">
+            📦 Livraisons en cours
+        </button>
+    </div>
+
+    <div class="map-stats">
+        <div class="stat-item">
+            <span class="stat-dot online"></span>
+            <span id="stat-online">0</span> en ligne
+        </div>
+        <div class="stat-item">
+            <span class="stat-dot busy"></span>
+            <span id="stat-busy">0</span> en course
+        </div>
+        <div class="stat-item">
+            📦 <span id="stat-deliveries">0</span> livraisons
+        </div>
+    </div>
+</div>
+
+<!-- Map Container -->
+<div class="live-map-container">
+    <div id="live-map"></div>
+
+    <div class="map-legend">
+        <div class="legend-title">Légende</div>
+        <div class="legend-items">
+            <div class="legend-item">
+                <div class="stat-dot online"></div>
+                Coursier disponible
+            </div>
+            <div class="legend-item">
+                <div class="stat-dot busy"></div>
+                Coursier en course
+            </div>
+            <div class="legend-item">
+                <span style="color: #3b82f6;">📦</span>
+                Livraison en attente
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+<script>
+    (function () {
+        // Config
+        const API_URL = '/fleet/api/courier-positions/';
+        const REFRESH_INTERVAL = 10000; // 10 seconds
+        const DEFAULT_CENTER = [4.0511, 9.7679]; // Douala
+        const DEFAULT_ZOOM = 13;
+
+        // State
+        let map = null;
+        let courierMarkers = {};
+        let deliveryMarkers = {};
+        let markerCluster = null;
+        let filters = {
+            online: true,
+            busy: true,
+            deliveries: true
+        };
+
+        // Level colors
+        const LEVEL_COLORS = {
+            'BRONZE': '#cd7f32',
+            'SILVER': '#c0c0c0',
+            'GOLD': '#ffd700',
+            'PLATINUM': '#e5e4e2'
+        };
+
+        // Initialize map
+        function initMap() {
+            map = L.map('live-map').setView(DEFAULT_CENTER, DEFAULT_ZOOM);
+
+            // OpenStreetMap tiles
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+
+            // Marker cluster group
+            markerCluster = L.markerClusterGroup({
+                disableClusteringAtZoom: 15,
+                spiderfyOnMaxZoom: true,
+                showCoverageOnHover: false,
+                maxClusterRadius: 50
+            });
+            map.addLayer(markerCluster);
+
+            // Initial data fetch
+            fetchCourierPositions();
+
+            // Auto-refresh
+            setInterval(fetchCourierPositions, REFRESH_INTERVAL);
+        }
+
+        // Fetch courier positions from API
+        async function fetchCourierPositions() {
+            try {
+                const response = await fetch(API_URL);
+                const data = await response.json();
+
+                updateMarkers(data.couriers || []);
+                updateStats(data.couriers || [], data.deliveries || []);
+                updateLastUpdateTime();
+
+            } catch (error) {
+                console.error('[LiveMap] Error fetching positions:', error);
+            }
+        }
+
+        // Update markers on map
+        function updateMarkers(couriers) {
+            const currentIds = new Set();
+
+            couriers.forEach(courier => {
+                if (!courier.lat || !courier.lng) return;
+
+                currentIds.add(courier.id);
+                const isBusy = courier.in_delivery;
+
+                // Skip based on filters
+                if (isBusy && !filters.busy) return;
+                if (!isBusy && !filters.online) return;
+
+                if (courierMarkers[courier.id]) {
+                    // Update existing marker position
+                    courierMarkers[courier.id].setLatLng([courier.lat, courier.lng]);
+                } else {
+                    // Create new marker
+                    const marker = createCourierMarker(courier);
+                    courierMarkers[courier.id] = marker;
+                    markerCluster.addLayer(marker);
+                }
+            });
+
+            // Remove markers for couriers no longer visible
+            Object.keys(courierMarkers).forEach(id => {
+                if (!currentIds.has(id)) {
+                    markerCluster.removeLayer(courierMarkers[id]);
+                    delete courierMarkers[id];
+                }
+            });
+        }
+
+        // Create courier marker
+        function createCourierMarker(courier) {
+            const isBusy = courier.in_delivery;
+            const isPlatinum = courier.level === 'PLATINUM';
+
+            const html = `
+            <div class="courier-marker ${isBusy ? 'busy' : ''} ${isPlatinum ? 'platinum' : ''}">
+                ${courier.name.charAt(0).toUpperCase()}
+            </div>
+        `;
+
+            const icon = L.divIcon({
+                html: html,
+                className: '',
+                iconSize: [36, 36],
+                iconAnchor: [18, 18]
+            });
+
+            const marker = L.marker([courier.lat, courier.lng], { icon: icon });
+
+            // Popup content
+            const popupContent = `
+            <div class="courier-popup">
+                <h4>${courier.name}</h4>
+                <span class="level-badge" style="background: ${LEVEL_COLORS[courier.level] || '#94a3b8'}">
+                    ${courier.level}
+                </span>
+                <div class="stats">
+                    <div>📞 ${courier.phone}</div>
+                    <div>⭐ ${courier.rating || 'N/A'}</div>
+                    <div>📦 ${courier.deliveries_today || 0} auj.</div>
+                    <div>⏱️ ${formatTime(courier.last_update)}</div>
+                </div>
+                <div class="actions">
+                    <a href="/fleet/courier/${courier.id}/">Voir détails →</a>
+                </div>
+            </div>
+        `;
+
+            marker.bindPopup(popupContent);
+
+            return marker;
+        }
+
+        // Update stats display
+        function updateStats(couriers, deliveries) {
+            const online = couriers.filter(c => !c.in_delivery).length;
+            const busy = couriers.filter(c => c.in_delivery).length;
+
+            document.getElementById('stat-online').textContent = online;
+            document.getElementById('stat-busy').textContent = busy;
+            document.getElementById('stat-deliveries').textContent = deliveries.length || 0;
+        }
+
+        // Update last update time
+        function updateLastUpdateTime() {
+            const now = new Date();
+            document.getElementById('last-update-time').textContent =
+                `Dernière MAJ: ${now.toLocaleTimeString('fr-FR')}`;
+        }
+
+        // Format time ago
+        function formatTime(isoString) {
+            if (!isoString) return 'N/A';
+
+            const date = new Date(isoString);
+            const now = new Date();
+            const diff = Math.floor((now - date) / 1000);
+
+            if (diff < 60) return 'À l\'instant';
+            if (diff < 3600) return `${Math.floor(diff / 60)} min`;
+            return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        // Filter button handlers
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const filter = this.dataset.filter;
+                filters[filter] = !filters[filter];
+                this.classList.toggle('active');
+                fetchCourierPositions(); // Refresh with new filters
+            });
+        });
+
+        // Initialize on DOM ready
+        document.addEventListener('DOMContentLoaded', initMap);
+    })();
+</script>
+{% endblock %}

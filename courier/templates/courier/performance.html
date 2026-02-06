@@ -1,0 +1,156 @@
+{% extends 'courier/base.html' %}
+
+{% block title %}Performance{% endblock %}
+
+{% block content %}
+<header class="header">
+    <div class="header-top">
+        <h1 style="font-size: 1.25rem;">Mes Performances</h1>
+    </div>
+</header>
+
+<div class="container" style="padding-top: 1rem;">
+    <!-- Level Card -->
+    <div class="card"
+        style="text-align: center; background: linear-gradient(135deg, var(--secondary) 0%, #16213e 100%); color: white;">
+        <div style="font-size: 4rem; margin-bottom: 0.5rem;">{{ performance.level_info.icon }}</div>
+        <div style="font-size: 1.5rem; font-weight: 700;">{{ performance.level_info.label }}</div>
+        <div style="opacity: 0.8; margin-bottom: 1rem;">Niveau actuel</div>
+
+        {% if performance.next_level.next_level %}
+        <div style="background: rgba(255,255,255,0.1); border-radius: 8px; padding: 1rem; margin-top: 1rem;">
+            <div style="display: flex; justify-content: space-between; font-size: 0.875rem; margin-bottom: 0.5rem;">
+                <span>Prochain: {{ performance.next_level.next_level_info.label }}</span>
+                <span>{{ performance.next_level.progress_percent }}%</span>
+            </div>
+            <div style="height: 8px; background: rgba(255,255,255,0.2); border-radius: 4px; overflow: hidden;">
+                <div
+                    style="height: 100%; width: {{ performance.next_level.progress_percent }}%; background: var(--primary); border-radius: 4px;">
+                </div>
+            </div>
+            <div style="font-size: 0.75rem; margin-top: 0.5rem; opacity: 0.8;">
+                {{ performance.next_level.deliveries_needed }} courses restantes • Note requise: {{
+                performance.next_level.rating_needed }}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Key Metrics -->
+    <div class="stats-row">
+        <div class="stat-card">
+            <div class="stat-value">{{ performance.total_deliveries }}</div>
+            <div class="stat-label">Total Courses</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">⭐ {{ performance.average_rating }}</div>
+            <div class="stat-label">Note Moyenne</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ performance.total_distance_km }}</div>
+            <div class="stat-label">km parcourus</div>
+        </div>
+    </div>
+
+    <!-- Streak & Reliability -->
+    <div class="card">
+        <h2 class="card-title mb-2">Fiabilité</h2>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div style="text-align: center; padding: 1rem; background: var(--gray-50); border-radius: 8px;">
+                <div style="font-size: 2rem;">🔥</div>
+                <div style="font-size: 1.5rem; font-weight: 700;">{{ performance.current_streak }}</div>
+                <div style="font-size: 0.75rem; color: var(--gray-500);">Série actuelle</div>
+            </div>
+            <div style="text-align: center; padding: 1rem; background: var(--gray-50); border-radius: 8px;">
+                <div style="font-size: 2rem;">🏆</div>
+                <div style="font-size: 1.5rem; font-weight: 700;">{{ performance.best_streak }}</div>
+                <div style="font-size: 0.75rem; color: var(--gray-500);">Meilleure série</div>
+            </div>
+        </div>
+
+        <div style="margin-top: 1rem;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                <span style="font-size: 0.875rem;">Taux d'acceptation</span>
+                <span style="font-weight: 600;">{{ performance.acceptance_rate|floatformat:1 }}%</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill"
+                    style="width: {{ performance.acceptance_rate }}%; background: {% if performance.acceptance_rate >= 90 %}var(--success){% elif performance.acceptance_rate >= 70 %}var(--warning){% else %}var(--danger){% endif %};">
+                </div>
+            </div>
+        </div>
+
+        {% if performance.cancellation_count > 0 %}
+        <div style="margin-top: 1rem; padding: 0.75rem; background: #fee2e2; border-radius: 8px; font-size: 0.875rem;">
+            ⚠️ {{ performance.cancellation_count }} annulation(s) au total
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Ranking -->
+    <div class="card">
+        <h2 class="card-title mb-2">Classement</h2>
+
+        <div style="display: flex; align-items: center; justify-content: center; padding: 2rem;">
+            <div style="text-align: center;">
+                <div style="font-size: 3rem; font-weight: 700; color: var(--primary);">#{{ rank.rank }}</div>
+                <div style="color: var(--gray-500);">sur {{ rank.total_couriers }} coursiers</div>
+                <div style="margin-top: 1rem;">
+                    <span
+                        style="background: var(--primary); color: white; padding: 0.5rem 1rem; border-radius: 20px; font-weight: 600;">
+                        Top {{ rank.top_percent|floatformat:0 }}%
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <a href="{% url 'courier:leaderboard' %}" class="btn btn-outline btn-block">
+            Voir le Classement Complet
+        </a>
+    </div>
+
+    <!-- Badges -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">Mes Badges</h2>
+            <span style="color: var(--gray-500); font-size: 0.875rem;">{{ performance.badges.total_badges }}/{{
+                performance.badges.available_badges }}</span>
+        </div>
+
+        {% if performance.badges.badges %}
+        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+            {% for badge in performance.badges.badges %}
+            <div
+                style="padding: 0.5rem 0.75rem; background: var(--gray-100); border-radius: 20px; font-size: 0.875rem;">
+                {{ badge.icon }} {{ badge.display|slice:":20" }}
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div style="text-align: center; padding: 2rem; color: var(--gray-500);">
+            Continuez à livrer pour gagner des badges! 🏅
+        </div>
+        {% endif %}
+
+        <a href="{% url 'courier:badges' %}" class="btn btn-outline btn-block mt-2">
+            Voir Tous les Badges
+        </a>
+    </div>
+
+    <!-- Level Benefits -->
+    <div class="card">
+        <h2 class="card-title mb-2">Avantages de Votre Niveau</h2>
+
+        <ul style="list-style: none;">
+            {% for perk in performance.level_info.perks %}
+            <li
+                style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0; border-bottom: 1px solid var(--gray-100);">
+                <span style="color: var(--success);">✓</span>
+                <span>{{ perk }}</span>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endblock %}

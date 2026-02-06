@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulateur Tarification - DELIVR-CM</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #fff;
+            padding: 32px;
+        }
+
+        h1 {
+            font-size: 1.75rem;
+            margin-bottom: 24px;
+        }
+
+        h1 span {
+            color: #00d084;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 24px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 24px;
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            margin-bottom: 16px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 8px;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            accent-color: #00d084;
+        }
+
+        .range-value {
+            text-align: right;
+            font-weight: 600;
+            color: #00d084;
+            font-size: 1.1rem;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #00d084, #00b894);
+            color: #fff;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 8px;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .chart-container {
+            height: 300px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 24px;
+        }
+
+        th,
+        td {
+            padding: 12px;
+            text-align: right;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        th {
+            color: rgba(255, 255, 255, 0.5);
+            font-weight: 500;
+        }
+
+        td:first-child,
+        th:first-child {
+            text-align: left;
+        }
+
+        .current-tag {
+            background: #00d084;
+            color: #000;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            margin-left: 8px;
+        }
+
+        .config-display {
+            background: rgba(0, 208, 132, 0.1);
+            border: 1px solid rgba(0, 208, 132, 0.3);
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 0.85rem;
+            margin-bottom: 16px;
+        }
+
+        .config-display strong {
+            color: #00d084;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>📊 Simulateur <span>Tarification</span></h1>
+
+    <div class="grid">
+        <!-- Controls -->
+        <div class="card">
+            <h3 class="card-title">Configuration</h3>
+
+            <div class="config-display">
+                <strong>Actuel:</strong> {{ current_config.base_fare|floatformat:0 }} XAF +
+                {{ current_config.cost_per_km|floatformat:0 }} XAF/km
+                (min: {{ current_config.minimum_fare|floatformat:0 }})
+            </div>
+
+            <form method="get" id="configForm">
+                <div class="form-group">
+                    <label>Tarif de base (XAF)</label>
+                    <input type="range" name="base_fare" id="baseFare" min="0" max="2000" step="100"
+                        value="{{ test_config.base_fare }}">
+                    <div class="range-value" id="baseFareValue">{{ test_config.base_fare|floatformat:0 }}</div>
+                </div>
+
+                <div class="form-group">
+                    <label>Coût par km (XAF)</label>
+                    <input type="range" name="cost_per_km" id="costPerKm" min="50" max="500" step="25"
+                        value="{{ test_config.cost_per_km }}">
+                    <div class="range-value" id="costPerKmValue">{{ test_config.cost_per_km|floatformat:0 }}</div>
+                </div>
+
+                <div class="form-group">
+                    <label>Tarif minimum (XAF)</label>
+                    <input type="range" name="minimum_fare" id="minimumFare" min="500" max="3000" step="100"
+                        value="{{ test_config.minimum_fare }}">
+                    <div class="range-value" id="minimumFareValue">{{ test_config.minimum_fare|floatformat:0 }}</div>
+                </div>
+
+                <button type="submit" class="btn">🔄 Simuler</button>
+            </form>
+
+            <a href="{% url 'reports:pricing-csv' %}?base_fare={{ test_config.base_fare }}&cost_per_km={{ test_config.cost_per_km }}&minimum_fare={{ test_config.minimum_fare }}"
+                class="btn btn-secondary" download>
+                📥 Export CSV
+            </a>
+        </div>
+
+        <!-- Chart and Table -->
+        <div>
+            <div class="card">
+                <h3 class="card-title">Courbe prix / distance</h3>
+                <div class="chart-container">
+                    <canvas id="priceChart"></canvas>
+                </div>
+            </div>
+
+            <div class="card" style="margin-top: 24px;">
+                <h3 class="card-title">Détail par distance</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Distance (km)</th>
+                            <th>Prix Client</th>
+                            <th>Commission</th>
+                            <th>Gain Coursier</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in scenarios %}
+                        <tr>
+                            <td>{{ s.distance_km }} km</td>
+                            <td>{{ s.total_price|floatformat:0 }} XAF</td>
+                            <td>{{ s.platform_fee|floatformat:0 }} XAF</td>
+                            <td>{{ s.courier_earning|floatformat:0 }} XAF</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Slider value display
+        document.querySelectorAll('input[type="range"]').forEach(slider => {
+            slider.addEventListener('input', function () {
+                const valueDisplay = document.getElementById(this.id + 'Value');
+                valueDisplay.textContent = this.value;
+            });
+        });
+
+        // Chart
+        const ctx = document.getElementById('priceChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: {{ chart_labels| safe }},
+            datasets: [{
+                label: 'Prix client (XAF)',
+                data: {{ chart_prices| safe }},
+            borderColor: '#00d084',
+            backgroundColor: 'rgba(0, 208, 132, 0.1)',
+            fill: true,
+            tension: 0.3,
+            pointRadius: 4,
+                }]
+            },
+            options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Distance (km)',
+                        color: 'rgba(255,255,255,0.5)'
+                    },
+                    ticks: { color: 'rgba(255,255,255,0.5)' },
+                    grid: { color: 'rgba(255,255,255,0.1)' }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Prix (XAF)',
+                        color: 'rgba(255,255,255,0.5)'
+                    },
+                    ticks: { color: 'rgba(255,255,255,0.5)' },
+                    grid: { color: 'rgba(255,255,255,0.1)' }
+                }
+            }
+        }
+        });
+    </script>
+</body>
+
+</html>

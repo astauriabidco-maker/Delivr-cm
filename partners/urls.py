@@ -16,6 +16,7 @@ from .views import (
     PartnerOrderExportView,
     PartnerWebhooksView,
     PartnerBrandingView,
+    PartnerInvoicesView,
 )
 
 app_name = 'partners'
@@ -42,6 +43,9 @@ urlpatterns = [
     
     # Branding / Customization
     path('branding/', PartnerBrandingView.as_view(), name='branding'),
+    
+    # Invoices / Billing
+    path('invoices/', PartnerInvoicesView.as_view(), name='invoices'),
     
     # API Documentation (Protected - Login Required)
     path('docs/schema/', login_required(SpectacularAPIView.as_view()), name='schema'),

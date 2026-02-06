@@ -1,0 +1,339 @@
+{% extends 'fleet/base.html' %}
+
+{% block title %}Alertes{% endblock %}
+{% block page_title %}Alertes{% endblock %}
+{% block page_subtitle %}{{ alerts|length }} alertes actives{% endblock %}
+
+{% block content %}
+<!-- Alert Stats -->
+<div class="alert-stats">
+    <div class="stat-pill danger">
+        <span class="count">{{ danger_count }}</span>
+        <span class="label">Critiques</span>
+    </div>
+    <div class="stat-pill warning">
+        <span class="count">{{ warning_count }}</span>
+        <span class="label">Attention</span>
+    </div>
+    <div class="stat-pill info">
+        <span class="count">{{ info_count }}</span>
+        <span class="label">Info</span>
+    </div>
+</div>
+
+<!-- Alerts List -->
+<div class="alerts-container">
+    {% for alert in alerts %}
+    <div class="alert-card {{ alert.severity }}">
+        <div class="alert-icon">
+            {% if alert.severity == 'danger' %}🚨
+            {% elif alert.severity == 'warning' %}⚠️
+            {% else %}ℹ️
+            {% endif %}
+        </div>
+        <div class="alert-content">
+            <div class="alert-header">
+                <span class="alert-type">{{ alert.type_display }}</span>
+                <span class="alert-badge {{ alert.severity }}">{{ alert.severity|upper }}</span>
+            </div>
+            <p class="alert-message">{{ alert.message }}</p>
+            {% if alert.courier %}
+            <div class="alert-meta">
+                <span class="courier-link">
+                    👤 <a href="{% url 'fleet:courier_detail' alert.courier.id %}">
+                        {{ alert.courier.first_name }} {{ alert.courier.last_name }}
+                    </a>
+                </span>
+                <span class="alert-time">📅 {{ alert.created_at|date:"d/m H:i" }}</span>
+            </div>
+            {% endif %}
+        </div>
+        <div class="alert-actions">
+            {% if alert.type == 'high_debt' or alert.type == 'blocked' %}
+            <a href="{% url 'fleet:courier_detail' alert.courier.id %}" class="btn btn-sm btn-primary">Gérer</a>
+            {% elif alert.type == 'pending_verification' %}
+            <form method="post" action="{% url 'fleet:verify_courier' alert.courier.id %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-success">Vérifier</button>
+            </form>
+            {% else %}
+            <a href="{% url 'fleet:courier_detail' alert.courier.id %}" class="btn btn-sm btn-secondary">Voir</a>
+            {% endif %}
+        </div>
+    </div>
+    {% empty %}
+    <div class="empty-state card">
+        <span class="empty-icon">✅</span>
+        <h3>Aucune alerte active</h3>
+        <p>Tout fonctionne correctement !</p>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Alert Types Legend -->
+<div class="card legend-card">
+    <div class="card-header">
+        <h2>📖 Types d'Alertes</h2>
+    </div>
+    <div class="card-body">
+        <div class="legend-grid">
+            <div class="legend-item">
+                <span class="legend-icon danger">🚨</span>
+                <div class="legend-content">
+                    <span class="legend-title">Critique (Danger)</span>
+                    <span class="legend-desc">Coursier bloqué, dette très élevée</span>
+                </div>
+            </div>
+            <div class="legend-item">
+                <span class="legend-icon warning">⚠️</span>
+                <div class="legend-content">
+                    <span class="legend-title">Attention (Warning)</span>
+                    <span class="legend-desc">Dette élevée, inactivité, faible acceptation</span>
+                </div>
+            </div>
+            <div class="legend-item">
+                <span class="legend-icon info">ℹ️</span>
+                <div class="legend-content">
+                    <span class="legend-title">Information (Info)</span>
+                    <span class="legend-desc">Vérification en attente, faible couverture</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .alert-stats {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .stat-pill {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem 1.5rem;
+        border-radius: 50px;
+        background: var(--card-bg);
+    }
+
+    .stat-pill.danger {
+        border-left: 4px solid var(--danger);
+    }
+
+    .stat-pill.warning {
+        border-left: 4px solid var(--warning);
+    }
+
+    .stat-pill.info {
+        border-left: 4px solid var(--info);
+    }
+
+    .stat-pill .count {
+        font-size: 1.5rem;
+        font-weight: 700;
+    }
+
+    .stat-pill .label {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+    }
+
+    .alerts-container {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .alert-card {
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        padding: 1.25rem;
+        background: var(--card-bg);
+        border-radius: 12px;
+        border-left: 4px solid;
+    }
+
+    .alert-card.danger {
+        border-left-color: var(--danger);
+    }
+
+    .alert-card.warning {
+        border-left-color: var(--warning);
+    }
+
+    .alert-card.info {
+        border-left-color: var(--info);
+    }
+
+    .alert-icon {
+        font-size: 1.5rem;
+        min-width: 40px;
+        text-align: center;
+    }
+
+    .alert-content {
+        flex: 1;
+    }
+
+    .alert-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .alert-type {
+        font-weight: 600;
+    }
+
+    .alert-badge {
+        padding: 0.125rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.625rem;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+
+    .alert-badge.danger {
+        background: rgba(239, 68, 68, 0.1);
+        color: var(--danger);
+    }
+
+    .alert-badge.warning {
+        background: rgba(245, 158, 11, 0.1);
+        color: var(--warning);
+    }
+
+    .alert-badge.info {
+        background: rgba(59, 130, 246, 0.1);
+        color: var(--info);
+    }
+
+    .alert-message {
+        margin: 0 0 0.75rem 0;
+        color: var(--text-secondary);
+    }
+
+    .alert-meta {
+        display: flex;
+        gap: 1.5rem;
+        font-size: 0.875rem;
+    }
+
+    .courier-link a {
+        color: var(--primary);
+        text-decoration: none;
+    }
+
+    .courier-link a:hover {
+        text-decoration: underline;
+    }
+
+    .alert-time {
+        color: var(--text-secondary);
+    }
+
+    .alert-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+    }
+
+    .empty-icon {
+        font-size: 4rem;
+        display: block;
+        margin-bottom: 1rem;
+    }
+
+    .empty-state h3 {
+        margin: 0 0 0.5rem 0;
+    }
+
+    .empty-state p {
+        color: var(--text-secondary);
+        margin: 0;
+    }
+
+    .legend-card {
+        margin-top: 1rem;
+    }
+
+    .legend-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1rem;
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem;
+        background: var(--surface);
+        border-radius: 8px;
+    }
+
+    .legend-icon {
+        font-size: 1.5rem;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+    }
+
+    .legend-icon.danger {
+        background: rgba(239, 68, 68, 0.1);
+    }
+
+    .legend-icon.warning {
+        background: rgba(245, 158, 11, 0.1);
+    }
+
+    .legend-icon.info {
+        background: rgba(59, 130, 246, 0.1);
+    }
+
+    .legend-title {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+
+    .legend-desc {
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+    }
+
+    @media (max-width: 768px) {
+        .alert-stats {
+            flex-wrap: wrap;
+        }
+
+        .stat-pill {
+            flex: 1;
+            min-width: 100px;
+        }
+
+        .alert-card {
+            flex-wrap: wrap;
+        }
+
+        .alert-actions {
+            width: 100%;
+            margin-top: 0.5rem;
+        }
+    }
+</style>
+{% endblock %}

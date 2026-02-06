@@ -1,0 +1,505 @@
+{% extends 'fleet/base.html' %}
+
+{% block title %}{{ courier.first_name }} {{ courier.last_name }}{% endblock %}
+{% block page_title %}{{ courier.first_name }} {{ courier.last_name }}{% endblock %}
+{% block page_subtitle %}{{ courier.phone_number }}{% endblock %}
+
+{% block content %}
+<!-- Courier Header Card -->
+<div class="profile-header">
+    <div class="profile-avatar">
+        <span class="avatar-text">{{ courier.first_name|slice:":1" }}{{ courier.last_name|slice:":1" }}</span>
+        <span class="status-dot {% if courier.is_online %}online{% else %}offline{% endif %}"></span>
+    </div>
+    <div class="profile-info">
+        <h1>{{ courier.first_name }} {{ courier.last_name }}</h1>
+        <div class="profile-meta">
+            <span class="level-badge">{{ level_info.icon }} {{ level_info.label }}</span>
+            {% if courier.is_courier_blocked %}
+            <span class="badge badge-danger">🚫 Bloqué</span>
+            {% elif not courier.is_verified %}
+            <span class="badge badge-warning">⏳ Non vérifié</span>
+            {% elif courier.is_online %}
+            <span class="badge badge-success">🟢 En ligne</span>
+            {% else %}
+            <span class="badge badge-secondary">🔴 Hors ligne</span>
+            {% endif %}
+        </div>
+        <div class="profile-contact">
+            <span>📱 {{ courier.phone_number }}</span>
+            <span>📧 {{ courier.email|default:"Non renseigné" }}</span>
+            <span>📅 Inscrit le {{ courier.date_joined|date:"d/m/Y" }}</span>
+        </div>
+    </div>
+    <div class="profile-actions">
+        {% if not courier.is_verified %}
+        <form method="post" action="{% url 'fleet:verify_courier' courier.id %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-success">✅ Vérifier</button>
+        </form>
+        {% endif %}
+        <form method="post" action="{% url 'fleet:toggle_block' courier.id %}">
+            {% csrf_token %}
+            {% if courier.is_courier_blocked %}
+            <button type="submit" class="btn btn-warning">🔓 Débloquer</button>
+            {% else %}
+            <button type="submit" class="btn btn-danger">🚫 Bloquer</button>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+<!-- Stats Grid -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon primary">📦</div>
+        <div class="stat-info">
+            <span class="stat-value">{{ courier.total_deliveries_completed }}</span>
+            <span class="stat-label">Courses complétées</span>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon success">⭐</div>
+        <div class="stat-info">
+            <span class="stat-value">{{ courier.average_rating|floatformat:1 }}</span>
+            <span class="stat-label">Note moyenne</span>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon info">📏</div>
+        <div class="stat-info">
+            <span class="stat-value">{{ courier.total_distance_km|floatformat:0 }}</span>
+            <span class="stat-label">Km parcourus</span>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon warning">📊</div>
+        <div class="stat-info">
+            <span class="stat-value">{{ courier.acceptance_rate|floatformat:0 }}%</span>
+            <span class="stat-label">Taux d'acceptation</span>
+        </div>
+    </div>
+</div>
+
+<div class="two-col">
+    <!-- Left Column -->
+    <div class="col">
+        <!-- Finance Card -->
+        <div class="card">
+            <div class="card-header">
+                <h2>💰 Finances</h2>
+            </div>
+            <div class="card-body">
+                <div class="finance-item">
+                    <span class="finance-label">Solde Wallet</span>
+                    <span class="finance-value {% if courier.wallet_balance < 0 %}text-danger{% endif %}">
+                        {{ courier.wallet_balance|floatformat:0 }} XAF
+                    </span>
+                </div>
+                <div class="finance-item">
+                    <span class="finance-label">Plafond Dette</span>
+                    <span class="finance-value">{{ courier.debt_ceiling|floatformat:0 }} XAF</span>
+                </div>
+                {% if courier.wallet_balance < 0 %} <div class="debt-progress">
+                    <div class="progress-bar">
+                        <div class="progress-fill {% if debt_percentage > 80 %}danger{% elif debt_percentage > 50 %}warning{% endif %}"
+                            style="width: {{ debt_percentage }}%"></div>
+                    </div>
+                    <span class="debt-text">{{ debt_percentage|floatformat:0 }}% du plafond utilisé</span>
+            </div>
+            {% endif %}
+            <div class="finance-item">
+                <span class="finance-label">Total Gagné (30j)</span>
+                <span class="finance-value text-success">{{ stats.total_earnings|floatformat:0 }} XAF</span>
+            </div>
+
+            <!-- Debt Ceiling Adjustment -->
+            <div class="debt-adjustment">
+                <form method="post" action="{% url 'fleet:adjust_debt' courier.id %}" class="inline-form">
+                    {% csrf_token %}
+                    <label>Ajuster le plafond:</label>
+                    <input type="number" name="new_ceiling" value="{{ courier.debt_ceiling }}" step="500" min="0">
+                    <button type="submit" class="btn btn-sm btn-primary">Modifier</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Documents Card -->
+    <div class="card">
+        <div class="card-header">
+            <h2>📄 Documents</h2>
+        </div>
+        <div class="card-body">
+            <div class="doc-item">
+                <span class="doc-label">📋 CNI</span>
+                {% if courier.cni_document %}
+                <a href="{{ courier.cni_document.url }}" target="_blank" class="btn btn-sm btn-secondary">Voir</a>
+                {% else %}
+                <span class="text-muted">Non soumis</span>
+                {% endif %}
+            </div>
+            <div class="doc-item">
+                <span class="doc-label">🏍️ Moto</span>
+                {% if courier.moto_document %}
+                <a href="{{ courier.moto_document.url }}" target="_blank" class="btn btn-sm btn-secondary">Voir</a>
+                {% else %}
+                <span class="text-muted">Non soumis</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Right Column -->
+<div class="col">
+    <!-- Recent Deliveries -->
+    <div class="card">
+        <div class="card-header">
+            <h2>📦 Dernières Courses</h2>
+        </div>
+        <div class="card-body" style="padding: 0;">
+            {% if recent_deliveries %}
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Statut</th>
+                        <th>Distance</th>
+                        <th>Gain</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for d in recent_deliveries %}
+                    <tr>
+                        <td>{{ d.created_at|date:"d/m H:i" }}</td>
+                        <td>
+                            {% if d.status == 'COMPLETED' %}
+                            <span class="badge badge-success">Complétée</span>
+                            {% elif d.status == 'CANCELLED' %}
+                            <span class="badge badge-danger">Annulée</span>
+                            {% else %}
+                            <span class="badge badge-warning">{{ d.status }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ d.distance_km|floatformat:1 }} km</td>
+                        <td class="text-success">{{ d.courier_earning|floatformat:0 }} XAF</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-state">
+                <span class="empty-icon">📭</span>
+                <p>Aucune course récente</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Badges -->
+    <div class="card">
+        <div class="card-header">
+            <h2>🏅 Badges</h2>
+        </div>
+        <div class="card-body">
+            {% if badges %}
+            <div class="badges-list">
+                {% for badge in badges %}
+                <span class="badge-item" title="{{ badge.badge_type }}">{{ badge.icon }}</span>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-muted">Aucun badge débloqué</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .profile-header {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        background: var(--card-bg);
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .profile-avatar {
+        position: relative;
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .avatar-text {
+        color: white;
+        font-size: 2rem;
+        font-weight: 700;
+    }
+
+    .status-dot {
+        position: absolute;
+        bottom: 4px;
+        right: 4px;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        border: 3px solid var(--card-bg);
+    }
+
+    .status-dot.online {
+        background: var(--success);
+    }
+
+    .status-dot.offline {
+        background: var(--text-secondary);
+    }
+
+    .profile-info {
+        flex: 1;
+    }
+
+    .profile-info h1 {
+        margin: 0 0 0.5rem 0;
+        font-size: 1.5rem;
+    }
+
+    .profile-meta {
+        display: flex;
+        gap: 0.75rem;
+        margin-bottom: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .level-badge {
+        font-weight: 600;
+    }
+
+    .profile-contact {
+        display: flex;
+        gap: 1.5rem;
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        flex-wrap: wrap;
+    }
+
+    .profile-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .stat-card {
+        background: var(--card-bg);
+        border-radius: 12px;
+        padding: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+
+    .stat-icon.primary {
+        background: rgba(0, 208, 132, 0.1);
+    }
+
+    .stat-icon.success {
+        background: rgba(245, 158, 11, 0.1);
+    }
+
+    .stat-icon.info {
+        background: rgba(59, 130, 246, 0.1);
+    }
+
+    .stat-icon.warning {
+        background: rgba(139, 92, 246, 0.1);
+    }
+
+    .stat-value {
+        display: block;
+        font-size: 1.5rem;
+        font-weight: 700;
+    }
+
+    .stat-label {
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+    }
+
+    .two-col {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+    }
+
+    .finance-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .finance-item:last-child {
+        border-bottom: none;
+    }
+
+    .finance-label {
+        color: var(--text-secondary);
+    }
+
+    .finance-value {
+        font-weight: 600;
+        font-size: 1.1rem;
+    }
+
+    .text-danger {
+        color: var(--danger) !important;
+    }
+
+    .text-success {
+        color: var(--success) !important;
+    }
+
+    .text-muted {
+        color: var(--text-secondary) !important;
+    }
+
+    .debt-progress {
+        padding: 1rem 0;
+    }
+
+    .progress-bar {
+        height: 8px;
+        background: var(--surface);
+        border-radius: 4px;
+        overflow: hidden;
+        margin-bottom: 0.5rem;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: var(--warning);
+        border-radius: 4px;
+    }
+
+    .progress-fill.warning {
+        background: #f59e0b;
+    }
+
+    .progress-fill.danger {
+        background: #ef4444;
+    }
+
+    .debt-text {
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+    }
+
+    .debt-adjustment {
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .inline-form {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .inline-form label {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+    }
+
+    .inline-form input {
+        width: 120px;
+        padding: 0.375rem 0.75rem;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        background: var(--surface);
+        color: var(--text-primary);
+    }
+
+    .doc-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .doc-item:last-child {
+        border-bottom: none;
+    }
+
+    .badges-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .badge-item {
+        font-size: 1.5rem;
+        cursor: help;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 2rem 1rem;
+        color: var(--text-secondary);
+    }
+
+    .empty-icon {
+        font-size: 2rem;
+        display: block;
+        margin-bottom: 0.5rem;
+    }
+
+    @media (max-width: 992px) {
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .two-col {
+            grid-template-columns: 1fr;
+        }
+
+        .profile-header {
+            flex-wrap: wrap;
+        }
+
+        .profile-actions {
+            width: 100%;
+            margin-top: 1rem;
+        }
+    }
+</style>
+{% endblock %}

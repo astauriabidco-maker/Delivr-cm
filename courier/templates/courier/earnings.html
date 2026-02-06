@@ -1,0 +1,248 @@
+{% extends 'courier/base.html' %}
+
+{% block title %}Mes Gains{% endblock %}
+{% block page_title %}Mes Gains{% endblock %}
+
+{% block content %}
+<!-- Period Selector -->
+<div class="period-tabs">
+    <button class="period-tab {% if period == 'week' %}active{% endif %}"
+        onclick="window.location.href='?period=week'">Semaine</button>
+    <button class="period-tab {% if period == 'month' %}active{% endif %}"
+        onclick="window.location.href='?period=month'">Mois</button>
+    <button class="period-tab {% if period == 'all' %}active{% endif %}"
+        onclick="window.location.href='?period=all'">Total</button>
+</div>
+
+<!-- Earnings Summary -->
+<div class="earnings-summary card">
+    <div class="summary-header">
+        <span class="summary-label">Total Gagné</span>
+        <span class="summary-period">{{ period_label }}</span>
+    </div>
+    <div class="summary-value">{{ earnings.total|floatformat:0 }} <small>XAF</small></div>
+    <div class="summary-details">
+        <div class="detail-item">
+            <span class="detail-label">📦 Courses</span>
+            <span class="detail-value">{{ earnings.deliveries_count }}</span>
+        </div>
+        <div class="detail-item">
+            <span class="detail-label">📏 Distance</span>
+            <span class="detail-value">{{ earnings.total_distance|floatformat:1 }} km</span>
+        </div>
+        <div class="detail-item">
+            <span class="detail-label">💵 Moyenne</span>
+            <span class="detail-value">{{ earnings.average_per_delivery|floatformat:0 }} XAF</span>
+        </div>
+    </div>
+</div>
+
+<!-- Earnings Chart -->
+<div class="card">
+    <div class="card-header">
+        <h2>📈 Évolution des Gains</h2>
+    </div>
+    <div class="card-body">
+        <div class="chart-container">
+            <canvas id="earningsChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Daily Breakdown -->
+<div class="card">
+    <div class="card-header">
+        <h2>📅 Détail par Jour</h2>
+    </div>
+    <div class="card-body" style="padding: 0;">
+        {% if earnings_history %}
+        <div class="earnings-list">
+            {% for day in earnings_history %}
+            <div class="earnings-day">
+                <div class="day-info">
+                    <span class="day-date">{{ day.date|date:"D d M" }}</span>
+                    <span class="day-stats">{{ day.count }} courses • {{ day.distance|floatformat:1 }} km</span>
+                </div>
+                <div class="day-amount {% if day.amount > 0 %}positive{% endif %}">
+                    +{{ day.amount|floatformat:0 }} XAF
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <span class="empty-icon">📭</span>
+            <p>Aucun gain sur cette période</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .period-tabs {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+        background: var(--card-bg);
+        padding: 0.25rem;
+        border-radius: 12px;
+    }
+
+    .period-tab {
+        flex: 1;
+        padding: 0.75rem;
+        border: none;
+        background: transparent;
+        border-radius: 10px;
+        font-weight: 500;
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .period-tab.active {
+        background: var(--primary);
+        color: white;
+    }
+
+    .earnings-summary {
+        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+        color: white;
+        padding: 1.5rem;
+        text-align: center;
+    }
+
+    .summary-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+        opacity: 0.9;
+    }
+
+    .summary-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+    }
+
+    .summary-value small {
+        font-size: 1rem;
+        opacity: 0.8;
+    }
+
+    .summary-details {
+        display: flex;
+        justify-content: space-around;
+        padding-top: 1rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .detail-item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .detail-label {
+        font-size: 0.75rem;
+        opacity: 0.9;
+    }
+
+    .detail-value {
+        font-weight: 600;
+    }
+
+    .chart-container {
+        height: 200px;
+    }
+
+    .earnings-list {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .earnings-day {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .earnings-day:last-child {
+        border-bottom: none;
+    }
+
+    .day-info {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .day-date {
+        font-weight: 600;
+        text-transform: capitalize;
+    }
+
+    .day-stats {
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+    }
+
+    .day-amount {
+        font-weight: 700;
+        font-size: 1.1rem;
+    }
+
+    .day-amount.positive {
+        color: var(--success);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+        color: var(--text-secondary);
+    }
+
+    .empty-icon {
+        font-size: 3rem;
+        display: block;
+        margin-bottom: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ctx = document.getElementById('earningsChart').getContext('2d');
+    const chartData = {{ chart_data| safe }};
+
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: chartData.labels,
+            datasets: [{
+                label: 'Gains (XAF)',
+                data: chartData.values,
+                backgroundColor: 'rgba(0, 208, 132, 0.8)',
+                borderRadius: 6,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: { beginAtZero: true },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+</script>
+{% endblock %}

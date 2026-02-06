@@ -1,0 +1,272 @@
+{% extends 'fleet/base.html' %}
+
+{% block title %}Fleet Dashboard{% endblock %}
+{% block page_title %}Fleet Management Dashboard{% endblock %}
+
+{% block content %}
+<!-- Quick Stats -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-card-header">
+            <span class="stat-card-title">Coursiers En Ligne</span>
+            <div class="stat-card-icon success">🟢</div>
+        </div>
+        <div class="stat-value">{{ fleet.online_couriers }}</div>
+        <span class="stat-change positive">{{ fleet.online_percentage }}% de la flotte</span>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-card-header">
+            <span class="stat-card-title">Livraisons (7j)</span>
+            <div class="stat-card-icon info">📦</div>
+        </div>
+        <div class="stat-value">{{ delivery_kpis.completed }}</div>
+        <span class="stat-change positive">{{ delivery_kpis.success_rate }}% réussite</span>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-card-header">
+            <span class="stat-card-title">Revenue (7j)</span>
+            <div class="stat-card-icon success">💰</div>
+        </div>
+        <div class="stat-value">{{ delivery_kpis.platform_earnings|floatformat:0 }}</div>
+        <span style="font-size: 0.75rem; color: var(--gray-500);">XAF commission plateforme</span>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-card-header">
+            <span class="stat-card-title">Alertes Actives</span>
+            <div
+                class="stat-card-icon {% if alert_summary.danger > 0 %}danger{% elif alert_summary.warning > 0 %}warning{% else %}info{% endif %}">
+                🔔</div>
+        </div>
+        <div class="stat-value">{{ alert_summary.total }}</div>
+        {% if alert_summary.danger > 0 %}
+        <span class="stat-change negative">{{ alert_summary.danger }} critique(s)</span>
+        {% endif %}
+    </div>
+</div>
+
+<div class="grid-2 mb-4">
+    <!-- Fleet Distribution -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">Distribution de la Flotte</h2>
+            <a href="{% url 'fleet:courier-list' %}" class="card-link">Voir tout →</a>
+        </div>
+        <div class="card-body">
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
+                <div style="text-align: center; padding: 1rem; background: var(--gray-50); border-radius: 8px;">
+                    <div style="font-size: 2rem; font-weight: 700; color: var(--success);">{{ fleet.online_couriers }}
+                    </div>
+                    <div style="font-size: 0.875rem; color: var(--gray-500);">En Ligne</div>
+                </div>
+                <div style="text-align: center; padding: 1rem; background: var(--gray-50); border-radius: 8px;">
+                    <div style="font-size: 2rem; font-weight: 700; color: var(--gray-400);">{{ fleet.offline_couriers }}
+                    </div>
+                    <div style="font-size: 0.875rem; color: var(--gray-500);">Hors Ligne</div>
+                </div>
+                <div style="text-align: center; padding: 1rem; background: var(--gray-50); border-radius: 8px;">
+                    <div style="font-size: 2rem; font-weight: 700; color: var(--danger);">{{ fleet.blocked_couriers }}
+                    </div>
+                    <div style="font-size: 0.875rem; color: var(--gray-500);">Bloqués</div>
+                </div>
+                <div style="text-align: center; padding: 1rem; background: var(--gray-50); border-radius: 8px;">
+                    <div style="font-size: 2rem; font-weight: 700; color: var(--warning);">{{ fleet.pending_verification
+                        }}</div>
+                    <div style="font-size: 0.875rem; color: var(--gray-500);">À Vérifier</div>
+                </div>
+            </div>
+
+            <!-- Level Distribution -->
+            <div style="margin-top: 1.5rem;">
+                <h3 style="font-size: 0.875rem; color: var(--gray-500); margin-bottom: 0.75rem;">Par Niveau</h3>
+                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                    {% for level, count in fleet.level_distribution.items %}
+                    <div style="padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.875rem;"
+                        class="badge-{{ level }}">
+                        {{ count }} {{ level }}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Metrics -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">Performance (7 jours)</h2>
+        </div>
+        <div class="card-body">
+            <div style="margin-bottom: 1.5rem;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                    <span style="font-size: 0.875rem;">Taux de Réussite</span>
+                    <span style="font-weight: 600;">{{ delivery_kpis.success_rate }}%</span>
+                </div>
+                <div style="height: 8px; background: var(--gray-200); border-radius: 4px; overflow: hidden;">
+                    <div
+                        style="height: 100%; width: {{ delivery_kpis.success_rate }}%; background: var(--success); border-radius: 4px;">
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; text-align: center;">
+                <div>
+                    <div style="font-size: 1.5rem; font-weight: 700;">{{ response_times.avg_assignment_time_minutes }}
+                    </div>
+                    <div style="font-size: 0.75rem; color: var(--gray-500);">min. attribution</div>
+                </div>
+                <div>
+                    <div style="font-size: 1.5rem; font-weight: 700;">{{ response_times.avg_pickup_time_minutes }}</div>
+                    <div style="font-size: 0.75rem; color: var(--gray-500);">min. pickup</div>
+                </div>
+                <div>
+                    <div style="font-size: 1.5rem; font-weight: 700;">{{ response_times.avg_delivery_duration_minutes }}
+                    </div>
+                    <div style="font-size: 0.75rem; color: var(--gray-500);">min. livraison</div>
+                </div>
+            </div>
+
+            <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--gray-200);">
+                <div style="display: flex; justify-content: space-between;">
+                    <div>
+                        <div style="font-size: 0.75rem; color: var(--gray-500);">Volume Total</div>
+                        <div style="font-weight: 600;">{{ delivery_kpis.total_deliveries }} livraisons</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 0.75rem; color: var(--gray-500);">Distance</div>
+                        <div style="font-weight: 600;">{{ delivery_kpis.total_distance_km }} km</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="grid-2 mb-4">
+    <!-- Alerts -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">🔔 Alertes Récentes</h2>
+            <a href="{% url 'fleet:alerts' %}" class="card-link">Tout voir →</a>
+        </div>
+        <div class="card-body">
+            {% if alerts %}
+            {% for alert in alerts %}
+            <div class="alert-item {{ alert.severity }}">
+                <span class="alert-icon">{{ alert.icon }}</span>
+                <div class="alert-content">
+                    <div class="alert-message">{{ alert.message }}</div>
+                    {% if alert.courier_name %}
+                    <div class="alert-meta">{{ alert.courier_name }}</div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+            {% else %}
+            <div style="text-align: center; padding: 2rem; color: var(--gray-500);">
+                ✅ Aucune alerte active
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Problem Couriers -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">⚠️ Coursiers à Surveiller</h2>
+        </div>
+        <div class="card-body">
+            {% if problem_couriers %}
+            {% for courier in problem_couriers %}
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid var(--gray-100);">
+                <div>
+                    <div style="font-weight: 500;">{{ courier.name }}</div>
+                    <div style="font-size: 0.75rem; color: var(--gray-500);">{{ courier.phone }}</div>
+                    <div style="display: flex; gap: 0.5rem; margin-top: 0.25rem;">
+                        {% for issue in courier.issues %}
+                        <span class="badge badge-warning" style="font-size: 0.625rem;">{{ issue }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                <a href="{% url 'fleet:courier-detail' courier.id %}" class="btn btn-sm btn-outline">Voir</a>
+            </div>
+            {% endfor %}
+            {% else %}
+            <div style="text-align: center; padding: 2rem; color: var(--gray-500);">
+                ✅ Aucun problème détecté
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Top Performers -->
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">🏆 Top Performers</h2>
+        <a href="{% url 'fleet:courier-list' %}?order=performance" class="card-link">Voir classement →</a>
+    </div>
+    <div class="card-body" style="padding: 0;">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Rang</th>
+                    <th>Coursier</th>
+                    <th>Niveau</th>
+                    <th>Livraisons</th>
+                    <th>Note</th>
+                    <th>Statut</th>
+                    <th>Solde</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for courier in top_performers %}
+                <tr>
+                    <td style="font-weight: 700; color: var(--primary);">#{{ forloop.counter }}</td>
+                    <td>
+                        <a href="{% url 'fleet:courier-detail' courier.id %}"
+                            style="color: inherit; text-decoration: none;">
+                            <div style="font-weight: 500;">{{ courier.name }}</div>
+                            <div style="font-size: 0.75rem; color: var(--gray-500);">{{ courier.phone }}</div>
+                        </a>
+                    </td>
+                    <td><span class="badge badge-{{ courier.level }}">{{ courier.level_icon }} {{ courier.level
+                            }}</span></td>
+                    <td>{{ courier.total_deliveries }}</td>
+                    <td>⭐ {{ courier.average_rating }}</td>
+                    <td>
+                        {% if courier.is_online %}
+                        <span class="badge badge-success">En ligne</span>
+                        {% else %}
+                        <span class="badge" style="background: var(--gray-200); color: var(--gray-600);">Hors
+                            ligne</span>
+                        {% endif %}
+                    </td>
+                    <td style="{% if courier.wallet_balance < 0 %}color: var(--danger);{% endif %}">
+                        {{ courier.wallet_balance|floatformat:0 }} XAF
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Auto-refresh stats every 30 seconds
+    setInterval(function () {
+        fetch('{% url "fleet:api-stats" %}')
+            .then(response => response.json())
+            .then(data => {
+                // Update online count
+                console.log('Fleet stats refreshed:', data);
+            })
+            .catch(err => console.error('Error refreshing stats:', err));
+    }, 30000);
+</script>
+{% endblock %}

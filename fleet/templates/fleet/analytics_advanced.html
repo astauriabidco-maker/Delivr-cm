@@ -1,0 +1,368 @@
+{% extends "fleet/base.html" %}
+{% load static %}
+
+{% block title %}Analytics Avancés - Fleet Admin{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js" />
+<style>
+    .analytics-grid {
+        display: grid;
+        grid-template-columns: repeat(12, 1fr);
+        gap: 1.5rem;
+    }
+
+    .card {
+        background: var(--bg-secondary);
+        border-radius: var(--border-radius-lg);
+        padding: 1.5rem;
+    }
+
+    .card-title {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+        margin-bottom: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    /* KPI Cards */
+    .kpi-row {
+        grid-column: span 12;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+
+    .kpi-card {
+        background: var(--bg-secondary);
+        border-radius: var(--border-radius-lg);
+        padding: 1.25rem;
+    }
+
+    .kpi-value {
+        font-size: 2rem;
+        font-weight: 700;
+    }
+
+    .kpi-label {
+        font-size: 0.75rem;
+        color: var(--text-tertiary);
+        text-transform: uppercase;
+    }
+
+    .kpi-change {
+        font-size: 0.75rem;
+        margin-top: 0.25rem;
+    }
+
+    .kpi-change.positive {
+        color: #22c55e;
+    }
+
+    .kpi-change.negative {
+        color: #ef4444;
+    }
+
+    /* Charts */
+    .chart-container {
+        grid-column: span 6;
+        min-height: 300px;
+    }
+
+    .chart-wrapper {
+        height: 250px;
+    }
+
+    /* Heatmap */
+    .heatmap-container {
+        grid-column: span 6;
+    }
+
+    #heatmap {
+        height: 300px;
+        border-radius: var(--border-radius);
+    }
+
+    /* Hourly Chart */
+    .hourly-container {
+        grid-column: span 8;
+    }
+
+    /* Ranking */
+    .ranking-container {
+        grid-column: span 4;
+    }
+
+    .ranking-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .ranking-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .ranking-item:last-child {
+        border-bottom: none;
+    }
+
+    .rank-number {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: var(--bg-tertiary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.75rem;
+    }
+
+    .rank-number.gold {
+        background: #fef08a;
+        color: #854d0e;
+    }
+
+    .rank-number.silver {
+        background: #e5e7eb;
+        color: #374151;
+    }
+
+    .rank-number.bronze {
+        background: #fed7aa;
+        color: #9a3412;
+    }
+
+    .ranking-info {
+        flex: 1;
+    }
+
+    .ranking-name {
+        font-weight: 600;
+        font-size: 0.875rem;
+    }
+
+    .ranking-stats {
+        font-size: 0.75rem;
+        color: var(--text-tertiary);
+    }
+
+    .ranking-score {
+        text-align: right;
+    }
+
+    .ranking-deliveries {
+        font-weight: 700;
+        font-size: 1.125rem;
+    }
+
+    .ranking-revenue {
+        font-size: 0.75rem;
+        color: var(--text-tertiary);
+    }
+
+    /* Peak Hours */
+    .peak-hours {
+        display: flex;
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+
+    .peak-badge {
+        padding: 0.5rem 1rem;
+        background: var(--primary);
+        color: white;
+        border-radius: var(--border-radius-full);
+        font-weight: 600;
+        font-size: 0.875rem;
+    }
+
+    @media (max-width: 1024px) {
+
+        .chart-container,
+        .heatmap-container,
+        .hourly-container,
+        .ranking-container {
+            grid-column: span 12;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>📊 Analytics Avancés</h1>
+    <p class="text-secondary">Analyses détaillées et tendances</p>
+</div>
+
+<div class="analytics-grid">
+    <!-- KPI Row with Week Comparison -->
+    <div class="kpi-row">
+        <div class="kpi-card">
+            <div class="kpi-value">{{ comparison.this_week.completed }}</div>
+            <div class="kpi-label">Livraisons (7j)</div>
+            <div class="kpi-change {% if comparison.changes.deliveries >= 0 %}positive{% else %}negative{% endif %}">
+                {% if comparison.changes.deliveries >= 0 %}↑{% else %}↓{% endif %} {{
+                comparison.changes.deliveries|floatformat:1 }}% vs semaine précédente
+            </div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-value">{{ comparison.this_week.revenue|floatformat:0 }} <small>XAF</small></div>
+            <div class="kpi-label">Revenus (7j)</div>
+            <div class="kpi-change {% if comparison.changes.revenue >= 0 %}positive{% else %}negative{% endif %}">
+                {% if comparison.changes.revenue >= 0 %}↑{% else %}↓{% endif %} {{
+                comparison.changes.revenue|floatformat:1 }}%
+            </div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-value">{{ comparison.this_week.platform_earnings|floatformat:0 }} <small>XAF</small></div>
+            <div class="kpi-label">Commissions Plateforme</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-value">{{ hourly_trends.peak_hour_label }}</div>
+            <div class="kpi-label">Heure de Pointe</div>
+        </div>
+    </div>
+
+    <!-- Hourly Trends Chart -->
+    <div class="card hourly-container">
+        <div class="card-title">📈 Tendances Horaires (7 derniers jours)</div>
+        <div class="chart-wrapper">
+            <canvas id="hourlyChart"></canvas>
+        </div>
+        <div class="peak-hours">
+            <span class="text-secondary">Heures de pointe:</span>
+            {% for peak in hourly_trends.peak_hours %}
+            <span class="peak-badge">{{ peak.hour }}:00 ({{ peak.orders }})</span>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Top Couriers Ranking -->
+    <div class="card ranking-container">
+        <div class="card-title">🏆 Top Coursiers (30j)</div>
+        <ul class="ranking-list">
+            {% for c in ranking %}
+            <li class="ranking-item">
+                <div
+                    class="rank-number {% if c.rank == 1 %}gold{% elif c.rank == 2 %}silver{% elif c.rank == 3 %}bronze{% endif %}">
+                    {{ c.rank }}</div>
+                <div class="ranking-info">
+                    <div class="ranking-name">{{ c.level_icon }} {{ c.name }}</div>
+                    <div class="ranking-stats">⭐ {{ c.rating|floatformat:1 }} • {{ c.level }}</div>
+                </div>
+                <div class="ranking-score">
+                    <div class="ranking-deliveries">{{ c.month_deliveries }}</div>
+                    <div class="ranking-revenue">{{ c.month_revenue|floatformat:0 }} XAF</div>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <!-- Weekly Trend Chart -->
+    <div class="card chart-container">
+        <div class="card-title">📊 Livraisons Quotidiennes</div>
+        <div class="chart-wrapper">
+            <canvas id="dailyChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Heatmap -->
+    <div class="card heatmap-container">
+        <div class="card-title">🔥 Carte de Chaleur des Livraisons</div>
+        <div id="heatmap"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+<script>
+    // Chart.js defaults
+    Chart.defaults.color = 'rgba(255,255,255,0.7)';
+    Chart.defaults.borderColor = 'rgba(255,255,255,0.1)';
+
+    // Hourly Chart
+    const hourlyData = {{ hourly_json| safe }};
+    new Chart(document.getElementById('hourlyChart'), {
+        type: 'bar',
+        data: {
+            labels: Object.keys(hourlyData).map(h => h + ':00'),
+            datasets: [{
+                label: 'Commandes',
+                data: Object.values(hourlyData).map(d => d.orders),
+                backgroundColor: 'rgba(59, 130, 246, 0.6)',
+                borderColor: '#3b82f6',
+                borderWidth: 1
+            }, {
+                label: 'Complétées',
+                data: Object.values(hourlyData).map(d => d.completed),
+                backgroundColor: 'rgba(34, 197, 94, 0.6)',
+                borderColor: '#22c55e',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
+    });
+
+    // Daily Chart
+    const dailyData = {{ daily_json| safe }};
+    new Chart(document.getElementById('dailyChart'), {
+        type: 'line',
+        data: {
+            labels: dailyData.map(d => new Date(d.day).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' })),
+            datasets: [{
+                label: 'Livraisons',
+                data: dailyData.map(d => d.count),
+                borderColor: '#8b5cf6',
+                backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                fill: true,
+                tension: 0.4
+            }, {
+                label: 'Revenus (k XAF)',
+                data: dailyData.map(d => (d.revenue || 0) / 1000),
+                borderColor: '#f59e0b',
+                yAxisID: 'y1',
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: { beginAtZero: true, position: 'left' },
+                y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false } }
+            }
+        }
+    });
+
+    // Heatmap
+    const heatmapData = {{ heatmap_json| safe }};
+    const map = L.map('heatmap').setView([4.05, 9.7], 11);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap'
+    }).addTo(map);
+
+    if (heatmapData.length > 0) {
+        const heatPoints = heatmapData.map(p => [p.lat, p.lng, p.intensity]);
+        L.heatLayer(heatPoints, { radius: 20, blur: 15, maxZoom: 17 }).addTo(map);
+    }
+</script>
+{% endblock %}

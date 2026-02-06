@@ -1,0 +1,94 @@
+{% extends "courier/onboarding/base.html" %}
+
+{% block step_content %}
+<div class="onboarding-card">
+    <h2 class="card-title">💰 Caution Sécurité</h2>
+    <p class="card-subtitle">Dépôt de garantie remboursable à la fin de votre collaboration</p>
+
+    <div class="caution-amount">
+        <div class="caution-value">{{ onboarding.caution_amount|floatformat:0 }} XAF</div>
+        <div class="caution-label">Montant de la caution</div>
+    </div>
+
+    <div class="alert info">
+        <strong>Pourquoi une caution ?</strong>
+        <ul style="margin: 0.5rem 0 0 1rem; padding: 0;">
+            <li>Garantir votre engagement sérieux</li>
+            <li>Couvrir d'éventuels incidents</li>
+            <li>100% remboursable à la fin de votre collaboration</li>
+        </ul>
+    </div>
+
+    {% if not onboarding.caution_paid %}
+    <form method="post" action="{% url 'courier:onboarding-caution' %}">
+        {% csrf_token %}
+
+        <div class="form-group">
+            <label>Méthode de paiement</label>
+            <select name="payment_method" required>
+                <option value="">Sélectionnez...</option>
+                <option value="MTN_MOMO">📱 MTN Mobile Money</option>
+                <option value="ORANGE_MONEY">📱 Orange Money</option>
+                <option value="CASH">💵 Espèces (en agence)</option>
+            </select>
+        </div>
+
+        <div id="momoInstructions" style="display: none;">
+            <div class="alert warning">
+                <strong>Instructions Mobile Money:</strong>
+                <ol style="margin: 0.5rem 0 0 1rem; padding: 0;">
+                    <li>Envoyez <strong>{{ onboarding.caution_amount|floatformat:0 }} XAF</strong> au <strong>+237 6XX
+                            XXX XXX</strong></li>
+                    <li>Motif: "Caution DELIVR {{ user.phone_number|slice:"-4:" }}"</li>
+                    <li>Entrez l'ID de transaction ci-dessous</li>
+                </ol>
+            </div>
+
+            <div class="form-group">
+                <label>ID Transaction Mobile Money *</label>
+                <input type="text" name="transaction_id" placeholder="Ex: 123456789ABC">
+            </div>
+        </div>
+
+        <div id="cashInstructions" style="display: none;">
+            <div class="alert warning">
+                <strong>Paiement en agence:</strong>
+                <p>Présentez-vous à notre agence avec votre pièce d'identité.</p>
+                <p>📍 <strong>Douala:</strong> Akwa Nord, face station Total</p>
+                <p>📍 <strong>Yaoundé:</strong> Bastos, rue principale</p>
+            </div>
+
+            <div class="form-group">
+                <label>Numéro de reçu (si déjà payé)</label>
+                <input type="text" name="transaction_id" placeholder="Numéro sur votre reçu">
+            </div>
+        </div>
+
+        <button type="submit" class="btn-primary" id="payBtn">
+            Confirmer le paiement
+        </button>
+    </form>
+
+    <script>
+        document.querySelector('[name="payment_method"]').addEventListener('change', function () {
+            document.getElementById('momoInstructions').style.display =
+                (this.value === 'MTN_MOMO' || this.value === 'ORANGE_MONEY') ? 'block' : 'none';
+            document.getElementById('cashInstructions').style.display =
+                this.value === 'CASH' ? 'block' : 'none';
+        });
+    </script>
+    {% else %}
+    <div class="alert success">
+        ✅ Caution de {{ onboarding.caution_amount|floatformat:0 }} XAF payée le {{
+        onboarding.caution_paid_at|date:"d/m/Y" }}
+        <br>
+        <small>Transaction: {{ onboarding.caution_transaction_id }}</small>
+    </div>
+
+    <a href="{% url 'courier:onboarding-contract' %}" class="btn-primary"
+        style="display: block; text-align: center; text-decoration: none;">
+        Continuer →
+    </a>
+    {% endif %}
+</div>
+{% endblock %}

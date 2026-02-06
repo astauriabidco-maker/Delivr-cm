@@ -1,0 +1,252 @@
+{% extends 'courier/base.html' %}
+
+{% block title %}Mes Badges{% endblock %}
+{% block page_title %}Badges{% endblock %}
+
+{% block content %}
+<!-- Progress Card -->
+<div class="progress-card card">
+    <div class="progress-header">
+        <span class="progress-title">🏅 Collection de Badges</span>
+        <span class="progress-count">{{ badges_summary.total_badges }} / {{ badges_summary.available_badges }}</span>
+    </div>
+    <div class="progress-bar-container">
+        <div class="progress-bar">
+            <div class="progress-fill" style="width: {{ badges_summary.completion_percent }}%"></div>
+        </div>
+        <span class="progress-percent">{{ badges_summary.completion_percent|floatformat:0 }}%</span>
+    </div>
+</div>
+
+<!-- Earned Badges -->
+<div class="card">
+    <div class="card-header">
+        <h2>✅ Badges Débloqués</h2>
+    </div>
+    <div class="card-body">
+        {% if earned_badges %}
+        <div class="badges-grid">
+            {% for badge in earned_badges %}
+            <div class="badge-item earned">
+                <span class="badge-icon">{{ badge.icon }}</span>
+                <span class="badge-name">{{ badge.display }}</span>
+                <span class="badge-date">{{ badge.earned_at|date:"d/m/Y" }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <span class="empty-icon">🎯</span>
+            <p>Pas encore de badges<br>Continuez à livrer pour en débloquer !</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Locked Badges -->
+<div class="card">
+    <div class="card-header">
+        <h2>🔒 Badges à Débloquer</h2>
+    </div>
+    <div class="card-body">
+        <div class="badges-grid">
+            {% for badge in available_badges %}
+            {% if badge.code not in earned_codes %}
+            <div class="badge-item locked">
+                <span class="badge-icon">{{ badge.icon }}</span>
+                <span class="badge-name">{{ badge.display }}</span>
+                <span class="badge-hint">{{ badge.hint }}</span>
+            </div>
+            {% endif %}
+            {% empty %}
+            <div class="empty-state">
+                <span class="empty-icon">🏆</span>
+                <p>Tous les badges sont débloqués !</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Badges Legend -->
+<div class="card info-card">
+    <div class="card-header">
+        <h2>📖 Guide des Badges</h2>
+    </div>
+    <div class="card-body">
+        <div class="badges-legend">
+            <div class="legend-item">
+                <span class="legend-cat">🌟 Débutant</span>
+                <span class="legend-desc">Premiers pas sur la plateforme</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-cat">🔥 Performance</span>
+                <span class="legend-desc">Séries et régularité</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-cat">⚡ Volume</span>
+                <span class="legend-desc">Nombre de livraisons</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-cat">⭐ Qualité</span>
+                <span class="legend-desc">Note moyenne élevée</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-cat">🏆 Expert</span>
+                <span class="legend-desc">Maîtrise complète</span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .progress-card {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        padding: 1.5rem;
+    }
+
+    .progress-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .progress-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+
+    .progress-count {
+        font-weight: 700;
+        background: rgba(255, 255, 255, 0.2);
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+    }
+
+    .progress-bar-container {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .progress-bar {
+        flex: 1;
+        height: 10px;
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 5px;
+        overflow: hidden;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: white;
+        border-radius: 5px;
+        transition: width 0.3s;
+    }
+
+    .progress-percent {
+        font-weight: 700;
+        min-width: 40px;
+    }
+
+    .badges-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+
+    .badge-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        padding: 1.25rem 0.75rem;
+        border-radius: 12px;
+        transition: transform 0.2s;
+    }
+
+    .badge-item.earned {
+        background: linear-gradient(135deg, rgba(0, 208, 132, 0.1), rgba(0, 208, 132, 0.05));
+        border: 2px solid var(--primary);
+    }
+
+    .badge-item.locked {
+        background: var(--surface);
+        border: 2px dashed var(--border-color);
+        opacity: 0.7;
+    }
+
+    .badge-icon {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .locked .badge-icon {
+        filter: grayscale(1);
+    }
+
+    .badge-name {
+        font-weight: 600;
+        font-size: 0.875rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .badge-date {
+        font-size: 0.75rem;
+        color: var(--primary);
+    }
+
+    .badge-hint {
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+    }
+
+    .info-card {
+        margin-top: 1rem;
+    }
+
+    .badges-legend {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .legend-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .legend-item:last-child {
+        border-bottom: none;
+    }
+
+    .legend-cat {
+        font-weight: 600;
+    }
+
+    .legend-desc {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 2rem 1rem;
+        color: var(--text-secondary);
+        grid-column: span 2;
+    }
+
+    .empty-icon {
+        font-size: 3rem;
+        display: block;
+        margin-bottom: 1rem;
+    }
+</style>
+{% endblock %}

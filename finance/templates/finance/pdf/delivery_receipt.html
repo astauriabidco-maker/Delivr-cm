@@ -1,0 +1,80 @@
+{% extends "finance/pdf/base_invoice.html" %}
+
+{% block title %}Reçu de Livraison - {{ delivery.id|slice:":8" }}{% endblock %}
+
+{% block invoice_info %}
+<div class="invoice-number">REÇU #{{ delivery.id|slice:":8"|upper }}</div>
+<div class="invoice-date">{{ created_at|date:"d/m/Y" }}</div>
+<span class="status-badge status-completed">✓ Livré</span>
+{% endblock %}
+
+{% block parties %}
+<div class="parties">
+    <div class="party">
+        <div class="party-label">Expéditeur</div>
+        <div class="party-name">{{ sender.full_name|default:sender.phone_number }}</div>
+        <div class="party-details">
+            📞 {{ sender.phone_number }}<br>
+            📍 {{ pickup_address }}
+        </div>
+    </div>
+    <div class="party">
+        <div class="party-label">Destinataire</div>
+        <div class="party-name">{{ recipient_name }}</div>
+        <div class="party-details">
+            📞 {{ recipient_phone }}<br>
+            📍 {{ dropoff_address }}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="info-box">
+    <h4>📦 Détails de la Livraison</h4>
+    <p>{{ delivery.package_description|default:"Colis standard" }}</p>
+</div>
+
+<table>
+    <thead>
+        <tr>
+            <th>Description</th>
+            <th class="text-center">Distance</th>
+            <th class="text-right">Montant</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+                <strong>Livraison Express</strong><br>
+                <span style="color: #666; font-size: 9pt;">
+                    {{ pickup_address }} → {{ dropoff_address }}
+                </span>
+            </td>
+            <td class="text-center">{{ distance_km }} km</td>
+            <td class="text-right currency">{{ total_price|floatformat:0 }} XAF</td>
+        </tr>
+    </tbody>
+</table>
+{% endblock %}
+
+{% block totals %}
+<div class="totals">
+    <div class="total-row">
+        <span class="total-label">Mode de paiement</span>
+        <span class="total-value">{{ payment_method }}</span>
+    </div>
+    <div class="total-row grand-total">
+        <span class="total-label">TOTAL</span>
+        <span class="total-value highlight">{{ total_price|floatformat:0 }} XAF</span>
+    </div>
+</div>
+
+<div class="info-box mt-20">
+    <h4>📊 Chronologie</h4>
+    <p>
+        🕐 Créée: {{ created_at|date:"d/m/Y H:i" }}<br>
+        ✅ Livrée: {{ completed_at|date:"d/m/Y H:i" }}
+    </p>
+</div>
+{% endblock %}

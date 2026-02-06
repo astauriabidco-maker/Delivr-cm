@@ -51,3 +51,7 @@ twilio>=8.10.0
 channels>=4.0.0
 channels-redis>=4.2.0
 daphne>=4.1.0
+
+# PDF Generation (Invoices & Receipts)
+weasyprint>=60.0
+qrcode[pil]>=7.4.0
