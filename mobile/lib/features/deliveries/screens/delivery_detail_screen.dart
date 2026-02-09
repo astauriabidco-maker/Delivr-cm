@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../../app/router.dart';
+
 import '../../../app/theme.dart';
 import '../../../core/services/navigation_service.dart';
 
@@ -50,7 +50,7 @@ class DeliveryDetailScreen extends ConsumerWidget {
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [DelivrColors.primary, DelivrColors.primary.withOpacity(0.8)],
+                  colors: [DelivrColors.primary, DelivrColors.primary.withValues(alpha: 0.8)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -61,7 +61,7 @@ class DeliveryDetailScreen extends ConsumerWidget {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
+                      color: Colors.white.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Icon(Icons.local_shipping, color: Colors.white, size: 28),
@@ -83,7 +83,7 @@ class DeliveryDetailScreen extends ConsumerWidget {
                         Text(
                           'Gain: ${(delivery['earning'] as double).toStringAsFixed(0)} XAF',
                           style: TextStyle(
-                            color: Colors.white.withOpacity(0.9),
+                            color: Colors.white.withValues(alpha: 0.9),
                             fontSize: 14,
                           ),
                         ),
@@ -121,7 +121,7 @@ class DeliveryDetailScreen extends ConsumerWidget {
               margin: const EdgeInsets.only(left: 15),
               height: 24,
               width: 2,
-              color: DelivrColors.textSecondary.withOpacity(0.3),
+              color: DelivrColors.textSecondary.withValues(alpha: 0.3),
             ),
 
             // Dropoff card
@@ -152,7 +152,7 @@ class DeliveryDetailScreen extends ConsumerWidget {
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withValues(alpha: 0.05),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -163,7 +163,7 @@ class DeliveryDetailScreen extends ConsumerWidget {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: DelivrColors.info.withOpacity(0.1),
+                      color: DelivrColors.info.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Icon(Icons.inventory_2, color: DelivrColors.info),
@@ -200,7 +200,7 @@ class DeliveryDetailScreen extends ConsumerWidget {
           color: Colors.white,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withValues(alpha: 0.1),
               blurRadius: 10,
               offset: const Offset(0, -5),
             ),
@@ -266,7 +266,7 @@ class DeliveryDetailScreen extends ConsumerWidget {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -293,7 +293,7 @@ class DeliveryDetailScreen extends ConsumerWidget {
                 icon: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: DelivrColors.primary.withOpacity(0.1),
+                    color: DelivrColors.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
@@ -381,7 +381,7 @@ class DeliveryDetailScreen extends ConsumerWidget {
                 child: Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: DelivrColors.success.withOpacity(0.1),
+                    color: DelivrColors.success.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(Icons.phone, size: 16, color: DelivrColors.success),
@@ -396,7 +396,7 @@ class DeliveryDetailScreen extends ConsumerWidget {
                 child: Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF25D366).withOpacity(0.1),
+                    color: const Color(0xFF25D366).withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(Icons.chat, size: 16, color: Color(0xFF25D366)),

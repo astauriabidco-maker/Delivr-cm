@@ -71,7 +71,7 @@ class ProfileScreen extends ConsumerWidget {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: DelivrColors.gold.withOpacity(0.2),
+                      color: DelivrColors.gold.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: const Text(

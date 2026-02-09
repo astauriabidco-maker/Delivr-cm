@@ -299,7 +299,7 @@
         </div>
         <div class="delivery-info">
             <div class="delivery-route">
-                {{ d.pickup_neighborhood.name|default:"N/A" }} → {{ d.dropoff_neighborhood.name|default:"N/A" }}
+                {{ d.pickup_address|default:"N/A" }} → {{ d.dropoff_neighborhood.name|default:"N/A" }}
             </div>
             <div class="delivery-meta">
                 <span class="status-badge {{ d.status }}">{{ d.get_status_display }}</span>

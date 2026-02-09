@@ -24,11 +24,25 @@ class PricingEngine:
     """
 
     def __init__(self):
-        self.base_fare = Decimal(str(settings.PRICING_BASE_FARE))
-        self.cost_per_km = Decimal(str(settings.PRICING_COST_PER_KM))
-        self.minimum_fare = Decimal(str(settings.PRICING_MINIMUM_FARE))
-        self.platform_fee_percent = Decimal(str(settings.PLATFORM_FEE_PERCENT)) / 100
-        self.osrm_base_url = settings.OSRM_BASE_URL
+        """
+        Load pricing parameters from DB (IntegrationConfig singleton).
+        Falls back to settings.py if DB is unavailable.
+        """
+        try:
+            from integrations.models import IntegrationConfig
+            config = IntegrationConfig.get_solo()
+            self.base_fare = Decimal(str(config.pricing_base_fare))
+            self.cost_per_km = Decimal(str(config.pricing_cost_per_km))
+            self.minimum_fare = Decimal(str(config.pricing_minimum_fare))
+            self.platform_fee_percent = Decimal(str(config.platform_fee_percent)) / 100
+            self.osrm_base_url = config.osrm_base_url
+        except Exception:
+            logger.warning("IntegrationConfig unavailable, using settings.py defaults")
+            self.base_fare = Decimal(str(settings.PRICING_BASE_FARE))
+            self.cost_per_km = Decimal(str(settings.PRICING_COST_PER_KM))
+            self.minimum_fare = Decimal(str(settings.PRICING_MINIMUM_FARE))
+            self.platform_fee_percent = Decimal(str(settings.PLATFORM_FEE_PERCENT)) / 100
+            self.osrm_base_url = settings.OSRM_BASE_URL
 
     def get_route_distance(self, origin: Point, destination: Point) -> Optional[float]:
         """
@@ -178,5 +192,6 @@ class PricingEngine:
         )
 
 
-# Singleton instance
-pricing_engine = PricingEngine()
+def pricing_engine():
+    """Factory that returns a fresh PricingEngine with current DB config."""
+    return PricingEngine()

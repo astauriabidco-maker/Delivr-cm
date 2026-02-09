@@ -1,0 +1,250 @@
+{% extends 'courier/base.html' %}
+
+{% block title %}Historique Transactions{% endblock %}
+{% block page_title %}Transactions{% endblock %}
+
+{% block content %}
+<!-- Wallet Summary -->
+<div class="wallet-summary card">
+    <div class="wallet-summary-top">
+        <span class="wallet-summary-label">Solde actuel</span>
+        <span class="wallet-summary-amount {% if wallet.balance < 0 %}negative{% endif %}">
+            {{ wallet.balance|floatformat:0 }} <small>XAF</small>
+        </span>
+    </div>
+    <div class="wallet-summary-stats">
+        <div class="wallet-stat">
+            <span class="wallet-stat-value text-success">{{ wallet.total_earned|floatformat:0 }}</span>
+            <span class="wallet-stat-label">Gagné</span>
+        </div>
+        <div class="wallet-stat-divider"></div>
+        <div class="wallet-stat">
+            <span class="wallet-stat-value text-danger">{{ wallet.total_commission|floatformat:0 }}</span>
+            <span class="wallet-stat-label">Commissions</span>
+        </div>
+    </div>
+</div>
+
+<!-- Transaction List -->
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">📝 Toutes les Transactions</h2>
+        <span class="transaction-count">{{ transactions|length }} opérations</span>
+    </div>
+
+    {% if transactions %}
+    <div class="transactions-list">
+        {% for tx in transactions %}
+        <div class="transaction-item">
+            <div class="transaction-icon {% if tx.amount > 0 %}credit{% else %}debit{% endif %}">
+                {% if tx.amount > 0 %}
+                <span>↓</span>
+                {% else %}
+                <span>↑</span>
+                {% endif %}
+            </div>
+            <div class="transaction-info">
+                <span class="transaction-label">{{ tx.description }}</span>
+                <span class="transaction-type">{{ tx.get_transaction_type_display }}</span>
+                <span class="transaction-date">{{ tx.created_at|date:"d/m/Y à H:i" }}</span>
+            </div>
+            <div class="transaction-amount {% if tx.amount > 0 %}credit{% else %}debit{% endif %}">
+                {% if tx.amount > 0 %}+{% endif %}{{ tx.amount|floatformat:0 }} XAF
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <span class="empty-icon">📭</span>
+        <p>Aucune transaction pour le moment</p>
+        <p class="empty-desc">Vos gains et commissions apparaîtront ici.</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Back to Wallet -->
+<div style="padding: 0 1rem 2rem;">
+    <a href="{% url 'courier:wallet' %}" class="btn btn-outline btn-block">
+        💰 Retour au Portefeuille
+    </a>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .wallet-summary {
+        background: linear-gradient(135deg, #1a1a2e, #16213e);
+        color: white;
+        padding: 1.5rem;
+    }
+
+    .wallet-summary-top {
+        text-align: center;
+        margin-bottom: 1rem;
+    }
+
+    .wallet-summary-label {
+        display: block;
+        font-size: 0.8rem;
+        opacity: 0.7;
+        margin-bottom: 0.25rem;
+    }
+
+    .wallet-summary-amount {
+        font-size: 2.5rem;
+        font-weight: 700;
+    }
+
+    .wallet-summary-amount.negative {
+        color: #ff6b6b;
+    }
+
+    .wallet-summary-amount small {
+        font-size: 1rem;
+        opacity: 0.6;
+    }
+
+    .wallet-summary-stats {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 1.5rem;
+        padding-top: 1rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .wallet-stat {
+        text-align: center;
+    }
+
+    .wallet-stat-value {
+        display: block;
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+
+    .wallet-stat-label {
+        display: block;
+        font-size: 0.7rem;
+        opacity: 0.7;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .wallet-stat-divider {
+        width: 1px;
+        height: 2rem;
+        background: rgba(255, 255, 255, 0.2);
+    }
+
+    .transaction-count {
+        font-size: 0.8rem;
+        color: var(--gray-500);
+        background: var(--gray-100);
+        padding: 0.25rem 0.5rem;
+        border-radius: 12px;
+    }
+
+    /* Transactions List */
+    .transactions-list {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .transaction-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 1rem 0;
+        border-bottom: 1px solid var(--gray-100);
+    }
+
+    .transaction-item:last-child {
+        border-bottom: none;
+    }
+
+    .transaction-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        font-weight: 700;
+        flex-shrink: 0;
+    }
+
+    .transaction-icon.credit {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--success);
+    }
+
+    .transaction-icon.debit {
+        background: rgba(239, 68, 68, 0.1);
+        color: var(--danger);
+    }
+
+    .transaction-info {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 0.125rem;
+        min-width: 0;
+    }
+
+    .transaction-label {
+        font-weight: 500;
+        font-size: 0.9rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .transaction-type {
+        font-size: 0.7rem;
+        color: var(--gray-500);
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+    }
+
+    .transaction-date {
+        font-size: 0.75rem;
+        color: var(--gray-500);
+    }
+
+    .transaction-amount {
+        font-weight: 600;
+        font-size: 0.95rem;
+        white-space: nowrap;
+    }
+
+    .transaction-amount.credit {
+        color: var(--success);
+    }
+
+    .transaction-amount.debit {
+        color: var(--danger);
+    }
+
+    /* Empty state */
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+        color: var(--gray-500);
+    }
+
+    .empty-icon {
+        font-size: 3rem;
+        display: block;
+        margin-bottom: 1rem;
+    }
+
+    .empty-desc {
+        font-size: 0.8rem;
+        margin-top: 0.5rem;
+        opacity: 0.7;
+    }
+</style>
+{% endblock %}

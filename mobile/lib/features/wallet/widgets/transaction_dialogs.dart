@@ -94,7 +94,7 @@ class _WithdrawalDialogState extends ConsumerState<WithdrawalDialog> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: DelivrColors.success.withOpacity(0.1),
+                    color: DelivrColors.success.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(Icons.arrow_upward, color: DelivrColors.success),
@@ -140,7 +140,7 @@ class _WithdrawalDialogState extends ConsumerState<WithdrawalDialog> {
                       ),
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       decoration: BoxDecoration(
-                        color: isSelected ? op.color.withOpacity(0.1) : Colors.grey.shade100,
+                        color: isSelected ? op.color.withValues(alpha: 0.1) : Colors.grey.shade100,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           color: isSelected ? op.color : Colors.transparent,
@@ -310,7 +310,7 @@ class _WithdrawalDialogState extends ConsumerState<WithdrawalDialog> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
-                      color: _selectedOperator.color.withOpacity(0.1),
+                      color: _selectedOperator.color.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
@@ -384,7 +384,7 @@ class _WithdrawalDialogState extends ConsumerState<WithdrawalDialog> {
         Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: DelivrColors.success.withOpacity(0.1),
+            color: DelivrColors.success.withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
           child: const Icon(Icons.check, size: 48, color: DelivrColors.success),
@@ -539,7 +539,7 @@ class _DebtPaymentDialogState extends ConsumerState<DebtPaymentDialog> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Colors.orange.withOpacity(0.1),
+                  color: Colors.orange.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(Icons.payment, color: Colors.orange),
@@ -643,7 +643,7 @@ class _DebtPaymentDialogState extends ConsumerState<DebtPaymentDialog> {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isSelected ? Colors.orange.withOpacity(0.1) : Colors.grey.shade100,
+          color: isSelected ? Colors.orange.withValues(alpha: 0.1) : Colors.grey.shade100,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected ? Colors.orange : Colors.transparent,
@@ -691,11 +691,28 @@ class _DebtPaymentDialogState extends ConsumerState<DebtPaymentDialog> {
                 ],
               ),
             ),
-            Radio<int>(
-              value: index,
-              groupValue: _selectedOption,
-              onChanged: (v) => setState(() => _selectedOption = v ?? 0),
-              activeColor: Colors.orange,
+            Container(
+              width: 20,
+              height: 20,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: isSelected ? Colors.orange : Colors.grey,
+                  width: 2,
+                ),
+              ),
+              child: isSelected
+                  ? Center(
+                      child: Container(
+                        width: 10,
+                        height: 10,
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.orange,
+                        ),
+                      ),
+                    )
+                  : null,
             ),
           ],
         ),
@@ -782,7 +799,7 @@ class _DebtPaymentDialogState extends ConsumerState<DebtPaymentDialog> {
                     ),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     decoration: BoxDecoration(
-                      color: isSelected ? op.color.withOpacity(0.1) : Colors.grey.shade100,
+                      color: isSelected ? op.color.withValues(alpha: 0.1) : Colors.grey.shade100,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: isSelected ? op.color : Colors.transparent,
@@ -873,7 +890,7 @@ class _DebtPaymentDialogState extends ConsumerState<DebtPaymentDialog> {
         Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: Colors.green.withOpacity(0.1),
+            color: Colors.green.withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
           child: const Icon(Icons.check, size: 48, color: Colors.green),
@@ -1071,7 +1088,7 @@ class _TopUpDialogState extends ConsumerState<TopUpDialog> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: Colors.blue.withOpacity(0.1),
+                    color: Colors.blue.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(Icons.add_circle, color: Colors.blue),
@@ -1115,7 +1132,7 @@ class _TopUpDialogState extends ConsumerState<TopUpDialog> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                     decoration: BoxDecoration(
-                      color: isSelected ? Colors.blue.withOpacity(0.1) : Colors.grey.shade100,
+                      color: isSelected ? Colors.blue.withValues(alpha: 0.1) : Colors.grey.shade100,
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
                         color: isSelected ? Colors.blue : Colors.transparent,
@@ -1190,7 +1207,7 @@ class _TopUpDialogState extends ConsumerState<TopUpDialog> {
                       ),
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       decoration: BoxDecoration(
-                        color: isSelected ? op.color.withOpacity(0.1) : Colors.grey.shade100,
+                        color: isSelected ? op.color.withValues(alpha: 0.1) : Colors.grey.shade100,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           color: isSelected ? op.color : Colors.transparent,
@@ -1329,7 +1346,7 @@ class _TopUpDialogState extends ConsumerState<TopUpDialog> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
-                      color: _selectedOperator.color.withOpacity(0.1),
+                      color: _selectedOperator.color.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
@@ -1442,7 +1459,7 @@ class _TopUpDialogState extends ConsumerState<TopUpDialog> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
-            color: _selectedOperator.color.withOpacity(0.1),
+            color: _selectedOperator.color.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(20),
           ),
           child: Row(
@@ -1481,7 +1498,7 @@ class _TopUpDialogState extends ConsumerState<TopUpDialog> {
         Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: Colors.green.withOpacity(0.1),
+            color: Colors.green.withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
           child: const Icon(Icons.check, size: 48, color: Colors.green),

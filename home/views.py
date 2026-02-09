@@ -4,19 +4,15 @@ Home App Views - Landing Page
 
 from django.views.generic import TemplateView
 from logistics.models import Delivery
+from core.models import User
 
 
 class HomeView(TemplateView):
     """
     Public landing page for DELIVR-CM.
     
-    Displays:
-    - Hero section with value proposition
-    - Pain points section
-    - Solution for Instagram and WooCommerce sellers
-    - Developer API section
-    - Pricing information
-    - Social proof statistics with dynamic delivery count
+    Displays all platform features: tracking, partner portal,
+    courier app, mobile money, API, pricing, testimonials, FAQ.
     """
     
     template_name = 'home/index.html'
@@ -33,11 +29,19 @@ class HomeView(TemplateView):
         else:
             context['delivery_count'] = f"{real_count:,}".replace(',', ' ')
         
+        # Active couriers
+        courier_count = User.objects.filter(role='COURIER', is_active=True).count()
+        
+        # Partners
+        partner_count = User.objects.filter(role='BUSINESS', is_active=True).count()
+        
         # Additional stats
         context['stats'] = {
             'success_rate': 98,
             'cities': 2,
             'avg_time': 30,
+            'couriers': max(courier_count, 50),
+            'partners': max(partner_count, 20),
         }
         
         return context

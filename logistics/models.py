@@ -368,3 +368,191 @@ class Rating(models.Model):
         self.rated.average_rating = round(stats['avg'] or 5.0, 2)
         self.rated.total_ratings_count = stats['count'] or 0
         self.rated.save(update_fields=['average_rating', 'total_ratings_count'])
+
+
+# ============================================
+# TRAFFIC EVENTS (Signalements type Waze)
+# ============================================
+
+class TrafficEventType(models.TextChoices):
+    """Types d'événements signalés par les coursiers."""
+    ACCIDENT = 'ACCIDENT', '🚗 Accident'
+    POLICE = 'POLICE', '👮 Contrôle de police'
+    ROAD_CLOSED = 'ROAD_CLOSED', '🚧 Route barrée'
+    FLOODING = 'FLOODING', '🌊 Inondation'
+    POTHOLE = 'POTHOLE', '🕳️ Nid-de-poule'
+    TRAFFIC_JAM = 'TRAFFIC_JAM', '🚦 Embouteillage'
+    ROADWORK = 'ROADWORK', '🏗️ Travaux'
+    HAZARD = 'HAZARD', '⚠️ Danger sur la route'
+    FUEL_STATION = 'FUEL_STATION', '⛽ Station essence ouverte'
+    OTHER = 'OTHER', '📍 Autre'
+
+
+class TrafficEventSeverity(models.TextChoices):
+    """Sévérité de l'événement."""
+    LOW = 'LOW', 'Faible'
+    MEDIUM = 'MEDIUM', 'Moyen'
+    HIGH = 'HIGH', 'Élevé'
+    CRITICAL = 'CRITICAL', 'Critique'
+
+
+class TrafficEvent(models.Model):
+    """
+    Événement trafic signalé par un coursier (système type Waze).
+    
+    Permet aux coursiers de signaler des incidents en temps réel
+    pour aider les autres coursiers à éviter les zones problématiques.
+    Chaque événement a un TTL basé sur son type et peut être
+    confirmé/infirmé par d'autres coursiers (upvote/downvote).
+    """
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    
+    # Qui signale
+    reporter = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='reported_events',
+        verbose_name="Signalé par"
+    )
+    
+    # Type et sévérité
+    event_type = models.CharField(
+        max_length=20,
+        choices=TrafficEventType.choices,
+        verbose_name="Type d'événement"
+    )
+    severity = models.CharField(
+        max_length=10,
+        choices=TrafficEventSeverity.choices,
+        default=TrafficEventSeverity.MEDIUM,
+        verbose_name="Sévérité"
+    )
+    
+    # Localisation
+    location = models.PointField(
+        srid=4326,
+        verbose_name="Position GPS"
+    )
+    address = models.CharField(
+        max_length=255,
+        blank=True,
+        verbose_name="Adresse approximative"
+    )
+    
+    # Description
+    description = models.TextField(
+        blank=True,
+        verbose_name="Description"
+    )
+    photo = models.ImageField(
+        upload_to='traffic_events/',
+        null=True,
+        blank=True,
+        verbose_name="Photo"
+    )
+    
+    # Validation communautaire
+    upvotes = models.PositiveIntegerField(default=0, verbose_name="Confirmations")
+    downvotes = models.PositiveIntegerField(default=0, verbose_name="Infirmations")
+    
+    # Lifecycle
+    is_active = models.BooleanField(default=True, verbose_name="Actif")
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField(
+        verbose_name="Expire à",
+        help_text="L'événement sera masqué après cette date"
+    )
+    resolved_at = models.DateTimeField(null=True, blank=True, verbose_name="Résolu à")
+    
+    class Meta:
+        verbose_name = "Événement trafic"
+        verbose_name_plural = "Événements trafic"
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['is_active', 'expires_at']),
+            models.Index(fields=['event_type', 'is_active']),
+        ]
+    
+    def __str__(self):
+        return f"{self.get_event_type_display()} - {self.address or 'GPS'}"
+    
+    @property
+    def latitude(self):
+        return self.location.y if self.location else None
+    
+    @property
+    def longitude(self):
+        return self.location.x if self.location else None
+    
+    @property
+    def confidence_score(self):
+        """Score de confiance basé sur les votes (0-100)."""
+        total = self.upvotes + self.downvotes
+        if total == 0:
+            return 50  # Neutral
+        return int((self.upvotes / total) * 100)
+    
+    @property
+    def is_expired(self):
+        from django.utils import timezone
+        return timezone.now() > self.expires_at
+    
+    @classmethod
+    def default_ttl_minutes(cls, event_type):
+        """Durée de vie par défaut selon le type d'événement."""
+        ttl_map = {
+            TrafficEventType.ACCIDENT: 120,        # 2 heures
+            TrafficEventType.POLICE: 60,           # 1 heure
+            TrafficEventType.ROAD_CLOSED: 480,     # 8 heures
+            TrafficEventType.FLOODING: 360,        # 6 heures
+            TrafficEventType.POTHOLE: 1440,        # 24 heures
+            TrafficEventType.TRAFFIC_JAM: 45,      # 45 minutes
+            TrafficEventType.ROADWORK: 720,        # 12 heures
+            TrafficEventType.HAZARD: 120,          # 2 heures
+            TrafficEventType.FUEL_STATION: 240,    # 4 heures
+            TrafficEventType.OTHER: 60,            # 1 heure
+        }
+        return ttl_map.get(event_type, 60)
+    
+    def save(self, *args, **kwargs):
+        # Auto-set expiration if not already set
+        if not self.expires_at:
+            from django.utils import timezone
+            from datetime import timedelta
+            ttl = self.default_ttl_minutes(self.event_type)
+            self.expires_at = timezone.now() + timedelta(minutes=ttl)
+        super().save(*args, **kwargs)
+
+
+class TrafficEventVote(models.Model):
+    """
+    Vote (confirmation/infirmation) d'un événement par un coursier.
+    Un coursier ne peut voter qu'une fois par événement.
+    """
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    
+    event = models.ForeignKey(
+        TrafficEvent,
+        on_delete=models.CASCADE,
+        related_name='votes',
+        verbose_name="Événement"
+    )
+    voter = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='event_votes',
+        verbose_name="Votant"
+    )
+    is_upvote = models.BooleanField(verbose_name="Confirme ?")
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = "Vote événement"
+        verbose_name_plural = "Votes événements"
+        unique_together = ['event', 'voter']
+    
+    def __str__(self):
+        vote = "👍" if self.is_upvote else "👎"
+        return f"{vote} {self.voter} sur {self.event}"

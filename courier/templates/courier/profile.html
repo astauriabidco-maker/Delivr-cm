@@ -1,0 +1,330 @@
+{% extends 'courier/base.html' %}
+
+{% block title %}Mon Profil{% endblock %}
+{% block page_title %}Profil{% endblock %}
+
+{% block content %}
+<!-- Profile Header -->
+<div class="profile-header card">
+    <div class="profile-avatar">
+        {{ request.user.full_name|first }}
+    </div>
+    <h2 class="profile-name">{{ request.user.full_name }}</h2>
+    <p class="profile-phone">{{ request.user.phone_number }}</p>
+
+    {% if courier.courier_level %}
+    <div class="profile-level">
+        <span class="level-badge level-{{ courier.courier_level }}">
+            {% if courier.courier_level == 'BRONZE' %}🥉
+            {% elif courier.courier_level == 'SILVER' %}🥈
+            {% elif courier.courier_level == 'GOLD' %}🥇
+            {% elif courier.courier_level == 'PLATINUM' %}💎
+            {% endif %}
+            {{ courier.courier_level }}
+        </span>
+    </div>
+    {% endif %}
+
+    <div class="profile-status">
+        {% if courier.is_online %}
+        <span class="status-dot online"></span> En ligne
+        {% else %}
+        <span class="status-dot offline"></span> Hors ligne
+        {% endif %}
+    </div>
+</div>
+
+<!-- Performance Summary -->
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">📊 Performance</h2>
+        <a href="{% url 'courier:performance' %}" class="card-link">Détails →</a>
+    </div>
+
+    <div class="profile-stats">
+        <div class="profile-stat">
+            <span class="profile-stat-value">{{ performance.total_deliveries|default:"0" }}</span>
+            <span class="profile-stat-label">Livraisons</span>
+        </div>
+        <div class="profile-stat">
+            <span class="profile-stat-value">{{ performance.success_rate|default:"0"|floatformat:0 }}%</span>
+            <span class="profile-stat-label">Taux succès</span>
+        </div>
+        <div class="profile-stat">
+            <span class="profile-stat-value">{{ performance.avg_distance|default:"0"|floatformat:1 }}</span>
+            <span class="profile-stat-label">Km moy.</span>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Links -->
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">⚡ Accès rapide</h2>
+    </div>
+
+    <div class="quick-links">
+        <a href="{% url 'courier:wallet' %}" class="quick-link">
+            <span class="quick-link-icon">💰</span>
+            <div class="quick-link-info">
+                <span class="quick-link-label">Portefeuille</span>
+                <span class="quick-link-value">{{ request.user.wallet_balance|floatformat:0 }} XAF</span>
+            </div>
+            <span class="quick-link-arrow">→</span>
+        </a>
+
+        <a href="{% url 'courier:delivery-history' %}" class="quick-link">
+            <span class="quick-link-icon">📦</span>
+            <div class="quick-link-info">
+                <span class="quick-link-label">Historique Livraisons</span>
+                <span class="quick-link-desc">Voir toutes mes courses</span>
+            </div>
+            <span class="quick-link-arrow">→</span>
+        </a>
+
+        <a href="{% url 'courier:badges' %}" class="quick-link">
+            <span class="quick-link-icon">🏅</span>
+            <div class="quick-link-info">
+                <span class="quick-link-label">Badges & Récompenses</span>
+                <span class="quick-link-desc">Ma collection</span>
+            </div>
+            <span class="quick-link-arrow">→</span>
+        </a>
+
+        <a href="{% url 'courier:leaderboard' %}" class="quick-link">
+            <span class="quick-link-icon">🏆</span>
+            <div class="quick-link-info">
+                <span class="quick-link-label">Classement</span>
+                <span class="quick-link-desc">Ma position</span>
+            </div>
+            <span class="quick-link-arrow">→</span>
+        </a>
+
+        <a href="{% url 'courier:transaction-history' %}" class="quick-link">
+            <span class="quick-link-icon">📝</span>
+            <div class="quick-link-info">
+                <span class="quick-link-label">Transactions</span>
+                <span class="quick-link-desc">Historique complet</span>
+            </div>
+            <span class="quick-link-arrow">→</span>
+        </a>
+    </div>
+</div>
+
+<!-- Account Info -->
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">👤 Informations</h2>
+    </div>
+
+    <div class="info-list">
+        <div class="info-item">
+            <span class="info-label">Téléphone</span>
+            <span class="info-value">{{ request.user.phone_number }}</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Nom complet</span>
+            <span class="info-value">{{ request.user.full_name }}</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Niveau</span>
+            <span class="info-value">{{ courier.courier_level|default:"BRONZE" }}</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Vérifié</span>
+            <span class="info-value">{% if courier.is_verified %}✅ Oui{% else %}❌ Non{% endif %}</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Inscrit le</span>
+            <span class="info-value">{{ courier.date_joined|date:"d/m/Y" }}</span>
+        </div>
+    </div>
+</div>
+
+<!-- Logout -->
+<div style="padding: 0 1rem 2rem;">
+    <a href="{% url 'courier:dashboard' %}" class="btn btn-outline btn-block">
+        🏠 Retour Dashboard
+    </a>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .profile-header {
+        text-align: center;
+        padding: 2rem 1rem;
+        background: linear-gradient(135deg, #1a1a2e, #16213e);
+        color: white;
+    }
+
+    .profile-avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: var(--primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        font-weight: 700;
+        margin: 0 auto 1rem;
+        border: 3px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .profile-name {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+    }
+
+    .profile-phone {
+        opacity: 0.7;
+        margin-bottom: 0.75rem;
+    }
+
+    .profile-level {
+        margin-bottom: 0.75rem;
+    }
+
+    .profile-status {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        font-size: 0.875rem;
+        opacity: 0.9;
+    }
+
+    .status-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+
+    .status-dot.online {
+        background: var(--success);
+        box-shadow: 0 0 6px var(--success);
+    }
+
+    .status-dot.offline {
+        background: var(--gray-500);
+    }
+
+    /* Performance Stats */
+    .profile-stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.75rem;
+        text-align: center;
+    }
+
+    .profile-stat {
+        padding: 0.75rem;
+        background: var(--gray-50);
+        border-radius: 8px;
+    }
+
+    .profile-stat-value {
+        display: block;
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--primary);
+    }
+
+    .profile-stat-label {
+        display: block;
+        font-size: 0.7rem;
+        color: var(--gray-500);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-top: 0.25rem;
+    }
+
+    /* Quick Links */
+    .quick-links {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .quick-link {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 1rem 0;
+        text-decoration: none;
+        color: inherit;
+        border-bottom: 1px solid var(--gray-100);
+        transition: background 0.2s;
+    }
+
+    .quick-link:last-child {
+        border-bottom: none;
+    }
+
+    .quick-link:active {
+        background: var(--gray-50);
+    }
+
+    .quick-link-icon {
+        font-size: 1.5rem;
+    }
+
+    .quick-link-info {
+        flex: 1;
+    }
+
+    .quick-link-label {
+        display: block;
+        font-weight: 500;
+        font-size: 0.95rem;
+    }
+
+    .quick-link-value {
+        display: block;
+        font-size: 0.8rem;
+        color: var(--primary);
+        font-weight: 600;
+    }
+
+    .quick-link-desc {
+        display: block;
+        font-size: 0.8rem;
+        color: var(--gray-500);
+    }
+
+    .quick-link-arrow {
+        color: var(--gray-300);
+        font-size: 1.25rem;
+    }
+
+    /* Info List */
+    .info-list {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .info-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--gray-100);
+    }
+
+    .info-item:last-child {
+        border-bottom: none;
+    }
+
+    .info-label {
+        font-size: 0.875rem;
+        color: var(--gray-500);
+    }
+
+    .info-value {
+        font-weight: 500;
+        font-size: 0.875rem;
+    }
+</style>
+{% endblock %}

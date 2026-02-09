@@ -48,4 +48,10 @@ urlpatterns = [
     path('api/couriers/online/', views.api_online_couriers, name='api-online-couriers'),
     path('api/courier-positions/', views.api_courier_positions, name='api-courier-positions'),
     path('api/alerts/', views.api_check_alerts, name='api-check-alerts'),
+    
+    # Finance Dashboard
+    path('finance/', views.FinanceDashboardView.as_view(), name='finance-dashboard'),
+    
+    # Reports
+    path('reports/', views.ReportView.as_view(), name='reports'),
 ]

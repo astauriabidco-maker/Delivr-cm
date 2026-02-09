@@ -615,3 +615,338 @@ def api_check_alerts(request):
         'alerts': AlertService.get_active_alerts(),
         'summary': AlertService.get_alert_summary(),
     })
+
+
+# ============================================
+# FINANCIAL DASHBOARD
+# ============================================
+
+class FinanceDashboardView(AdminRequiredMixin, TemplateView):
+    """Financial KPI dashboard with revenue, commissions, debts."""
+    template_name = 'fleet/finance_dashboard.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        from django.db.models import Sum, Count
+        from logistics.models import Delivery, DeliveryStatus
+        from finance.models import Transaction, WithdrawalRequest, WithdrawalStatus
+        from core.models import PromoCode
+        from datetime import timedelta
+        
+        now = timezone.now()
+        today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        
+        # === KPI Cards ===
+        completed = Delivery.objects.filter(status=DeliveryStatus.COMPLETED)
+        agg = completed.aggregate(
+            total_revenue=Sum('total_price'),
+            total_commission=Sum('platform_fee'),
+            total_courier_earnings=Sum('courier_earning'),
+        )
+        context['total_revenue'] = f"{agg['total_revenue'] or 0:,.0f}"
+        context['total_commission'] = f"{agg['total_commission'] or 0:,.0f}"
+        context['total_courier_earnings'] = f"{agg['total_courier_earnings'] or 0:,.0f}"
+        
+        # Debts
+        indebted = User.objects.filter(
+            role=UserRole.COURIER,
+            wallet_balance__lt=0
+        )
+        debt_agg = indebted.aggregate(total_debt=Sum('wallet_balance'))
+        context['total_debt'] = f"{abs(debt_agg['total_debt'] or 0):,.0f}"
+        context['indebted_couriers'] = indebted.count()
+        
+        # Withdrawals
+        pending_w = WithdrawalRequest.objects.filter(status=WithdrawalStatus.PENDING)
+        context['pending_withdrawals_count'] = pending_w.count()
+        context['pending_withdrawals_amount'] = f"{pending_w.aggregate(t=Sum('amount'))['t'] or 0:,.0f}"
+        
+        # Today
+        today_completed = completed.filter(completed_at__gte=today_start)
+        context['today_deliveries'] = today_completed.count()
+        context['today_revenue'] = f"{today_completed.aggregate(t=Sum('total_price'))['t'] or 0:,.0f}"
+        
+        # Wallet balance
+        wallet_total = User.objects.filter(
+            role=UserRole.COURIER
+        ).aggregate(t=Sum('wallet_balance'))['t'] or 0
+        context['total_wallet_balance'] = f"{wallet_total:,.0f}"
+        
+        # Active promos
+        context['active_promos'] = PromoCode.objects.filter(
+            is_active=True,
+            valid_until__gte=now
+        ).count()
+        
+        # === Daily Revenue Chart (30 days) ===
+        daily_data = []
+        for i in range(29, -1, -1):
+            day = (now - timedelta(days=i)).date()
+            day_revenue = completed.filter(
+                completed_at__date=day
+            ).aggregate(r=Sum('total_price'))['r'] or 0
+            daily_data.append({
+                'date': day.strftime('%d/%m'),
+                'revenue': float(day_revenue),
+            })
+        context['daily_revenue_json'] = json.dumps(daily_data)
+        
+        # === Payment Method Chart ===
+        payment_methods = Delivery.objects.filter(
+            status=DeliveryStatus.COMPLETED
+        ).values('payment_method').annotate(
+            count=Count('id')
+        ).order_by('-count')
+        
+        pm_data = []
+        method_labels = {'CASH': 'Espèces', 'PREPAID': 'Prépayé', 'MOMO': 'Mobile Money'}
+        for pm in payment_methods:
+            pm_data.append({
+                'method': method_labels.get(pm['payment_method'], pm['payment_method']),
+                'count': pm['count'],
+            })
+        context['payment_methods_json'] = json.dumps(pm_data)
+        
+        # === Top 10 Couriers ===
+        from django.db.models import Subquery, OuterRef
+        
+        top_couriers = User.objects.filter(
+            role=UserRole.COURIER,
+            total_deliveries_completed__gt=0,
+        ).order_by('-total_deliveries_completed')[:10]
+        
+        courier_data = []
+        for c in top_couriers:
+            courier_deliveries = Delivery.objects.filter(
+                courier=c, status=DeliveryStatus.COMPLETED
+            )
+            rev = courier_deliveries.aggregate(
+                revenue=Sum('total_price'),
+                earnings=Sum('courier_earning'),
+            )
+            c.revenue = f"{rev['revenue'] or 0:,.0f}"
+            c.earnings = f"{rev['earnings'] or 0:,.0f}"
+            courier_data.append(c)
+        context['top_couriers'] = courier_data
+        
+        # === Recent Transactions ===
+        context['recent_transactions'] = Transaction.objects.select_related(
+            'user'
+        ).order_by('-created_at')[:15]
+        
+        return context
+
+
+# ============================================
+# REPORT GENERATION VIEW
+# ============================================
+
+class ReportView(AdminRequiredMixin, TemplateView):
+    """Generate downloadable financial and operational reports."""
+    template_name = 'fleet/reports.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        from django.db.models import Sum, Count, Avg, F
+        from logistics.models import Delivery, DeliveryStatus, Neighborhood
+        from finance.models import Transaction, WithdrawalRequest, WithdrawalStatus
+        from core.models import PromoCode
+        from datetime import timedelta, datetime
+        
+        now = timezone.now()
+        
+        # ── Period Selection ──
+        period = self.request.GET.get('period', '30')
+        date_from = self.request.GET.get('from', '')
+        date_to = self.request.GET.get('to', '')
+        
+        if date_from and date_to:
+            try:
+                start = timezone.make_aware(datetime.strptime(date_from, '%Y-%m-%d'))
+                end = timezone.make_aware(datetime.strptime(date_to, '%Y-%m-%d').replace(
+                    hour=23, minute=59, second=59))
+                period_label = f"Du {start.strftime('%d/%m/%Y')} au {end.strftime('%d/%m/%Y')}"
+            except ValueError:
+                start = now - timedelta(days=30)
+                end = now
+                period_label = "30 derniers jours"
+        else:
+            days = int(period)
+            start = now - timedelta(days=days)
+            end = now
+            period_labels = {7: '7 derniers jours', 30: '30 derniers jours', 90: '90 derniers jours'}
+            period_label = period_labels.get(days, f'{days} derniers jours')
+        
+        context['period'] = period
+        context['period_label'] = period_label
+        context['date_from'] = date_from
+        context['date_to'] = date_to
+        context['report_date'] = now.strftime('%d/%m/%Y à %H:%M')
+        context['is_print'] = self.request.GET.get('print') == '1'
+        
+        # ── FINANCIAL KPIs ──
+        period_deliveries = Delivery.objects.filter(
+            status=DeliveryStatus.COMPLETED,
+            completed_at__gte=start,
+            completed_at__lte=end,
+        )
+        
+        fin_agg = period_deliveries.aggregate(
+            total_revenue=Sum('total_price'),
+            total_commission=Sum('platform_fee'),
+            total_courier_earnings=Sum('courier_earning'),
+            total_distance=Sum('distance_km'),
+            avg_price=Avg('total_price'),
+        )
+        
+        context['fin'] = {
+            'revenue': fin_agg['total_revenue'] or 0,
+            'commission': fin_agg['total_commission'] or 0,
+            'courier_earnings': fin_agg['total_courier_earnings'] or 0,
+            'total_distance': round(fin_agg['total_distance'] or 0, 1),
+            'avg_price': round(fin_agg['avg_price'] or 0),
+        }
+        
+        # Payment method breakdown
+        pm_breakdown = period_deliveries.values('payment_method').annotate(
+            count=Count('id'),
+            total=Sum('total_price'),
+        ).order_by('-count')
+        
+        method_labels = {
+            'CASH': 'Espèces (Cash)', 
+            'PREPAID': 'Prépayé (Wallet)', 
+            'MOMO': 'Mobile Money',
+            'CASH_P2P': 'Cash P2P',
+            'PREPAID_WALLET': 'Prépayé Wallet',
+        }
+        context['payment_breakdown'] = [
+            {
+                'method': method_labels.get(pm['payment_method'], pm['payment_method']),
+                'count': pm['count'],
+                'total': pm['total'] or 0,
+            }
+            for pm in pm_breakdown
+        ]
+        
+        # Withdrawals in period
+        period_withdrawals = WithdrawalRequest.objects.filter(created_at__gte=start, created_at__lte=end)
+        w_agg = period_withdrawals.aggregate(
+            total_amount=Sum('amount'),
+        )
+        context['withdrawals'] = {
+            'total_count': period_withdrawals.count(),
+            'total_amount': w_agg['total_amount'] or 0,
+            'pending': period_withdrawals.filter(status=WithdrawalStatus.PENDING).count(),
+            'completed': period_withdrawals.filter(status=WithdrawalStatus.COMPLETED).count(),
+            'rejected': period_withdrawals.filter(status=WithdrawalStatus.REJECTED).count(),
+        }
+        
+        # Current debt snapshot
+        indebted = User.objects.filter(role=UserRole.COURIER, wallet_balance__lt=0)
+        debt_agg = indebted.aggregate(total_debt=Sum('wallet_balance'))
+        context['debt'] = {
+            'total': abs(debt_agg['total_debt'] or 0),
+            'count': indebted.count(),
+            'blocked': User.objects.filter(
+                role=UserRole.COURIER,
+                wallet_balance__lt=-F('debt_ceiling')
+            ).count(),
+        }
+        
+        # ── OPERATIONAL KPIs ──
+        all_period_deliveries = Delivery.objects.filter(
+            created_at__gte=start, created_at__lte=end
+        )
+        total_created = all_period_deliveries.count()
+        completed_count = period_deliveries.count()
+        cancelled_count = all_period_deliveries.filter(status=DeliveryStatus.CANCELLED).count()
+        
+        context['ops'] = {
+            'total_created': total_created,
+            'completed': completed_count,
+            'cancelled': cancelled_count,
+            'pending': all_period_deliveries.filter(status=DeliveryStatus.PENDING).count(),
+            'success_rate': round((completed_count / total_created * 100), 1) if total_created > 0 else 0,
+            'cancel_rate': round((cancelled_count / total_created * 100), 1) if total_created > 0 else 0,
+        }
+        
+        # Fleet snapshot
+        all_couriers = User.objects.filter(role=UserRole.COURIER, is_active=True)
+        context['fleet_snapshot'] = {
+            'total': all_couriers.count(),
+            'verified': all_couriers.filter(is_verified=True).count(),
+            'online': all_couriers.filter(is_online=True).count(),
+            'new_in_period': all_couriers.filter(date_joined__gte=start).count(),
+        }
+        
+        # ── TOP COURIERS ──
+        top_couriers = []
+        couriers_data = User.objects.filter(
+            role=UserRole.COURIER,
+            is_verified=True,
+        ).order_by('-total_deliveries_completed')[:10]
+        
+        for c in couriers_data:
+            c_deliveries = period_deliveries.filter(courier=c)
+            c_agg = c_deliveries.aggregate(
+                count=Count('id'),
+                revenue=Sum('total_price'),
+                earnings=Sum('courier_earning'),
+            )
+            if c_agg['count'] and c_agg['count'] > 0:
+                top_couriers.append({
+                    'name': c.full_name or c.phone_number,
+                    'phone': c.phone_number,
+                    'deliveries': c_agg['count'],
+                    'revenue': c_agg['revenue'] or 0,
+                    'earnings': c_agg['earnings'] or 0,
+                    'balance': c.wallet_balance,
+                    'level': c.courier_level,
+                })
+        
+        top_couriers.sort(key=lambda x: x['revenue'], reverse=True)
+        context['top_couriers'] = top_couriers[:10]
+        
+        # ── DAILY BREAKDOWN ──
+        days_count = (end - start).days + 1
+        daily_data = []
+        for i in range(min(days_count, 90)):
+            day = (start + timedelta(days=i)).date()
+            day_delivers = period_deliveries.filter(completed_at__date=day)
+            day_agg = day_delivers.aggregate(
+                count=Count('id'), 
+                revenue=Sum('total_price'),
+            )
+            daily_data.append({
+                'date': day.strftime('%d/%m'),
+                'count': day_agg['count'] or 0,
+                'revenue': float(day_agg['revenue'] or 0),
+            })
+        context['daily_data'] = daily_data
+        context['daily_data_json'] = json.dumps(daily_data)
+        
+        # ── ZONE PERFORMANCE ──
+        zones = Neighborhood.objects.filter(is_active=True)
+        zone_data = []
+        for zone in zones:
+            zone_pickups = period_deliveries.filter(
+                pickup_geo__distance_lte=(zone.center_geo, zone.radius_km * 1000)
+            ).count() if zone.center_geo else 0
+            zone_dropoffs = period_deliveries.filter(
+                dropoff_geo__distance_lte=(zone.center_geo, zone.radius_km * 1000)
+            ).count() if zone.center_geo else 0
+            zone_data.append({
+                'name': zone.name,
+                'city': zone.city,
+                'pickups': zone_pickups,
+                'dropoffs': zone_dropoffs,
+                'total': zone_pickups + zone_dropoffs,
+            })
+        zone_data.sort(key=lambda x: x['total'], reverse=True)
+        context['zone_data'] = zone_data[:15]
+        
+        return context
+

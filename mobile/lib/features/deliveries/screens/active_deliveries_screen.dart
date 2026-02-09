@@ -175,7 +175,7 @@ class _ActiveDeliveriesScreenState extends ConsumerState<ActiveDeliveriesScreen>
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
+          color: color.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Row(
@@ -272,7 +272,7 @@ class _ActiveDeliveriesScreenState extends ConsumerState<ActiveDeliveriesScreen>
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
-          color: statusColor.withOpacity(0.3),
+          color: statusColor.withValues(alpha: 0.3),
           width: 1,
         ),
       ),
@@ -334,7 +334,7 @@ class _ActiveDeliveriesScreenState extends ConsumerState<ActiveDeliveriesScreen>
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: statusColor.withOpacity(0.1),
+                      color: statusColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -406,7 +406,7 @@ class _ActiveDeliveriesScreenState extends ConsumerState<ActiveDeliveriesScreen>
                       label: const Text('Appeler'),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: DelivrColors.primary,
-                        side: BorderSide(color: DelivrColors.primary.withOpacity(0.3)),
+                        side: BorderSide(color: DelivrColors.primary.withValues(alpha: 0.3)),
                         padding: const EdgeInsets.symmetric(vertical: 8),
                       ),
                     ),
@@ -475,7 +475,7 @@ class _ActiveDeliveriesScreenState extends ConsumerState<ActiveDeliveriesScreen>
             Polyline(
               points: points.map((p) => LatLng(p.lat, p.lng)).toList(),
               strokeWidth: 3,
-              color: DelivrColors.primary.withOpacity(0.7),
+              color: DelivrColors.primary.withValues(alpha: 0.7),
             ),
           ],
         ),
@@ -499,7 +499,7 @@ class _ActiveDeliveriesScreenState extends ConsumerState<ActiveDeliveriesScreen>
                     border: Border.all(color: Colors.white, width: 2),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.2),
+                        color: Colors.black.withValues(alpha: 0.2),
                         blurRadius: 4,
                       ),
                     ],
@@ -590,8 +590,8 @@ class _ActiveDeliveriesScreenState extends ConsumerState<ActiveDeliveriesScreen>
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: point.isPickup 
-                        ? DelivrColors.info.withOpacity(0.1)
-                        : DelivrColors.success.withOpacity(0.1),
+                        ? DelivrColors.info.withValues(alpha: 0.1)
+                        : DelivrColors.success.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(

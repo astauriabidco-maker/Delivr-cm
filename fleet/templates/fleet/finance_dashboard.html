@@ -1,0 +1,240 @@
+{% extends "fleet/base.html" %}
+
+{% block title %}Finances{% endblock %}
+{% block page_title %}💰 Dashboard Financier{% endblock %}
+
+{% block content %}
+<!-- KPI Summary Cards -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-card-header">
+            <span class="stat-card-title">Chiffre d'Affaires Total</span>
+            <div class="stat-card-icon success">💵</div>
+        </div>
+        <div class="stat-value">{{ total_revenue|default:"0" }} <small
+                style="font-size:0.5em;color:var(--gray-500);">XAF</small></div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-card-header">
+            <span class="stat-card-title">Commissions Plateforme</span>
+            <div class="stat-card-icon info">🏦</div>
+        </div>
+        <div class="stat-value">{{ total_commission|default:"0" }} <small
+                style="font-size:0.5em;color:var(--gray-500);">XAF</small></div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-card-header">
+            <span class="stat-card-title">Gains Coursiers</span>
+            <div class="stat-card-icon warning">🛵</div>
+        </div>
+        <div class="stat-value">{{ total_courier_earnings|default:"0" }} <small
+                style="font-size:0.5em;color:var(--gray-500);">XAF</small></div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-card-header">
+            <span class="stat-card-title">Dettes en Cours</span>
+            <div class="stat-card-icon danger">⚠️</div>
+        </div>
+        <div class="stat-value">{{ total_debt|default:"0" }} <small
+                style="font-size:0.5em;color:var(--gray-500);">XAF</small></div>
+        <div class="stat-change negative">{{ indebted_couriers }} coursier(s) endettés</div>
+    </div>
+</div>
+
+<!-- Second row: Withdrawals + Orders -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-card-header">
+            <span class="stat-card-title">Retraits en attente</span>
+            <div class="stat-card-icon warning">📤</div>
+        </div>
+        <div class="stat-value">{{ pending_withdrawals_count|default:"0" }}</div>
+        <p style="font-size:0.875rem;color:var(--gray-500);margin-top:4px;">{{ pending_withdrawals_amount|default:"0" }}
+            XAF</p>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-card-header">
+            <span class="stat-card-title">Livraisons aujourd'hui</span>
+            <div class="stat-card-icon success">📦</div>
+        </div>
+        <div class="stat-value">{{ today_deliveries|default:"0" }}</div>
+        <p style="font-size:0.875rem;color:var(--gray-500);margin-top:4px;">{{ today_revenue|default:"0" }} XAF</p>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-card-header">
+            <span class="stat-card-title">Solde Wallets Total</span>
+            <div class="stat-card-icon info">👛</div>
+        </div>
+        <div class="stat-value">{{ total_wallet_balance|default:"0" }} <small
+                style="font-size:0.5em;color:var(--gray-500);">XAF</small></div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-card-header">
+            <span class="stat-card-title">Promos Actives</span>
+            <div class="stat-card-icon success">🎫</div>
+        </div>
+        <div class="stat-value">{{ active_promos|default:"0" }}</div>
+    </div>
+</div>
+
+<!-- Revenue Chart -->
+<div class="grid-2 mb-4">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">📊 CA par Jour (30 derniers jours)</h3>
+        </div>
+        <div class="card-body">
+            <canvas id="revenueChart" width="400" height="200"></canvas>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">🔄 Répartition par Mode de Paiement</h3>
+        </div>
+        <div class="card-body">
+            <canvas id="paymentChart" width="400" height="200"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Top Couriers Table -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h3 class="card-title">🏆 Top 10 Coursiers (par revenus)</h3>
+        <a href="{% url 'fleet:courier-list' %}" class="card-link">Voir tout →</a>
+    </div>
+    <div class="card-body" style="padding:0;">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Coursier</th>
+                    <th>Livraisons</th>
+                    <th>CA généré</th>
+                    <th>Gains</th>
+                    <th>Solde Wallet</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in top_couriers %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>
+                        <a href="{% url 'fleet:courier-detail' c.id %}"
+                            style="color:var(--primary);text-decoration:none;">
+                            {{ c.full_name|default:c.phone_number }}
+                        </a>
+                    </td>
+                    <td>{{ c.total_deliveries_completed }}</td>
+                    <td>{{ c.revenue|default:"0" }} XAF</td>
+                    <td>{{ c.earnings|default:"0" }} XAF</td>
+                    <td>
+                        <span class="{% if c.wallet_balance < 0 %}text-danger{% else %}text-success{% endif %}">
+                            {{ c.wallet_balance }} XAF
+                        </span>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" style="text-align:center;color:var(--gray-400);padding:2rem;">
+                        Aucune données disponibles
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Recent Transactions -->
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">🕐 Dernières Transactions</h3>
+        <a href="/admin/finance/transaction/" class="card-link">Admin →</a>
+    </div>
+    <div class="card-body" style="padding:0;">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Utilisateur</th>
+                    <th>Type</th>
+                    <th>Montant</th>
+                    <th>Statut</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for t in recent_transactions %}
+                <tr>
+                    <td style="font-size:0.875rem;">{{ t.created_at|date:"d/m H:i" }}</td>
+                    <td>{{ t.user.full_name|default:t.user.phone_number }}</td>
+                    <td><span class="badge badge-info">{{ t.get_transaction_type_display }}</span></td>
+                    <td style="font-weight:600;">{{ t.amount }} XAF</td>
+                    <td><span class="badge badge-success">{{ t.get_status_display }}</span></td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" style="text-align:center;color:var(--gray-400);padding:2rem;">
+                        Aucune transaction
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+    // Revenue Chart
+    const revenueData = {{ daily_revenue_json| safe }};
+    new Chart(document.getElementById('revenueChart'), {
+        type: 'line',
+        data: {
+            labels: revenueData.map(d => d.date),
+            datasets: [{
+                label: 'CA (XAF)',
+                data: revenueData.map(d => d.revenue),
+                borderColor: '#00d084',
+                backgroundColor: 'rgba(0,208,132,0.1)',
+                fill: true,
+                tension: 0.4,
+                pointRadius: 3,
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, ticks: { callback: v => v.toLocaleString() + ' XAF' } }
+            }
+        }
+    });
+
+    // Payment Method Chart
+    const paymentData = {{ payment_methods_json| safe }};
+    new Chart(document.getElementById('paymentChart'), {
+        type: 'doughnut',
+        data: {
+            labels: paymentData.map(d => d.method),
+            datasets: [{
+                data: paymentData.map(d => d.count),
+                backgroundColor: ['#00d084', '#3b82f6', '#f59e0b', '#ef4444'],
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { position: 'bottom' } }
+        }
+    });
+</script>
+{% endblock %}

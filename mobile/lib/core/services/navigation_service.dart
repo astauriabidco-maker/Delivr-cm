@@ -16,12 +16,12 @@ class NavigationService {
     if (Platform.isIOS) {
       // Apple Maps
       uri = Uri.parse(
-        'https://maps.apple.com/?daddr=$latitude,$longitude&dirflg=d'
+        'https://maps.apple.com/?daddr=$latitude,$longitude&dirflg=d&q=$encodedLabel'
       );
     } else {
       // Google Maps
       uri = Uri.parse(
-        'https://www.google.com/maps/dir/?api=1&destination=$latitude,$longitude&travelmode=driving'
+        'https://www.google.com/maps/dir/?api=1&destination=$latitude,$longitude&travelmode=driving&destination_place_id=$encodedLabel'
       );
     }
     

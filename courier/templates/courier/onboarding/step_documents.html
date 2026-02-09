@@ -91,10 +91,10 @@
         <div class="form-group">
             <label>Type de véhicule</label>
             <select name="vehicle_type">
-                <option value="MOTO" {% if onboarding.vehicle_type=='MOTO' %}selected{% endif %}>🏍️ Moto</option>
-                <option value="BICYCLE" {% if onboarding.vehicle_type=='BICYCLE' %}selected{% endif %}>🚲 Vélo</option>
-                <option value="FOOT" {% if onboarding.vehicle_type=='FOOT' %}selected{% endif %}>🚶 À pied</option>
-                <option value="CAR" {% if onboarding.vehicle_type=='CAR' %}selected{% endif %}>🚗 Voiture</option>
+                <option value="MOTO" {% if onboarding.vehicle_type == 'MOTO' %}selected{% endif %}>🏍️ Moto</option>
+                <option value="BICYCLE" {% if onboarding.vehicle_type == 'BICYCLE' %}selected{% endif %}>🚲 Vélo</option>
+                <option value="FOOT" {% if onboarding.vehicle_type == 'FOOT' %}selected{% endif %}>🚶 À pied</option>
+                <option value="CAR" {% if onboarding.vehicle_type == 'CAR' %}selected{% endif %}>🚗 Voiture</option>
             </select>
         </div>
 

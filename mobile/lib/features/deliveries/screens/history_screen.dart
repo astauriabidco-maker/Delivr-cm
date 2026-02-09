@@ -120,14 +120,14 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [DelivrColors.primary, DelivrColors.primary.withOpacity(0.8)],
+                colors: [DelivrColors.primary, DelivrColors.primary.withValues(alpha: 0.8)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: DelivrColors.primary.withOpacity(0.3),
+                  color: DelivrColors.primary.withValues(alpha: 0.3),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -221,7 +221,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
         Text(
           label,
           style: TextStyle(
-            color: Colors.white.withOpacity(0.8),
+            color: Colors.white.withValues(alpha: 0.8),
             fontSize: 12,
           ),
         ),
@@ -240,7 +240,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -263,8 +263,8 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: isCompleted 
-                      ? DelivrColors.success.withOpacity(0.1) 
-                      : DelivrColors.error.withOpacity(0.1),
+                      ? DelivrColors.success.withValues(alpha: 0.1) 
+                      : DelivrColors.error.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -295,7 +295,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
             margin: const EdgeInsets.only(left: 7),
             height: 16,
             width: 2,
-            color: DelivrColors.textSecondary.withOpacity(0.3),
+            color: DelivrColors.textSecondary.withValues(alpha: 0.3),
           ),
           Row(
             children: [
@@ -425,7 +425,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
             filter.copyWith(status: selected ? status : null);
         Navigator.pop(context);
       },
-      selectedColor: DelivrColors.primary.withOpacity(0.2),
+      selectedColor: DelivrColors.primary.withValues(alpha: 0.2),
       checkmarkColor: DelivrColors.primary,
     );
   }

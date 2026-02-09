@@ -1,4 +1,4 @@
-import 'dart:typed_data';
+// dart:typed_data provided by foundation.dart
 
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
@@ -180,7 +180,7 @@ class ProfilePhotoPicker extends ConsumerWidget {
               border: Border.all(color: Colors.white, width: 3),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withValues(alpha: 0.1),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -217,7 +217,7 @@ class ProfilePhotoPicker extends ConsumerWidget {
               height: size,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.black.withOpacity(0.5),
+                color: Colors.black.withValues(alpha: 0.5),
               ),
               child: const Center(
                 child: CircularProgressIndicator(
@@ -300,7 +300,7 @@ class ProfilePhotoPicker extends ConsumerWidget {
                 leading: Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: Colors.blue.withOpacity(0.1),
+                    color: Colors.blue.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: const Icon(Icons.camera_alt, color: Colors.blue),
@@ -320,7 +320,7 @@ class ProfilePhotoPicker extends ConsumerWidget {
                 leading: Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: Colors.purple.withOpacity(0.1),
+                    color: Colors.purple.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: const Icon(Icons.photo_library, color: Colors.purple),
@@ -341,7 +341,7 @@ class ProfilePhotoPicker extends ConsumerWidget {
                   leading: Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: Colors.red.withOpacity(0.1),
+                      color: Colors.red.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: const Icon(Icons.delete, color: Colors.red),

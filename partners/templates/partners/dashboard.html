@@ -427,9 +427,14 @@
         <div class="sidebar-nav">
             <a href="{% url 'partners:dashboard' %}" class="active">📊 Dashboard</a>
             <a href="{% url 'partners:orders' %}">📦 Mes Commandes</a>
-            <a href="#api-keys">🔑 Clés API</a>
-            <a href="{% url 'partners:webhooks' %}">🔔 Webhooks</a>
+            <a href="{% url 'partners:tracking' %}">🗺️ Suivi Live</a>
+            <a href="{% url 'partners:wallet' %}">💰 Wallet</a>
+            <a href="{% url 'partners:analytics' %}">📈 Analytiques</a>
+            <a href="{% url 'partners:notifications' %}">🔔 Notifications</a>
+            <a href="{% url 'partners:invoices' %}">🧾 Factures</a>
+            <a href="{% url 'partners:webhooks' %}">⚙️ Webhooks</a>
             <a href="{% url 'partners:branding' %}">🎨 Personnalisation</a>
+            <a href="{% url 'partners:profile' %}">👤 Profil</a>
             <a href="{% url 'partners:docs' %}">📖 Documentation</a>
         </div>
         <div class="sidebar-user">
@@ -649,8 +654,8 @@
         {% if is_approved and stats.chart_data %}
         // Chart.js - Orders Chart
         const ctx = document.getElementById('ordersChart').getContext('2d');
-        const chartData = {{ stats.chart_data|safe }};
-        
+        const chartData = {{ stats.chart_data| safe }};
+
         new Chart(ctx, {
             type: 'line',
             data: {

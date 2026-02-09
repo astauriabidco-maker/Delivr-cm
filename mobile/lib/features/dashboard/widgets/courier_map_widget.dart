@@ -5,6 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../../app/theme.dart';
+import '../providers/traffic_provider.dart';
+import '../providers/events_provider.dart';
+import 'traffic_events_layer.dart';
+import 'report_event_sheet.dart';
 
 /// Map widget showing courier's current location and nearby deliveries
 class CourierMapWidget extends ConsumerStatefulWidget {
@@ -12,6 +16,7 @@ class CourierMapWidget extends ConsumerStatefulWidget {
   final double? longitude;
   final List<MapDeliveryMarker> deliveryMarkers;
   final double height;
+  final bool showTraffic;
   
   const CourierMapWidget({
     super.key,
@@ -19,6 +24,7 @@ class CourierMapWidget extends ConsumerStatefulWidget {
     this.longitude,
     this.deliveryMarkers = const [],
     this.height = 200,
+    this.showTraffic = true,
   });
 
   @override
@@ -27,13 +33,22 @@ class CourierMapWidget extends ConsumerStatefulWidget {
 
 class _CourierMapWidgetState extends ConsumerState<CourierMapWidget> {
   late MapController _mapController;
+  bool _trafficVisible = true;
   // Default to Douala city center
   static const LatLng _defaultLocation = LatLng(4.0511, 9.7679);
+  static const double _cellSize = 0.0018;
   
   @override
   void initState() {
     super.initState();
     _mapController = MapController();
+    if (widget.showTraffic) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(trafficHeatmapProvider.notifier).startAutoRefresh();
+        ref.read(trafficHeatmapProvider.notifier).fetchStats();
+        ref.read(trafficEventsProvider.notifier).startAutoRefresh();
+      });
+    }
   }
 
   @override
@@ -51,13 +66,15 @@ class _CourierMapWidgetState extends ConsumerState<CourierMapWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final trafficState = widget.showTraffic ? ref.watch(trafficHeatmapProvider) : null;
+
     return Container(
       height: widget.height,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 20,
             offset: const Offset(0, 4),
           ),
@@ -86,6 +103,26 @@ class _CourierMapWidgetState extends ConsumerState<CourierMapWidget> {
                     : NetworkTileProvider(),
                 ),
                 
+                // Traffic heatmap layer (colored grid cells)
+                if (widget.showTraffic && _trafficVisible && trafficState != null && trafficState.cells.isNotEmpty)
+                  PolygonLayer(
+                    polygons: trafficState.cells.map((cell) {
+                      final half = _cellSize / 2;
+                      return Polygon(
+                        points: [
+                          LatLng(cell.lat - half, cell.lng - half),
+                          LatLng(cell.lat - half, cell.lng + half),
+                          LatLng(cell.lat + half, cell.lng + half),
+                          LatLng(cell.lat + half, cell.lng - half),
+                        ],
+                        color: Color(cell.level.colorValue)
+                            .withValues(alpha: cell.level.opacity),
+                        borderColor: Color(cell.level.colorValue).withValues(alpha: 0.3),
+                        borderStrokeWidth: 0.5,
+                      );
+                    }).toList(),
+                  ),
+                
                 // Delivery markers
                 MarkerLayer(
                   markers: [
@@ -106,6 +143,10 @@ class _CourierMapWidgetState extends ConsumerState<CourierMapWidget> {
                     )),
                   ],
                 ),
+                
+                // Traffic events markers
+                if (widget.showTraffic && _trafficVisible)
+                  const TrafficEventsLayer(),
               ],
             ),
             
@@ -121,7 +162,7 @@ class _CourierMapWidgetState extends ConsumerState<CourierMapWidget> {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      Colors.black.withOpacity(0.3),
+                      Colors.black.withValues(alpha: 0.3),
                       Colors.transparent,
                     ],
                   ),
@@ -136,11 +177,11 @@ class _CourierMapWidgetState extends ConsumerState<CourierMapWidget> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.95),
+                  color: Colors.white.withValues(alpha: 0.95),
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
+                      color: Colors.black.withValues(alpha: 0.1),
                       blurRadius: 4,
                     ),
                   ],
@@ -170,6 +211,21 @@ class _CourierMapWidgetState extends ConsumerState<CourierMapWidget> {
               ),
             ),
             
+            // Traffic toggle + stats (top right)
+            if (widget.showTraffic)
+              Positioned(
+                top: 12,
+                right: 12,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    _buildTrafficToggle(trafficState),
+                    if (_trafficVisible && trafficState?.stats != null)
+                      _buildTrafficStats(trafficState!.stats!),
+                  ],
+                ),
+              ),
+            
             // Recenter button
             Positioned(
               bottom: 12,
@@ -186,7 +242,7 @@ class _CourierMapWidgetState extends ConsumerState<CourierMapWidget> {
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.15),
+                        color: Colors.black.withValues(alpha: 0.15),
                         blurRadius: 8,
                       ),
                     ],
@@ -199,6 +255,64 @@ class _CourierMapWidgetState extends ConsumerState<CourierMapWidget> {
                 ),
               ),
             ),
+            
+            // Traffic legend (bottom left)
+            if (widget.showTraffic && _trafficVisible && trafficState != null && trafficState.cells.isNotEmpty)
+              Positioned(
+                bottom: 12,
+                left: 12,
+                child: _buildTrafficLegend(),
+              ),
+            
+            // Report event FAB (bottom center)
+            if (widget.showTraffic)
+              Positioned(
+                bottom: 12,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: GestureDetector(
+                    onTap: () => showQuickReportSheet(
+                      context,
+                      latitude: _currentLocation.latitude,
+                      longitude: _currentLocation.longitude,
+                      // TODO: pass real speed from GPS provider
+                      currentSpeedKmh: null,
+                    ),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [DelivrColors.primary, DelivrColors.primaryLight],
+                        ),
+                        borderRadius: BorderRadius.circular(24),
+                        boxShadow: [
+                          BoxShadow(
+                            color: DelivrColors.primary.withValues(alpha: 0.3),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.flash_on, color: Colors.white, size: 18),
+                          SizedBox(width: 6),
+                          Text(
+                            'Signaler ⚡',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
       ),
@@ -214,7 +328,7 @@ class _CourierMapWidgetState extends ConsumerState<CourierMapWidget> {
           width: 60,
           height: 60,
           decoration: BoxDecoration(
-            color: DelivrColors.primary.withOpacity(0.2),
+            color: DelivrColors.primary.withValues(alpha: 0.2),
             shape: BoxShape.circle,
           ),
         ),
@@ -228,7 +342,7 @@ class _CourierMapWidgetState extends ConsumerState<CourierMapWidget> {
             border: Border.all(color: Colors.white, width: 3),
             boxShadow: [
               BoxShadow(
-                color: DelivrColors.primary.withOpacity(0.4),
+                color: DelivrColors.primary.withValues(alpha: 0.4),
                 blurRadius: 10,
                 spreadRadius: 2,
               ),
@@ -273,7 +387,7 @@ class _CourierMapWidgetState extends ConsumerState<CourierMapWidget> {
             border: Border.all(color: Colors.white, width: 2),
             boxShadow: [
               BoxShadow(
-                color: markerColor.withOpacity(0.4),
+                color: markerColor.withValues(alpha: 0.4),
                 blurRadius: 6,
               ),
             ],
@@ -297,6 +411,148 @@ class _CourierMapWidgetState extends ConsumerState<CourierMapWidget> {
           ),
         ),
       ],
+    );
+  }
+  // ==========================
+  // Traffic UI components
+  // ==========================
+  
+  Widget _buildTrafficToggle(TrafficHeatmapState? state) {
+    return GestureDetector(
+      onTap: () => setState(() => _trafficVisible = !_trafficVisible),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+        decoration: BoxDecoration(
+          color: _trafficVisible ? Colors.blue.shade700 : Colors.white.withValues(alpha: 0.95),
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.15),
+              blurRadius: 4,
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.traffic,
+              size: 14,
+              color: _trafficVisible ? Colors.white : Colors.grey.shade600,
+            ),
+            const SizedBox(width: 3),
+            Text(
+              'Trafic',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: _trafficVisible ? Colors.white : Colors.grey.shade600,
+              ),
+            ),
+            if (state?.isLoading == true) ...[
+              const SizedBox(width: 4),
+              SizedBox(
+                width: 8,
+                height: 8,
+                child: CircularProgressIndicator(
+                  strokeWidth: 1.5,
+                  color: _trafficVisible ? Colors.white : Colors.grey,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildTrafficStats(TrafficStats stats) {
+    return Container(
+      margin: const EdgeInsets.only(top: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.95),
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 4,
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(stats.overallLevel.emoji, style: const TextStyle(fontSize: 12)),
+          const SizedBox(width: 3),
+          Text(
+            '${stats.avgCitySpeed.toStringAsFixed(0)} km/h',
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              color: Color(stats.overallLevel.colorValue),
+            ),
+          ),
+          const SizedBox(width: 6),
+          Icon(Icons.people, size: 10, color: Colors.grey.shade600),
+          const SizedBox(width: 2),
+          Text(
+            '${stats.onlineCouriers}',
+            style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildTrafficLegend() {
+    return Container(
+      padding: const EdgeInsets.all(6),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.95),
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 4,
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _legendRow(TrafficLevel.fluide),
+          _legendRow(TrafficLevel.modere),
+          _legendRow(TrafficLevel.dense),
+          _legendRow(TrafficLevel.bloque),
+        ],
+      ),
+    );
+  }
+  
+  Widget _legendRow(TrafficLevel level) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 1),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 10,
+            height: 10,
+            decoration: BoxDecoration(
+              color: Color(level.colorValue).withValues(alpha: level.opacity),
+              border: Border.all(color: Color(level.colorValue), width: 0.5),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(width: 4),
+          Text(
+            level.label,
+            style: TextStyle(fontSize: 9, color: Colors.grey.shade700),
+          ),
+        ],
+      ),
     );
   }
 }

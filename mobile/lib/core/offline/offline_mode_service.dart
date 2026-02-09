@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -88,6 +87,7 @@ class OfflineModeService extends StateNotifier<OfflineState> {
   Box<String>? _cacheBox;
   Box<String>? _actionsBox;
   StreamSubscription? _connectivitySubscription;
+  // ignore: unused_field
   final Ref _ref;
   
   OfflineModeService(this._ref) : super(const OfflineState()) {
@@ -295,8 +295,8 @@ class ConnectionIndicator extends ConsumerWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: offlineState.isOnline 
-            ? Colors.green.withOpacity(0.1) 
-            : Colors.red.withOpacity(0.1),
+            ? Colors.green.withValues(alpha: 0.1) 
+            : Colors.red.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -384,7 +384,7 @@ class OfflineBanner extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
+                color: Colors.white.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(

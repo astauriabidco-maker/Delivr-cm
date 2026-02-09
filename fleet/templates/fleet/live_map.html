@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
+<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js" defer></script>
 <style>
     .live-map-container {
         height: calc(100vh - 180px);
@@ -253,6 +254,86 @@
         color: var(--text-secondary);
     }
 
+    /* Layer Switcher */
+    .layer-switcher {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        z-index: 1000;
+        display: flex;
+        gap: 2px;
+        background: rgba(255, 255, 255, 0.95);
+        padding: 4px;
+        border-radius: 10px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .layer-btn {
+        padding: 8px 14px;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        cursor: pointer;
+        color: #555;
+        background: transparent;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        white-space: nowrap;
+    }
+
+    .layer-btn:hover {
+        background: rgba(0, 0, 0, 0.06);
+    }
+
+    .layer-btn.active {
+        background: var(--primary, #3b82f6);
+        color: white;
+        box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
+    }
+
+    /* Heatmap toggle */
+    .heatmap-toggle {
+        position: absolute;
+        top: 12px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 1000;
+        display: flex;
+        gap: 2px;
+        background: rgba(255, 255, 255, 0.95);
+        padding: 4px;
+        border-radius: 10px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .heatmap-btn {
+        padding: 8px 14px;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        cursor: pointer;
+        color: #555;
+        background: transparent;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .heatmap-btn:hover {
+        background: rgba(0, 0, 0, 0.06);
+    }
+
+    .heatmap-btn.active {
+        background: #ef4444;
+        color: white;
+        box-shadow: 0 2px 6px rgba(239, 68, 68, 0.3);
+    }
+
     /* Last Update */
     .last-update {
         font-size: 0.75rem;
@@ -329,6 +410,29 @@
 <div class="live-map-container">
     <div id="live-map"></div>
 
+    <!-- Layer Switcher -->
+    <div class="layer-switcher">
+        <button class="layer-btn active" data-layer="plan" title="Vue Plan">
+            🗺️ Plan
+        </button>
+        <button class="layer-btn" data-layer="satellite" title="Vue Satellite">
+            🛰️ Satellite
+        </button>
+        <button class="layer-btn" data-layer="hybrid" title="Vue Hybride">
+            🌍 Hybride
+        </button>
+        <button class="layer-btn" data-layer="dark" title="Vue Sombre">
+            🌙 Sombre
+        </button>
+    </div>
+
+    <!-- Heatmap Toggle -->
+    <div class="heatmap-toggle">
+        <button class="heatmap-btn" id="heatmap-toggle" title="Zones de densité">
+            🔥 Zones chaudes
+        </button>
+    </div>
+
     <div class="map-legend">
         <div class="legend-title">Légende</div>
         <div class="legend-items">
@@ -343,6 +447,10 @@
             <div class="legend-item">
                 <span style="color: #3b82f6;">📦</span>
                 Livraison en attente
+            </div>
+            <div class="legend-item">
+                <span style="color: #ef4444;">🔥</span>
+                Zone de forte densité
             </div>
         </div>
     </div>
@@ -379,14 +487,44 @@
             'PLATINUM': '#e5e4e2'
         };
 
+        // Tile layers
+        const tileLayers = {
+            plan: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors',
+                maxZoom: 19
+            }),
+            satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                attribution: '© Esri, Maxar, Earthstar Geographics',
+                maxZoom: 18
+            }),
+            hybrid: L.layerGroup([
+                L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                    maxZoom: 18
+                }),
+                L.tileLayer('https://stamen-tiles.a.ssl.fastly.net/toner-labels/{z}/{x}/{y}.png', {
+                    attribution: '© Esri | Labels: Stamen',
+                    maxZoom: 18,
+                    opacity: 0.7
+                })
+            ]),
+            dark: L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                attribution: '© CARTO',
+                maxZoom: 19
+            })
+        };
+
+        let currentLayer = 'plan';
+        let heatmapLayer = null;
+        let heatmapVisible = false;
+
         // Initialize map
         function initMap() {
-            map = L.map('live-map').setView(DEFAULT_CENTER, DEFAULT_ZOOM);
+            map = L.map('live-map', {
+                zoomControl: true
+            }).setView(DEFAULT_CENTER, DEFAULT_ZOOM);
 
-            // OpenStreetMap tiles
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap contributors'
-            }).addTo(map);
+            // Default tile layer
+            tileLayers.plan.addTo(map);
 
             // Marker cluster group
             markerCluster = L.markerClusterGroup({
@@ -397,11 +535,111 @@
             });
             map.addLayer(markerCluster);
 
+            // Layer switcher
+            setupLayerSwitcher();
+
+            // Heatmap toggle
+            setupHeatmapToggle();
+
             // Initial data fetch
             fetchCourierPositions();
 
             // Auto-refresh
             setInterval(fetchCourierPositions, REFRESH_INTERVAL);
+        }
+
+        // Layer switching
+        function setupLayerSwitcher() {
+            document.querySelectorAll('.layer-btn').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    const layerName = this.dataset.layer;
+                    if (layerName === currentLayer) return;
+
+                    // Remove current layer
+                    if (currentLayer === 'hybrid') {
+                        tileLayers[currentLayer].eachLayer(l => map.removeLayer(l));
+                    } else {
+                        map.removeLayer(tileLayers[currentLayer]);
+                    }
+
+                    // Add new layer
+                    if (layerName === 'hybrid') {
+                        tileLayers[layerName].eachLayer(l => l.addTo(map));
+                    } else {
+                        tileLayers[layerName].addTo(map);
+                    }
+
+                    // Bring markers to front
+                    if (markerCluster) markerCluster.bringToFront();
+
+                    currentLayer = layerName;
+
+                    // Update button states
+                    document.querySelectorAll('.layer-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
+        }
+
+        // Heatmap toggle
+        function setupHeatmapToggle() {
+            const btn = document.getElementById('heatmap-toggle');
+            if (!btn) return;
+
+            btn.addEventListener('click', function () {
+                heatmapVisible = !heatmapVisible;
+                this.classList.toggle('active', heatmapVisible);
+
+                if (heatmapVisible) {
+                    updateHeatmap();
+                } else if (heatmapLayer) {
+                    map.removeLayer(heatmapLayer);
+                    heatmapLayer = null;
+                }
+            });
+        }
+
+        // Update heatmap with courier/delivery positions
+        function updateHeatmap() {
+            if (!heatmapVisible || typeof L.heatLayer === 'undefined') return;
+
+            const points = [];
+
+            // Courier positions
+            Object.values(courierMarkers).forEach(marker => {
+                const ll = marker.getLatLng();
+                points.push([ll.lat, ll.lng, 0.8]);
+            });
+
+            // Add some neighborhood hotspots for Douala
+            const hotspots = [
+                [4.0511, 9.7679, 0.6],  // Centre Akwa
+                [4.0468, 9.7403, 0.5],  // Bonanjo
+                [4.0650, 9.7850, 0.4],  // Bonabéri
+                [4.0320, 9.7550, 0.3],  // Deido
+                [4.0750, 9.7600, 0.4],  // Makepe
+            ];
+            points.push(...hotspots);
+
+            if (heatmapLayer) {
+                map.removeLayer(heatmapLayer);
+            }
+
+            heatmapLayer = L.heatLayer(points, {
+                radius: 35,
+                blur: 25,
+                maxZoom: 16,
+                max: 1.0,
+                gradient: {
+                    0.0: '#313695',
+                    0.2: '#4575b4',
+                    0.4: '#74add1',
+                    0.5: '#fee090',
+                    0.7: '#f46d43',
+                    0.9: '#d73027',
+                    1.0: '#a50026'
+                }
+            }).addTo(map);
         }
 
         // Fetch courier positions from API
@@ -413,6 +651,7 @@
                 updateMarkers(data.couriers || []);
                 updateStats(data.couriers || [], data.deliveries || []);
                 updateLastUpdateTime();
+                if (heatmapVisible) updateHeatmap();
 
             } catch (error) {
                 console.error('[LiveMap] Error fetching positions:', error);
@@ -531,6 +770,7 @@
         document.querySelectorAll('.filter-btn').forEach(btn => {
             btn.addEventListener('click', function () {
                 const filter = this.dataset.filter;
+                if (!filter) return;
                 filters[filter] = !filters[filter];
                 this.classList.toggle('active');
                 fetchCourierPositions(); // Refresh with new filters

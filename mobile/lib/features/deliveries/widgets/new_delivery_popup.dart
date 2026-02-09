@@ -82,7 +82,7 @@ class _NewDeliveryPopupState extends ConsumerState<NewDeliveryPopup>
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: DelivrColors.primary.withOpacity(0.3),
+            color: DelivrColors.primary.withValues(alpha: 0.3),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -111,7 +111,7 @@ class _NewDeliveryPopupState extends ConsumerState<NewDeliveryPopup>
                       child: Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
+                          color: Colors.white.withValues(alpha: 0.2),
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
@@ -343,7 +343,7 @@ class _NewDeliveryPopupState extends ConsumerState<NewDeliveryPopup>
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: iconColor.withOpacity(0.1),
+            color: iconColor.withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
           child: Icon(icon, color: iconColor, size: 16),

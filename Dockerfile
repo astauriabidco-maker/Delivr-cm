@@ -30,6 +30,9 @@ RUN pip install --no-cache-dir --upgrade pip \
 # Copy project files
 COPY . .
 
+# Collect static files (admin CSS/JS, etc.)
+RUN python manage.py collectstatic --noinput
+
 # Expose port
 EXPOSE 8000
 

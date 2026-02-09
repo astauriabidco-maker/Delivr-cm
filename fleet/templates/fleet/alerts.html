@@ -40,7 +40,7 @@
             {% if alert.courier %}
             <div class="alert-meta">
                 <span class="courier-link">
-                    👤 <a href="{% url 'fleet:courier_detail' alert.courier.id %}">
+                    👤 <a href="{% url 'fleet:courier-detail' alert.courier.id %}">
                         {{ alert.courier.first_name }} {{ alert.courier.last_name }}
                     </a>
                 </span>
@@ -49,15 +49,17 @@
             {% endif %}
         </div>
         <div class="alert-actions">
+            {% if alert.courier %}
             {% if alert.type == 'high_debt' or alert.type == 'blocked' %}
-            <a href="{% url 'fleet:courier_detail' alert.courier.id %}" class="btn btn-sm btn-primary">Gérer</a>
+            <a href="{% url 'fleet:courier-detail' alert.courier.id %}" class="btn btn-sm btn-primary">Gérer</a>
             {% elif alert.type == 'pending_verification' %}
-            <form method="post" action="{% url 'fleet:verify_courier' alert.courier.id %}">
+            <form method="post" action="{% url 'fleet:verify-courier' alert.courier.id %}">
                 {% csrf_token %}
                 <button type="submit" class="btn btn-sm btn-success">Vérifier</button>
             </form>
             {% else %}
-            <a href="{% url 'fleet:courier_detail' alert.courier.id %}" class="btn btn-sm btn-secondary">Voir</a>
+            <a href="{% url 'fleet:courier-detail' alert.courier.id %}" class="btn btn-sm btn-secondary">Voir</a>
+            {% endif %}
             {% endif %}
         </div>
     </div>

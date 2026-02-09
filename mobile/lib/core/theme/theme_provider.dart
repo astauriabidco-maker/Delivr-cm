@@ -105,7 +105,7 @@ ThemeData buildDarkTheme() {
     ),
     chipTheme: ChipThemeData(
       backgroundColor: DelivrDarkColors.card,
-      selectedColor: DelivrDarkColors.primary.withOpacity(0.3),
+      selectedColor: DelivrDarkColors.primary.withValues(alpha: 0.3),
       labelStyle: const TextStyle(color: DelivrDarkColors.textPrimary),
     ),
     dividerColor: Colors.white12,

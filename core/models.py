@@ -340,3 +340,201 @@ class User(AbstractBaseUser, PermissionsMixin):
             return f"/book/{self.slug}/"
         return ""
 
+
+class AdminActivityLog(models.Model):
+    """
+    Audit log for admin actions.
+    
+    Tracks who did what, when, and from where.
+    """
+    
+    class ActionType(models.TextChoices):
+        CREATE = 'CREATE', 'Création'
+        UPDATE = 'UPDATE', 'Modification'
+        DELETE = 'DELETE', 'Suppression'
+        APPROVE = 'APPROVE', 'Approbation'
+        REJECT = 'REJECT', 'Rejet'
+        BLOCK = 'BLOCK', 'Blocage'
+        UNBLOCK = 'UNBLOCK', 'Déblocage'
+        EXPORT = 'EXPORT', 'Export'
+        IMPORT = 'IMPORT', 'Import'
+        LOGIN = 'LOGIN', 'Connexion admin'
+    
+    user = models.ForeignKey(
+        'core.User',
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='admin_activity_logs',
+        verbose_name="Administrateur"
+    )
+    action = models.CharField(
+        max_length=20,
+        choices=ActionType.choices,
+        verbose_name="Action"
+    )
+    target_model = models.CharField(
+        max_length=100,
+        blank=True,
+        verbose_name="Modèle cible"
+    )
+    target_id = models.CharField(
+        max_length=100,
+        blank=True,
+        verbose_name="ID cible"
+    )
+    details = models.JSONField(
+        default=dict,
+        blank=True,
+        verbose_name="Détails"
+    )
+    ip_address = models.GenericIPAddressField(
+        null=True,
+        blank=True,
+        verbose_name="Adresse IP"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = "Log d'activité admin"
+        verbose_name_plural = "Logs d'activité admin"
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', 'created_at']),
+            models.Index(fields=['action', 'created_at']),
+            models.Index(fields=['target_model', 'created_at']),
+        ]
+    
+    def __str__(self):
+        user_str = self.user.phone_number if self.user else "System"
+        return f"{user_str} | {self.action} | {self.target_model} | {self.created_at:%d/%m %H:%M}"
+    
+    @classmethod
+    def log(cls, user, action, target_model='', target_id='', details=None, ip_address=None):
+        """Convenience method to create a log entry."""
+        return cls.objects.create(
+            user=user,
+            action=action,
+            target_model=target_model,
+            target_id=str(target_id) if target_id else '',
+            details=details or {},
+            ip_address=ip_address,
+        )
+
+
+class PromoCode(models.Model):
+    """
+    Promotional discount codes for deliveries.
+    """
+    
+    class DiscountType(models.TextChoices):
+        PERCENTAGE = 'PERCENTAGE', 'Pourcentage (%)'
+        FIXED = 'FIXED', 'Montant fixe (XAF)'
+    
+    code = models.CharField(
+        max_length=30,
+        unique=True,
+        verbose_name="Code promo",
+        help_text="Code unique, ex: BIENVENUE2025"
+    )
+    description = models.TextField(
+        blank=True,
+        verbose_name="Description"
+    )
+    discount_type = models.CharField(
+        max_length=20,
+        choices=DiscountType.choices,
+        default=DiscountType.PERCENTAGE,
+        verbose_name="Type de remise"
+    )
+    discount_value = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        verbose_name="Valeur",
+        help_text="Pourcentage (ex: 10) ou montant fixe (ex: 500)"
+    )
+    max_uses = models.PositiveIntegerField(
+        default=0,
+        verbose_name="Utilisations max",
+        help_text="0 = illimité"
+    )
+    current_uses = models.PositiveIntegerField(
+        default=0,
+        verbose_name="Utilisations actuelles"
+    )
+    min_order_amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=Decimal('0.00'),
+        verbose_name="Montant minimum commande (XAF)"
+    )
+    max_discount_amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name="Remise max (XAF)",
+        help_text="Plafond pour les remises en pourcentage"
+    )
+    valid_from = models.DateTimeField(
+        verbose_name="Valide à partir de"
+    )
+    valid_until = models.DateTimeField(
+        verbose_name="Valide jusqu'au"
+    )
+    is_active = models.BooleanField(
+        default=True,
+        verbose_name="Actif"
+    )
+    created_by = models.ForeignKey(
+        'core.User',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='created_promos',
+        verbose_name="Créé par"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = "Code promo"
+        verbose_name_plural = "Codes promo"
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.code} ({self.get_discount_type_display()}: {self.discount_value})"
+    
+    @property
+    def is_valid(self):
+        """Check if the promo code is currently valid."""
+        from django.utils import timezone
+        now = timezone.now()
+        if not self.is_active:
+            return False
+        if now < self.valid_from or now > self.valid_until:
+            return False
+        if self.max_uses > 0 and self.current_uses >= self.max_uses:
+            return False
+        return True
+    
+    def apply_discount(self, total_price):
+        """
+        Apply the discount to a total price.
+        
+        Returns:
+            Decimal: discounted price (never below 0)
+        """
+        if not self.is_valid:
+            return total_price
+        if total_price < self.min_order_amount:
+            return total_price
+        
+        if self.discount_type == self.DiscountType.PERCENTAGE:
+            discount = total_price * self.discount_value / 100
+            if self.max_discount_amount:
+                discount = min(discount, self.max_discount_amount)
+        else:
+            discount = self.discount_value
+        
+        return max(Decimal('0.00'), total_price - discount)
+
+

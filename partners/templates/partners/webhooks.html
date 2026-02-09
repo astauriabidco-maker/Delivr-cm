@@ -320,9 +320,14 @@
         <div class="sidebar-nav">
             <a href="{% url 'partners:dashboard' %}">📊 Dashboard</a>
             <a href="{% url 'partners:orders' %}">📦 Mes Commandes</a>
-            <a href="{% url 'partners:dashboard' %}#api-keys">🔑 Clés API</a>
-            <a href="{% url 'partners:webhooks' %}" class="active">🔔 Webhooks</a>
+            <a href="{% url 'partners:tracking' %}">🗺️ Suivi Live</a>
+            <a href="{% url 'partners:wallet' %}">💰 Wallet</a>
+            <a href="{% url 'partners:analytics' %}">📈 Analytiques</a>
+            <a href="{% url 'partners:notifications' %}">🔔 Notifications</a>
+            <a href="{% url 'partners:invoices' %}">🧾 Factures</a>
+            <a href="{% url 'partners:webhooks' %}" class="active">⚙️ Webhooks</a>
             <a href="{% url 'partners:branding' %}">🎨 Personnalisation</a>
+            <a href="{% url 'partners:profile' %}">👤 Profil</a>
             <a href="{% url 'partners:docs' %}">📖 Documentation</a>
         </div>
         <div class="sidebar-user">
@@ -379,7 +384,8 @@
                 <div class="events-grid">
                     {% for event_code, event_name, event_desc in available_events %}
                     <label class="event-checkbox">
-                        <input type="checkbox" name="events" value="{{ event_code }}" {% if event_code in config.events %}checked{% endif %}>
+                        <input type="checkbox" name="events" value="{{ event_code }}" {% if event_code in config.events
+                            %}checked{% endif %}>
                         <div class="event-info">
                             <h4>{{ event_name }}</h4>
                             <p>{{ event_desc }}</p>

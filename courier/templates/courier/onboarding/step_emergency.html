@@ -24,19 +24,19 @@
             <label>Relation *</label>
             <select name="emergency_relation" required>
                 <option value="">Sélectionnez...</option>
-                <option value="Père" {% if onboarding.emergency_contact_relation=='Père' %}selected{% endif %}>Père
+                <option value="Père" {% if onboarding.emergency_contact_relation == 'Père' %}selected{% endif %}>Père
                 </option>
-                <option value="Mère" {% if onboarding.emergency_contact_relation=='Mère' %}selected{% endif %}>Mère
+                <option value="Mère" {% if onboarding.emergency_contact_relation == 'Mère' %}selected{% endif %}>Mère
                 </option>
-                <option value="Frère" {% if onboarding.emergency_contact_relation=='Frère' %}selected{% endif %}>Frère
+                <option value="Frère" {% if onboarding.emergency_contact_relation == 'Frère' %}selected{% endif %}>Frère
                 </option>
-                <option value="Soeur" {% if onboarding.emergency_contact_relation=='Soeur' %}selected{% endif %}>Sœur
+                <option value="Soeur" {% if onboarding.emergency_contact_relation == 'Soeur' %}selected{% endif %}>Sœur
                 </option>
-                <option value="Époux/Épouse" {% if onboarding.emergency_contact_relation=='Époux/Épouse' %}selected{%
+                <option value="Époux/Épouse" {% if onboarding.emergency_contact_relation == 'Époux/Épouse' %}selected{%
                     endif %}>Époux/Épouse</option>
-                <option value="Ami(e)" {% if onboarding.emergency_contact_relation=='Ami(e)' %}selected{% endif %}>
+                <option value="Ami(e)" {% if onboarding.emergency_contact_relation == 'Ami(e)' %}selected{% endif %}>
                     Ami(e)</option>
-                <option value="Autre" {% if onboarding.emergency_contact_relation=='Autre' %}selected{% endif %}>Autre
+                <option value="Autre" {% if onboarding.emergency_contact_relation == 'Autre' %}selected{% endif %}>Autre
                 </option>
             </select>
         </div>
@@ -49,12 +49,12 @@
         <div class="form-group">
             <label>Ville *</label>
             <select name="home_city" required>
-                <option value="Douala" {% if onboarding.home_city=='Douala' %}selected{% endif %}>Douala</option>
-                <option value="Yaoundé" {% if onboarding.home_city=='Yaoundé' %}selected{% endif %}>Yaoundé</option>
-                <option value="Bafoussam" {% if onboarding.home_city=='Bafoussam' %}selected{% endif %}>Bafoussam
+                <option value="Douala" {% if onboarding.home_city == 'Douala' %}selected{% endif %}>Douala</option>
+                <option value="Yaoundé" {% if onboarding.home_city == 'Yaoundé' %}selected{% endif %}>Yaoundé</option>
+                <option value="Bafoussam" {% if onboarding.home_city == 'Bafoussam' %}selected{% endif %}>Bafoussam
                 </option>
-                <option value="Kribi" {% if onboarding.home_city=='Kribi' %}selected{% endif %}>Kribi</option>
-                <option value="Autre" {% if onboarding.home_city=='Autre' %}selected{% endif %}>Autre</option>
+                <option value="Kribi" {% if onboarding.home_city == 'Kribi' %}selected{% endif %}>Kribi</option>
+                <option value="Autre" {% if onboarding.home_city == 'Autre' %}selected{% endif %}>Autre</option>
             </select>
         </div>
 

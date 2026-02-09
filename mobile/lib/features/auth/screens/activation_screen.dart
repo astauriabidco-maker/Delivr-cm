@@ -71,8 +71,8 @@ class _ActivationScreenState extends ConsumerState<ActivationScreen> {
     }
   }
 
-  void _onKeyDown(int index, RawKeyEvent event) {
-    if (event is RawKeyDownEvent &&
+  void _onKeyDown(int index, KeyEvent event) {
+    if (event is KeyDownEvent &&
         event.logicalKey == LogicalKeyboardKey.backspace &&
         _controllers[index].text.isEmpty &&
         index > 0) {
@@ -135,9 +135,9 @@ class _ActivationScreenState extends ConsumerState<ActivationScreen> {
                     width: 48,
                     height: 56,
                     margin: const EdgeInsets.symmetric(horizontal: 4),
-                    child: RawKeyboardListener(
+                    child: KeyboardListener(
                       focusNode: FocusNode(),
-                      onKey: (event) => _onKeyDown(index, event),
+                      onKeyEvent: (event) => _onKeyDown(index, event),
                       child: TextFormField(
                         controller: _controllers[index],
                         focusNode: _focusNodes[index],

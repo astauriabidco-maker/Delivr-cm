@@ -68,6 +68,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # Serve static files via ASGI/WSGI
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -75,6 +76,10 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # DELIVR-CM Security Middlewares
+    'core.middleware.RateLimitMiddleware',
+    'core.middleware.SecurityHeadersMiddleware',
+    'core.middleware.RequestAuditMiddleware',
 ]
 
 ROOT_URLCONF = 'delivr_core.urls'
@@ -139,6 +144,7 @@ USE_TZ = True
 # ===========================================
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
@@ -256,6 +262,16 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'bot.tasks.check_debt_warnings',
         'schedule': crontab(minute=0),  # Every hour at :00
     },
+    # Clean stale traffic observations every 5 minutes
+    'cleanup-traffic-data': {
+        'task': 'logistics.tasks.cleanup_traffic_data',
+        'schedule': crontab(minute='*/5'),
+    },
+    # Refresh traffic heatmap cache every 2 minutes
+    'refresh-traffic-heatmap': {
+        'task': 'logistics.tasks.aggregate_traffic_heatmap',
+        'schedule': crontab(minute='*/2'),
+    },
 }
 
 # ===========================================
@@ -333,6 +349,18 @@ PLATFORM_FEE_PERCENT = config('PLATFORM_FEE_PERCENT', default=20, cast=int)     
 COURIER_DEBT_CEILING = config('COURIER_DEBT_CEILING', default=2500, cast=int)    # XAF
 
 # ===========================================
+# RATE LIMITING
+# ===========================================
+# Enable rate limiting even in DEBUG mode (set to True to test locally)
+RATE_LIMIT_IN_DEBUG = config('RATE_LIMIT_IN_DEBUG', default=False, cast=bool)
+
+# OTP Security
+OTP_CODE_LENGTH = 4
+OTP_EXPIRY_MINUTES = 10  # OTP expires after 10 minutes
+OTP_MAX_ATTEMPTS = 5     # Max verification attempts before lockout
+OTP_LOCKOUT_MINUTES = 15 # Lockout duration after max attempts
+
+# ===========================================
 # LOGGING CONFIGURATION
 # ===========================================
 LOGGING = {
@@ -341,6 +369,10 @@ LOGGING = {
     'formatters': {
         'verbose': {
             'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+        'json': {
+            'format': '{message}',
             'style': '{',
         },
     },
@@ -365,5 +397,58 @@ LOGGING = {
             'level': 'INFO',
             'propagate': False,
         },
+        'delivr.security': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'delivr.monitoring': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
     },
 }
+
+# ===========================================
+# PRODUCTION SECURITY (Applied when DEBUG=False)
+# ===========================================
+if not DEBUG:
+    # HTTPS enforcement
+    SECURE_SSL_REDIRECT = True
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    
+    # HSTS
+    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    
+    # Content Security
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_BROWSER_XSS_FILTER = True
+    
+    # CORS: restrict to actual domains in production
+    CORS_ALLOW_ALL_ORIGINS = False
+    
+    # Sentry Integration (if DSN is configured)
+    SENTRY_DSN = config('SENTRY_DSN', default='')
+    if SENTRY_DSN:
+        import sentry_sdk
+        from sentry_sdk.integrations.django import DjangoIntegration
+        from sentry_sdk.integrations.celery import CeleryIntegration
+        from sentry_sdk.integrations.redis import RedisIntegration
+        
+        sentry_sdk.init(
+            dsn=SENTRY_DSN,
+            integrations=[
+                DjangoIntegration(),
+                CeleryIntegration(),
+                RedisIntegration(),
+            ],
+            traces_sample_rate=config('SENTRY_TRACES_RATE', default=0.1, cast=float),
+            send_default_pii=False,
+            environment=config('SENTRY_ENVIRONMENT', default='production'),
+            release=f"delivr-cm@{config('APP_VERSION', default='1.0.0')}",
+        )

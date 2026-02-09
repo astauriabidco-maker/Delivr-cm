@@ -1,0 +1,64 @@
+{% extends 'fleet/base.html' %}
+
+{% block title %}Couverture{% endblock %}
+{% block page_title %}🗺️ Couverture des Zones{% endblock %}
+
+{% block content %}
+<!-- Coverage Stats -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-card-header">
+            <span class="stat-card-title">Zones Actives</span>
+            <div class="stat-card-icon success">📍</div>
+        </div>
+        <div class="stat-value">{{ coverage|length|default:"0" }}</div>
+    </div>
+</div>
+
+<!-- Coverage Table -->
+<div class="card" style="margin-top:1.5rem;">
+    <div class="card-header">
+        <h3 class="card-title">📊 Détail par Zone</h3>
+    </div>
+    <div class="card-body" style="padding:0;">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Zone</th>
+                    <th>Ville</th>
+                    <th>Coursiers en ligne</th>
+                    <th>Livraisons (7j)</th>
+                    <th>Statut</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for zone in coverage %}
+                <tr>
+                    <td><strong>{{ zone.name }}</strong></td>
+                    <td>{{ zone.city|default:"—" }}</td>
+                    <td>
+                        <span class="{% if zone.online_couriers > 0 %}text-success{% else %}text-danger{% endif %}">
+                            {{ zone.online_couriers|default:"0" }}
+                        </span>
+                    </td>
+                    <td>{{ zone.deliveries_7d|default:"0" }}</td>
+                    <td>
+                        {% if zone.online_couriers > 0 %}
+                        <span class="badge badge-success">Couvert</span>
+                        {% else %}
+                        <span class="badge badge-danger">Non couvert</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" style="text-align:center;color:var(--gray-400);padding:2rem;">
+                        Aucune zone configurée. Ajoutez des quartiers depuis l'admin.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

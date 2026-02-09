@@ -1,0 +1,601 @@
+{% extends "fleet/base.html" %}
+
+{% block title %}Rapport — {{ period_label }}{% endblock %}
+{% block page_title %}📊 Rapport d'Activité{% endblock %}
+
+{% block extra_css %}
+<style>
+    .report-controls {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+        flex-wrap: wrap;
+        margin-bottom: 2rem;
+        padding: 1.25rem;
+        background: var(--gray-50);
+        border-radius: 12px;
+        border: 1px solid var(--gray-200);
+    }
+
+    .report-controls label {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--gray-600);
+    }
+
+    .report-controls select,
+    .report-controls input[type="date"] {
+        padding: 0.5rem 0.75rem;
+        border-radius: 8px;
+        border: 1px solid var(--gray-300);
+        font-size: 0.875rem;
+        background: white;
+    }
+
+    .report-header-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .report-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        background: var(--primary);
+        color: white;
+        border-radius: 20px;
+        font-size: 0.875rem;
+        font-weight: 600;
+    }
+
+    .report-section {
+        margin-bottom: 2rem;
+    }
+
+    .report-section h2 {
+        font-size: 1.125rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid var(--primary);
+        color: var(--gray-800);
+    }
+
+    .kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .kpi-box {
+        background: white;
+        border-radius: 12px;
+        padding: 1.25rem;
+        border: 1px solid var(--gray-200);
+        text-align: center;
+    }
+
+    .kpi-box .kpi-value {
+        font-size: 1.75rem;
+        font-weight: 800;
+        color: var(--gray-900);
+        line-height: 1;
+    }
+
+    .kpi-box .kpi-label {
+        font-size: 0.75rem;
+        color: var(--gray-500);
+        margin-top: 0.375rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .kpi-box .kpi-unit {
+        font-size: 0.875rem;
+        color: var(--gray-400);
+        font-weight: 400;
+    }
+
+    .kpi-box.success {
+        border-left: 4px solid var(--success);
+    }
+
+    .kpi-box.danger {
+        border-left: 4px solid var(--danger);
+    }
+
+    .kpi-box.warning {
+        border-left: 4px solid var(--warning);
+    }
+
+    .kpi-box.info {
+        border-left: 4px solid var(--info, #3b82f6);
+    }
+
+    .report-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.875rem;
+    }
+
+    .report-table th {
+        background: var(--gray-50);
+        padding: 0.75rem;
+        text-align: left;
+        font-weight: 600;
+        color: var(--gray-600);
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid var(--gray-200);
+    }
+
+    .report-table td {
+        padding: 0.75rem;
+        border-bottom: 1px solid var(--gray-100);
+        color: var(--gray-700);
+    }
+
+    .report-table tbody tr:hover {
+        background: var(--gray-50);
+    }
+
+    .print-actions {
+        display: flex;
+        gap: 0.75rem;
+    }
+
+    .btn-print {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.625rem 1.25rem;
+        background: var(--primary);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        transition: opacity 0.15s;
+    }
+
+    .btn-print:hover {
+        opacity: 0.85;
+    }
+
+    .btn-print.outline {
+        background: transparent;
+        color: var(--primary);
+        border: 2px solid var(--primary);
+    }
+
+    .progress-bar-container {
+        height: 8px;
+        background: var(--gray-200);
+        border-radius: 4px;
+        overflow: hidden;
+        margin-top: 0.5rem;
+    }
+
+    .progress-bar-fill {
+        height: 100%;
+        border-radius: 4px;
+        transition: width 0.3s;
+    }
+
+    .chart-container {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        border: 1px solid var(--gray-200);
+    }
+
+    /* Print styles */
+    @media print {
+
+        .sidebar,
+        .report-controls,
+        .print-actions,
+        .nav-link,
+        header {
+            display: none !important;
+        }
+
+        .main {
+            margin-left: 0 !important;
+            padding: 0 !important;
+        }
+
+        .kpi-box {
+            break-inside: avoid;
+        }
+
+        .report-section {
+            break-inside: avoid;
+        }
+
+        body {
+            font-size: 11pt;
+        }
+
+        .kpi-value {
+            font-size: 1.5rem !important;
+        }
+
+        .chart-container {
+            break-inside: avoid;
+            page-break-inside: avoid;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Controls (hidden in print) -->
+<div class="report-controls">
+    <label>📅 Période :</label>
+    <select id="periodSelect" onchange="updatePeriod()">
+        <option value="7" {% if period == '7' %}selected{% endif %}>7 jours</option>
+        <option value="30" {% if period == '30' %}selected{% endif %}>30 jours</option>
+        <option value="90" {% if period == '90' %}selected{% endif %}>90 jours</option>
+        <option value="custom" {% if date_from %}selected{% endif %}>Personnalisé</option>
+    </select>
+
+    <div id="customDates"
+        style="display: {% if date_from %}flex{% else %}none{% endif %}; gap: 0.5rem; align-items: center;">
+        <label>Du</label>
+        <input type="date" id="dateFrom" value="{{ date_from }}">
+        <label>au</label>
+        <input type="date" id="dateTo" value="{{ date_to }}">
+        <button class="btn btn-sm btn-primary" onclick="applyCustom()">Appliquer</button>
+    </div>
+
+    <div style="margin-left: auto;" class="print-actions">
+        <button onclick="window.print()" class="btn-print">
+            🖨️ Imprimer
+        </button>
+    </div>
+</div>
+
+<!-- Report Header -->
+<div class="report-header-info">
+    <div>
+        <h2 style="font-size: 1.5rem; font-weight: 800; color: var(--gray-900); margin: 0;">
+            DELIVR-CM — Rapport d'Activité
+        </h2>
+        <p style="color: var(--gray-500); margin-top: 0.25rem;">
+            {{ period_label }} • Généré le {{ report_date }}
+        </p>
+    </div>
+    <div class="report-badge">📊 {{ period_label }}</div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!--  SECTION 1: FINANCIER                  -->
+<!-- ═══════════════════════════════════════ -->
+<div class="report-section">
+    <h2>💰 Synthèse Financière</h2>
+
+    <div class="kpi-grid">
+        <div class="kpi-box success">
+            <div class="kpi-value">{{ fin.revenue|floatformat:0 }} <span class="kpi-unit">XAF</span></div>
+            <div class="kpi-label">Chiffre d'Affaires</div>
+        </div>
+        <div class="kpi-box info">
+            <div class="kpi-value">{{ fin.commission|floatformat:0 }} <span class="kpi-unit">XAF</span></div>
+            <div class="kpi-label">Commissions Plateforme (20%)</div>
+        </div>
+        <div class="kpi-box warning">
+            <div class="kpi-value">{{ fin.courier_earnings|floatformat:0 }} <span class="kpi-unit">XAF</span></div>
+            <div class="kpi-label">Gains Coursiers (80%)</div>
+        </div>
+        <div class="kpi-box">
+            <div class="kpi-value">{{ fin.avg_price|floatformat:0 }} <span class="kpi-unit">XAF</span></div>
+            <div class="kpi-label">Prix Moyen / Livraison</div>
+        </div>
+    </div>
+
+    <!-- Payment Methods -->
+    {% if payment_breakdown %}
+    <div class="card mb-4">
+        <div class="card-header">
+            <h3 class="card-title">Répartition par Mode de Paiement</h3>
+        </div>
+        <div class="card-body" style="padding: 0;">
+            <table class="report-table">
+                <thead>
+                    <tr>
+                        <th>Mode de Paiement</th>
+                        <th style="text-align: right;">Livraisons</th>
+                        <th style="text-align: right;">Montant Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pm in payment_breakdown %}
+                    <tr>
+                        <td><strong>{{ pm.method }}</strong></td>
+                        <td style="text-align: right;">{{ pm.count }}</td>
+                        <td style="text-align: right; font-weight: 600;">{{ pm.total|floatformat:0 }} XAF</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Debt & Withdrawals -->
+    <div class="kpi-grid">
+        <div class="kpi-box danger">
+            <div class="kpi-value">{{ debt.total|floatformat:0 }} <span class="kpi-unit">XAF</span></div>
+            <div class="kpi-label">Dettes Totales ({{ debt.count }} coursier{{ debt.count|pluralize:"s" }})</div>
+        </div>
+        <div class="kpi-box danger">
+            <div class="kpi-value">{{ debt.blocked }}</div>
+            <div class="kpi-label">Coursiers Bloqués</div>
+        </div>
+        <div class="kpi-box info">
+            <div class="kpi-value">{{ withdrawals.total_count }}</div>
+            <div class="kpi-label">Demandes de Retrait</div>
+        </div>
+        <div class="kpi-box">
+            <div class="kpi-value">{{ withdrawals.total_amount|floatformat:0 }} <span class="kpi-unit">XAF</span></div>
+            <div class="kpi-label">Montant Retraits ({{ withdrawals.completed }} complété{{
+                withdrawals.completed|pluralize:"s" }})</div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!--  SECTION 2: OPÉRATIONNEL               -->
+<!-- ═══════════════════════════════════════ -->
+<div class="report-section">
+    <h2>📦 Synthèse Opérationnelle</h2>
+
+    <div class="kpi-grid">
+        <div class="kpi-box">
+            <div class="kpi-value">{{ ops.total_created }}</div>
+            <div class="kpi-label">Livraisons Créées</div>
+        </div>
+        <div class="kpi-box success">
+            <div class="kpi-value">{{ ops.completed }}</div>
+            <div class="kpi-label">Complétées</div>
+            <div class="progress-bar-container">
+                <div class="progress-bar-fill" style="width: {{ ops.success_rate }}%; background: var(--success);">
+                </div>
+            </div>
+            <div style="font-size: 0.75rem; color: var(--success); margin-top: 0.25rem;">{{ ops.success_rate }}% taux de
+                réussite</div>
+        </div>
+        <div class="kpi-box danger">
+            <div class="kpi-value">{{ ops.cancelled }}</div>
+            <div class="kpi-label">Annulées</div>
+            <div style="font-size: 0.75rem; color: var(--danger); margin-top: 0.25rem;">{{ ops.cancel_rate }}% taux
+                d'annulation</div>
+        </div>
+        <div class="kpi-box warning">
+            <div class="kpi-value">{{ ops.pending }}</div>
+            <div class="kpi-label">En attente</div>
+        </div>
+    </div>
+
+    <div class="kpi-grid">
+        <div class="kpi-box">
+            <div class="kpi-value">{{ fin.total_distance }}</div>
+            <div class="kpi-label">Kilomètres Parcourus</div>
+        </div>
+        <div class="kpi-box">
+            <div class="kpi-value">{{ fleet_snapshot.total }}</div>
+            <div class="kpi-label">Coursiers Actifs</div>
+        </div>
+        <div class="kpi-box success">
+            <div class="kpi-value">{{ fleet_snapshot.verified }}</div>
+            <div class="kpi-label">Coursiers Vérifiés</div>
+        </div>
+        <div class="kpi-box info">
+            <div class="kpi-value">{{ fleet_snapshot.new_in_period }}</div>
+            <div class="kpi-label">Nouveaux Inscrits</div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!--  SECTION 3: GRAPHIQUE REVENUS          -->
+<!-- ═══════════════════════════════════════ -->
+<div class="report-section">
+    <h2>📈 Évolution du Chiffre d'Affaires</h2>
+    <div class="chart-container">
+        <canvas id="reportRevenueChart" height="80"></canvas>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!--  SECTION 4: TOP COURSIERS              -->
+<!-- ═══════════════════════════════════════ -->
+<div class="report-section">
+    <h2>🏆 Top Coursiers</h2>
+    <div class="card">
+        <div class="card-body" style="padding: 0;">
+            <table class="report-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Coursier</th>
+                        <th>Niveau</th>
+                        <th style="text-align: right;">Livraisons</th>
+                        <th style="text-align: right;">CA Généré</th>
+                        <th style="text-align: right;">Gains</th>
+                        <th style="text-align: right;">Solde</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in top_couriers %}
+                    <tr>
+                        <td style="font-weight: 700; color: var(--primary);">#{{ forloop.counter }}</td>
+                        <td>
+                            <div style="font-weight: 600;">{{ c.name }}</div>
+                            <div style="font-size: 0.75rem; color: var(--gray-500);">{{ c.phone }}</div>
+                        </td>
+                        <td><span class="badge badge-{{ c.level }}">{{ c.level }}</span></td>
+                        <td style="text-align: right;">{{ c.deliveries }}</td>
+                        <td style="text-align: right; font-weight: 600;">{{ c.revenue|floatformat:0 }} XAF</td>
+                        <td style="text-align: right;">{{ c.earnings|floatformat:0 }} XAF</td>
+                        <td style="text-align: right; {% if c.balance < 0 %}color: var(--danger);{% endif %}">
+                            {{ c.balance|floatformat:0 }} XAF
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" style="text-align: center; color: var(--gray-400); padding: 2rem;">
+                            Aucune donnée pour cette période
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!--  SECTION 5: PERFORMANCE PAR ZONE      -->
+<!-- ═══════════════════════════════════════ -->
+{% if zone_data %}
+<div class="report-section">
+    <h2>🗺️ Performance par Zone</h2>
+    <div class="card">
+        <div class="card-body" style="padding: 0;">
+            <table class="report-table">
+                <thead>
+                    <tr>
+                        <th>Zone</th>
+                        <th>Ville</th>
+                        <th style="text-align: right;">Pickups</th>
+                        <th style="text-align: right;">Livraisons</th>
+                        <th style="text-align: right;">Total Activité</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for z in zone_data %}
+                    <tr>
+                        <td style="font-weight: 600;">{{ z.name }}</td>
+                        <td>{{ z.city }}</td>
+                        <td style="text-align: right;">{{ z.pickups }}</td>
+                        <td style="text-align: right;">{{ z.dropoffs }}</td>
+                        <td style="text-align: right; font-weight: 700;">{{ z.total }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Footer -->
+<div style="text-align: center; padding: 2rem 0; color: var(--gray-400); font-size: 0.75rem;">
+    DELIVR-CM • Rapport généré automatiquement le {{ report_date }} • Confidentiel
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+    // Period selector
+    function updatePeriod() {
+        const select = document.getElementById('periodSelect');
+        const customDates = document.getElementById('customDates');
+
+        if (select.value === 'custom') {
+            customDates.style.display = 'flex';
+            return;
+        }
+
+        customDates.style.display = 'none';
+        window.location.href = '?period=' + select.value;
+    }
+
+    function applyCustom() {
+        const from = document.getElementById('dateFrom').value;
+        const to = document.getElementById('dateTo').value;
+        if (from && to) {
+            window.location.href = '?from=' + from + '&to=' + to;
+        }
+    }
+
+    // Revenue Chart
+    const dailyData = {{ daily_data_json| safe }};
+    if (dailyData.length > 0) {
+        new Chart(document.getElementById('reportRevenueChart'), {
+            type: 'bar',
+            data: {
+                labels: dailyData.map(d => d.date),
+                datasets: [
+                    {
+                        label: 'CA (XAF)',
+                        data: dailyData.map(d => d.revenue),
+                        backgroundColor: 'rgba(0, 208, 132, 0.7)',
+                        borderColor: '#00d084',
+                        borderWidth: 1,
+                        borderRadius: 4,
+                        order: 2,
+                    },
+                    {
+                        label: 'Livraisons',
+                        data: dailyData.map(d => d.count),
+                        type: 'line',
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        fill: false,
+                        tension: 0.4,
+                        pointRadius: 3,
+                        yAxisID: 'y1',
+                        order: 1,
+                    },
+                ]
+            },
+            options: {
+                responsive: true,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: { position: 'top' },
+                    tooltip: {
+                        callbacks: {
+                            label: function (ctx) {
+                                if (ctx.dataset.label === 'CA (XAF)') {
+                                    return 'CA: ' + ctx.raw.toLocaleString() + ' XAF';
+                                }
+                                return 'Livraisons: ' + ctx.raw;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        position: 'left',
+                        ticks: { callback: v => v.toLocaleString() + ' XAF' },
+                        grid: { color: 'rgba(0,0,0,0.05)' },
+                    },
+                    y1: {
+                        beginAtZero: true,
+                        position: 'right',
+                        grid: { drawOnChartArea: false },
+                        ticks: { stepSize: 1 },
+                    },
+                    x: {
+                        grid: { display: false },
+                    }
+                }
+            }
+        });
+    }
+</script>
+{% endblock %}

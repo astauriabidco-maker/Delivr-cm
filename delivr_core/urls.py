@@ -51,6 +51,11 @@ def api_root(request):
 
 
 urlpatterns = [
+    # Health Checks (monitoring / load balancer probes)
+    path('health/', __import__('core.health', fromlist=['health_check']).health_check, name='health-check'),
+    path('health/ready/', __import__('core.health', fromlist=['readiness_check']).readiness_check, name='readiness-check'),
+    path('health/detailed/', __import__('core.health', fromlist=['detailed_health']).detailed_health, name='detailed-health'),
+    
     # Landing Page (Home)
     path('', include('home.urls')),
     
@@ -93,6 +98,7 @@ urlpatterns = [
     path('webhooks/', include('bot.urls')),
 ]
 
-# Serve media files in development
+# Serve static & media files in development
 if settings.DEBUG:
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

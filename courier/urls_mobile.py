@@ -6,6 +6,7 @@ from django.urls import path
 from .api_mobile import (
     CourierLoginView,
     CourierRefreshTokenView,
+    CourierActivateView,
     CourierDashboardView,
     ToggleOnlineView,
     DeliveryListView,
@@ -15,6 +16,7 @@ from .api_mobile import (
     ConfirmDropoffView,
     UpdateLocationView,
     UploadDeliveryPhotoView,
+    ProfilePhotoUploadView,
     WalletView,
 )
 
@@ -25,6 +27,7 @@ urlpatterns = [
     # Authentication
     path('auth/login/', CourierLoginView.as_view(), name='login'),
     path('auth/refresh/', CourierRefreshTokenView.as_view(), name='refresh'),
+    path('activate/', CourierActivateView.as_view(), name='activate'),
     
     # Dashboard
     path('dashboard/', CourierDashboardView.as_view(), name='dashboard'),
@@ -43,6 +46,10 @@ urlpatterns = [
     # Uploads
     path('uploads/delivery-photo/', UploadDeliveryPhotoView.as_view(), name='upload_photo'),
     
+    # Profile
+    path('profile/photo/', ProfilePhotoUploadView.as_view(), name='profile_photo'),
+    
     # Wallet
     path('wallet/', WalletView.as_view(), name='wallet'),
 ]
+

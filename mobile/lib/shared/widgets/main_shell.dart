@@ -39,7 +39,7 @@ class _BottomNavBar extends StatelessWidget {
         color: DelivrColors.surface,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 10,
             offset: const Offset(0, -2),
           ),
@@ -111,7 +111,7 @@ class _NavItem extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: isActive
             ? BoxDecoration(
-                color: DelivrColors.primary.withOpacity(0.1),
+                color: DelivrColors.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               )
             : null,

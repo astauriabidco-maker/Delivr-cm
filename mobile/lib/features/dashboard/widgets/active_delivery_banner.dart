@@ -24,7 +24,7 @@ class ActiveDeliveryBanner extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: DelivrColors.primary.withOpacity(0.3),
+              color: DelivrColors.primary.withValues(alpha: 0.3),
               blurRadius: 15,
               offset: const Offset(0, 5),
             ),
@@ -42,7 +42,7 @@ class ActiveDeliveryBanner extends StatelessWidget {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
+                    color: Colors.white.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Row(
@@ -99,7 +99,7 @@ class ActiveDeliveryBanner extends StatelessWidget {
                     Container(
                       width: 2,
                       height: 30,
-                      color: Colors.white.withOpacity(0.5),
+                      color: Colors.white.withValues(alpha: 0.5),
                     ),
                     Container(
                       width: 12,
@@ -123,7 +123,7 @@ class ActiveDeliveryBanner extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontSize: 13,
-                          color: Colors.white.withOpacity(0.9),
+                          color: Colors.white.withValues(alpha: 0.9),
                         ),
                       ),
                       const SizedBox(height: 20),

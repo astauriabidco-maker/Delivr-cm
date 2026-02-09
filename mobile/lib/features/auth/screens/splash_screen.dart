@@ -88,7 +88,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                         borderRadius: BorderRadius.circular(30),
                         boxShadow: [
                           BoxShadow(
-                            color: DelivrColors.primary.withOpacity(0.4),
+                            color: DelivrColors.primary.withValues(alpha: 0.4),
                             blurRadius: 30,
                             spreadRadius: 5,
                           ),
@@ -117,7 +117,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                       'Coursier',
                       style: TextStyle(
                         fontSize: 18,
-                        color: Colors.white.withOpacity(0.7),
+                        color: Colors.white.withValues(alpha: 0.7),
                         letterSpacing: 2,
                       ),
                     ),
@@ -130,7 +130,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
                         valueColor: AlwaysStoppedAnimation<Color>(
-                          DelivrColors.primary.withOpacity(0.8),
+                          DelivrColors.primary.withValues(alpha: 0.8),
                         ),
                       ),
                     ),

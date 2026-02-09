@@ -241,8 +241,14 @@ final autoConnectWebSocketProvider = Provider<void>((ref) {
   final authState = ref.watch(authStateProvider);
   final wsService = ref.watch(trackingWebSocketProvider);
   
-  if (authState.isAuthenticated && authState.accessToken != null) {
-    wsService.connect(authState.accessToken!);
+  if (authState.isAuthenticated) {
+    // Retrieve token from secure storage via AuthService
+    final authService = ref.read(authServiceProvider);
+    authService.getAccessToken().then((token) {
+      if (token != null) {
+        wsService.connect(token);
+      }
+    });
   } else {
     wsService.disconnect();
   }

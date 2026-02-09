@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notifications - DELIVR-CM</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #fff;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 260px;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.3);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 24px 0;
+            z-index: 100;
+        }
+
+        .sidebar-logo {
+            padding: 0 24px 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 24px;
+        }
+
+        .sidebar-logo h1 {
+            font-size: 1.4rem;
+        }
+
+        .sidebar-logo span {
+            color: #00d084;
+        }
+
+        .sidebar-nav a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 24px;
+            color: rgba(255, 255, 255, 0.6);
+            text-decoration: none;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+
+        .sidebar-nav a:hover,
+        .sidebar-nav a.active {
+            background: rgba(0, 208, 132, 0.1);
+            color: #00d084;
+            border-left-color: #00d084;
+        }
+
+        .sidebar-nav .nav-badge {
+            margin-left: auto;
+            background: #ff5252;
+            color: #fff;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 700;
+        }
+
+        .sidebar-user {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 20px 24px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .sidebar-user .name {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .sidebar-user .status {
+            font-size: 0.8rem;
+            color: #00d084;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 260px;
+            padding: 32px;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .page-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        .page-title span {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 1rem;
+            font-weight: 400;
+            margin-left: 12px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 10px 20px;
+            border-radius: 10px;
+            border: none;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #fff;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #00d084 0%, #00a86b 100%);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 208, 132, 0.3);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .btn-sm {
+            padding: 8px 14px;
+            font-size: 0.8rem;
+        }
+
+        /* Filters */
+        .filters-bar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 4px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 4px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .filter-btn {
+            padding: 6px 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            color: rgba(255, 255, 255, 0.6);
+            background: transparent;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .filter-btn:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .filter-btn.active {
+            background: rgba(0, 208, 132, 0.2);
+            color: #00d084;
+        }
+
+        /* Stats Bar */
+        .stats-bar {
+            display: flex;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .stat-chip {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .stat-chip .number {
+            font-size: 1.3rem;
+            font-weight: 700;
+        }
+
+        .stat-chip .label {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.8rem;
+        }
+
+        .stat-chip.unread .number {
+            color: #ff5252;
+        }
+
+        /* Notifications List */
+        .notifications-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .notification-item {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            transition: all 0.3s;
+            cursor: default;
+        }
+
+        .notification-item:hover {
+            border-color: rgba(0, 208, 132, 0.3);
+        }
+
+        .notification-item.unread {
+            background: rgba(0, 208, 132, 0.04);
+            border-color: rgba(0, 208, 132, 0.2);
+        }
+
+        .notification-item.unread::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 12px;
+            bottom: 12px;
+            width: 3px;
+            background: #00d084;
+            border-radius: 3px;
+        }
+
+        .notification-item {
+            position: relative;
+        }
+
+        .notification-icon {
+            width: 46px;
+            height: 46px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            flex-shrink: 0;
+        }
+
+        .notification-icon.order_created {
+            background: rgba(66, 165, 245, 0.15);
+        }
+
+        .notification-icon.order_assigned {
+            background: rgba(171, 71, 188, 0.15);
+        }
+
+        .notification-icon.order_picked_up {
+            background: rgba(255, 152, 0, 0.15);
+        }
+
+        .notification-icon.order_completed {
+            background: rgba(0, 208, 132, 0.15);
+        }
+
+        .notification-icon.order_cancelled {
+            background: rgba(255, 82, 82, 0.15);
+        }
+
+        .notification-icon.payment_received {
+            background: rgba(255, 193, 7, 0.15);
+        }
+
+        .notification-icon.invoice_generated {
+            background: rgba(0, 150, 136, 0.15);
+        }
+
+        .notification-icon.system {
+            background: rgba(158, 158, 158, 0.15);
+        }
+
+        .notification-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .notification-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+            gap: 12px;
+        }
+
+        .notification-title {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .notification-time {
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 0.8rem;
+            white-space: nowrap;
+        }
+
+        .notification-message {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.85rem;
+            line-height: 1.5;
+            margin-bottom: 8px;
+        }
+
+        .notification-meta {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .notification-type-badge {
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .type-order_created .notification-type-badge {
+            background: rgba(66, 165, 245, 0.15);
+            color: #42a5f5;
+        }
+
+        .type-order_assigned .notification-type-badge {
+            background: rgba(171, 71, 188, 0.15);
+            color: #ab47bc;
+        }
+
+        .type-order_picked_up .notification-type-badge {
+            background: rgba(255, 152, 0, 0.15);
+            color: #ff9800;
+        }
+
+        .type-order_completed .notification-type-badge {
+            background: rgba(0, 208, 132, 0.15);
+            color: #00d084;
+        }
+
+        .type-order_cancelled .notification-type-badge {
+            background: rgba(255, 82, 82, 0.15);
+            color: #ff5252;
+        }
+
+        .type-payment_received .notification-type-badge {
+            background: rgba(255, 193, 7, 0.15);
+            color: #ffc107;
+        }
+
+        .type-invoice_generated .notification-type-badge {
+            background: rgba(0, 150, 136, 0.15);
+            color: #009688;
+        }
+
+        .type-system .notification-type-badge {
+            background: rgba(158, 158, 158, 0.15);
+            color: #9e9e9e;
+        }
+
+        .notification-actions {
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+            align-self: center;
+        }
+
+        .mark-read-btn {
+            background: rgba(0, 208, 132, 0.1);
+            border: 1px solid rgba(0, 208, 132, 0.2);
+            color: #00d084;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .mark-read-btn:hover {
+            background: rgba(0, 208, 132, 0.2);
+        }
+
+        /* Empty State */
+        .empty-state {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 60px 40px;
+            text-align: center;
+        }
+
+        .empty-state .icon {
+            font-size: 4rem;
+            margin-bottom: 16px;
+        }
+
+        .empty-state h3 {
+            font-size: 1.3rem;
+            margin-bottom: 8px;
+        }
+
+        .empty-state p {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 32px;
+        }
+
+        .pagination a,
+        .pagination span {
+            padding: 8px 14px;
+            border-radius: 8px;
+            color: rgba(255, 255, 255, 0.6);
+            text-decoration: none;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .pagination a:hover {
+            border-color: rgba(0, 208, 132, 0.5);
+            color: #00d084;
+        }
+
+        .pagination .current {
+            background: linear-gradient(135deg, #00d084, #00a86b);
+            color: #fff;
+            border-color: #00d084;
+        }
+
+        /* Alerts */
+        .alert {
+            padding: 16px 20px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+        }
+
+        .alert-success {
+            background: rgba(0, 208, 132, 0.15);
+            border: 1px solid rgba(0, 208, 132, 0.3);
+            color: #00d084;
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .stats-bar {
+                flex-wrap: wrap;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                display: none;
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .notification-item {
+                flex-direction: column;
+            }
+
+            .notification-actions {
+                align-self: flex-start;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Sidebar -->
+    <nav class="sidebar">
+        <div class="sidebar-logo">
+            <h1>🚀 DELIVR<span>-CM</span></h1>
+        </div>
+        <div class="sidebar-nav">
+            <a href="{% url 'partners:dashboard' %}">📊 Dashboard</a>
+            <a href="{% url 'partners:orders' %}">📦 Mes Commandes</a>
+            <a href="{% url 'partners:tracking' %}">🗺️ Suivi Live</a>
+            <a href="{% url 'partners:wallet' %}">💰 Wallet</a>
+            <a href="{% url 'partners:analytics' %}">📈 Analytiques</a>
+            <a href="{% url 'partners:notifications' %}" class="active">
+                🔔 Notifications
+                {% if unread_count > 0 %}
+                <span class="nav-badge">{{ unread_count }}</span>
+                {% endif %}
+            </a>
+            <a href="{% url 'partners:invoices' %}">🧾 Factures</a>
+            <a href="{% url 'partners:webhooks' %}">⚙️ Webhooks</a>
+            <a href="{% url 'partners:branding' %}">🎨 Personnalisation</a>
+            <a href="{% url 'partners:profile' %}">👤 Profil</a>
+            <a href="{% url 'partners:docs' %}">📖 Documentation</a>
+        </div>
+        <div class="sidebar-user">
+            <div class="name">{{ request.user.full_name }}</div>
+            <div class="status">✓ Compte Vérifié</div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Header -->
+        <div class="page-header">
+            <h1 class="page-title">🔔 Notifications<span>{{ total_count }} total{{ total_count|pluralize:"es" }}</span>
+            </h1>
+            <div class="header-actions">
+                {% if unread_count > 0 %}
+                <form method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="mark_all_read">
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        ✅ Tout marquer comme lu
+                    </button>
+                </form>
+                {% endif %}
+                <a href="{% url 'partners:dashboard' %}" class="btn btn-secondary btn-sm">← Dashboard</a>
+            </div>
+        </div>
+
+        {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+        {% endif %}
+
+        <!-- Stats -->
+        <div class="stats-bar">
+            <div class="stat-chip unread">
+                <span class="number">{{ unread_count }}</span>
+                <span class="label">Non lues</span>
+            </div>
+            <div class="stat-chip">
+                <span class="number" style="color: #00d084;">{{ total_count }}</span>
+                <span class="label">Total</span>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="filters-bar">
+            <div class="filter-group">
+                <a href="?{% if type_filter %}type={{ type_filter }}&{% endif %}"
+                    class="filter-btn {% if not read_filter %}active{% endif %}">Toutes</a>
+                <a href="?read=unread{% if type_filter %}&type={{ type_filter }}{% endif %}"
+                    class="filter-btn {% if read_filter == 'unread' %}active{% endif %}">Non lues</a>
+                <a href="?read=read{% if type_filter %}&type={{ type_filter }}{% endif %}"
+                    class="filter-btn {% if read_filter == 'read' %}active{% endif %}">Lues</a>
+            </div>
+            <div class="filter-group">
+                <a href="?{% if read_filter %}read={{ read_filter }}&{% endif %}"
+                    class="filter-btn {% if not type_filter %}active{% endif %}">Tous types</a>
+                {% for code, label in type_choices %}
+                <a href="?type={{ code }}{% if read_filter %}&read={{ read_filter }}{% endif %}"
+                    class="filter-btn {% if type_filter == code %}active{% endif %}">{{ label }}</a>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Notifications List -->
+        {% if notifications %}
+        <div class="notifications-list">
+            {% for notif in notifications %}
+            <div
+                class="notification-item type-{{ notif.notification_type }} {% if not notif.is_read %}unread{% endif %}">
+                <div class="notification-icon {{ notif.notification_type }}">
+                    {% if notif.notification_type == 'order_created' %}📦
+                    {% elif notif.notification_type == 'order_assigned' %}🛵
+                    {% elif notif.notification_type == 'order_picked_up' %}📍
+                    {% elif notif.notification_type == 'order_completed' %}✅
+                    {% elif notif.notification_type == 'order_cancelled' %}❌
+                    {% elif notif.notification_type == 'payment_received' %}💰
+                    {% elif notif.notification_type == 'invoice_generated' %}🧾
+                    {% else %}🔔
+                    {% endif %}
+                </div>
+
+                <div class="notification-content">
+                    <div class="notification-header">
+                        <span class="notification-title">{{ notif.title }}</span>
+                        <span class="notification-time">{{ notif.created_at|timesince }} ago</span>
+                    </div>
+                    <p class="notification-message">{{ notif.message }}</p>
+                    <div class="notification-meta">
+                        <span class="notification-type-badge">{{ notif.get_notification_type_display }}</span>
+                        {% if notif.delivery %}
+                        <span style="color: rgba(255,255,255,0.4); font-size: 0.8rem;">
+                            Course #{{ notif.delivery.id|slice:":8"|upper }}
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                {% if not notif.is_read %}
+                <div class="notification-actions">
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="mark_read">
+                        <input type="hidden" name="notification_id" value="{{ notif.id }}">
+                        <button type="submit" class="mark-read-btn">✓ Lu</button>
+                    </form>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if notifications.has_other_pages %}
+        <div class="pagination">
+            {% if notifications.has_previous %}
+            <a
+                href="?page={{ notifications.previous_page_number }}{% if type_filter %}&type={{ type_filter }}{% endif %}{% if read_filter %}&read={{ read_filter }}{% endif %}">
+                ← Précédent
+            </a>
+            {% endif %}
+
+            {% for num in notifications.paginator.page_range %}
+            {% if notifications.number == num %}
+            <span class="current">{{ num }}</span>
+            {% elif num > notifications.number|add:'-3' and num < notifications.number|add:'3' %} <a
+                href="?page={{ num }}{% if type_filter %}&type={{ type_filter }}{% endif %}{% if read_filter %}&read={{ read_filter }}{% endif %}">
+                {{ num }}
+                </a>
+                {% endif %}
+                {% endfor %}
+
+                {% if notifications.has_next %}
+                <a
+                    href="?page={{ notifications.next_page_number }}{% if type_filter %}&type={{ type_filter }}{% endif %}{% if read_filter %}&read={{ read_filter }}{% endif %}">
+                    Suivant →
+                </a>
+                {% endif %}
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div class="empty-state">
+            <div class="icon">🔔</div>
+            <h3>Aucune notification</h3>
+            <p>
+                {% if type_filter or read_filter %}
+                Aucune notification ne correspond à ces filtres.
+                {% else %}
+                Les notifications apparaîtront ici lorsque vos livraisons seront mises à jour.
+                {% endif %}
+            </p>
+        </div>
+        {% endif %}
+    </main>
+</body>
+
+</html>

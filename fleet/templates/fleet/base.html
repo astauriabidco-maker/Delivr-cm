@@ -582,6 +582,16 @@
                 <span class="nav-icon">📈</span>
                 <span>Analytics</span>
             </a>
+            <a href="{% url 'fleet:finance-dashboard' %}"
+                class="nav-link {% if request.resolver_match.url_name == 'finance-dashboard' %}active{% endif %}">
+                <span class="nav-icon">💰</span>
+                <span>Finances</span>
+            </a>
+            <a href="{% url 'fleet:reports' %}"
+                class="nav-link {% if request.resolver_match.url_name == 'reports' %}active{% endif %}">
+                <span class="nav-icon">📊</span>
+                <span>Rapports</span>
+            </a>
 
             <div class="nav-section">Retour</div>
             <a href="/admin/" class="nav-link">

@@ -13,17 +13,17 @@
     <div class="filter-group">
         <select id="statusFilter" onchange="applyFilters()">
             <option value="">Tous les statuts</option>
-            <option value="online" {% if status_filter=='online' %}selected{% endif %}>En ligne</option>
-            <option value="offline" {% if status_filter=='offline' %}selected{% endif %}>Hors ligne</option>
-            <option value="blocked" {% if status_filter=='blocked' %}selected{% endif %}>Bloqués</option>
-            <option value="unverified" {% if status_filter=='unverified' %}selected{% endif %}>Non vérifiés</option>
+            <option value="online" {% if status_filter == 'online' %}selected{% endif %}>En ligne</option>
+            <option value="offline" {% if status_filter == 'offline' %}selected{% endif %}>Hors ligne</option>
+            <option value="blocked" {% if status_filter == 'blocked' %}selected{% endif %}>Bloqués</option>
+            <option value="unverified" {% if status_filter == 'unverified' %}selected{% endif %}>Non vérifiés</option>
         </select>
         <select id="levelFilter" onchange="applyFilters()">
             <option value="">Tous les niveaux</option>
-            <option value="BRONZE" {% if level_filter=='BRONZE' %}selected{% endif %}>🥉 Bronze</option>
-            <option value="SILVER" {% if level_filter=='SILVER' %}selected{% endif %}>🥈 Argent</option>
-            <option value="GOLD" {% if level_filter=='GOLD' %}selected{% endif %}>🥇 Or</option>
-            <option value="PLATINUM" {% if level_filter=='PLATINUM' %}selected{% endif %}>💎 Platine</option>
+            <option value="BRONZE" {% if level_filter == 'BRONZE' %}selected{% endif %}>🥉 Bronze</option>
+            <option value="SILVER" {% if level_filter == 'SILVER' %}selected{% endif %}>🥈 Argent</option>
+            <option value="GOLD" {% if level_filter == 'GOLD' %}selected{% endif %}>🥇 Or</option>
+            <option value="PLATINUM" {% if level_filter == 'PLATINUM' %}selected{% endif %}>💎 Platine</option>
         </select>
     </div>
 </div>
@@ -110,9 +110,9 @@
                     </td>
                     <td>
                         <div class="action-buttons">
-                            <a href="{% url 'fleet:courier_detail' c.id %}" class="btn btn-sm btn-primary">Voir</a>
+                            <a href="{% url 'fleet:courier-detail' c.id %}" class="btn btn-sm btn-primary">Voir</a>
                             {% if not c.is_verified %}
-                            <form method="post" action="{% url 'fleet:verify_courier' c.id %}" style="display:inline;">
+                            <form method="post" action="{% url 'fleet:verify-courier' c.id %}" style="display:inline;">
                                 {% csrf_token %}
                                 <button type="submit" class="btn btn-sm btn-success">Vérifier</button>
                             </form>

@@ -118,7 +118,7 @@ class WalletScreen extends ConsumerWidget {
                 gradient: LinearGradient(
                   colors: wallet.isNegative
                       ? [const Color(0xFFD32F2F), const Color(0xFFB71C1C)]
-                      : [DelivrColors.primary, DelivrColors.primary.withOpacity(0.8)],
+                      : [DelivrColors.primary, DelivrColors.primary.withValues(alpha: 0.8)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -126,7 +126,7 @@ class WalletScreen extends ConsumerWidget {
                 boxShadow: [
                   BoxShadow(
                     color: (wallet.isNegative ? Colors.red : DelivrColors.primary)
-                        .withOpacity(0.3),
+                        .withValues(alpha: 0.3),
                     blurRadius: 15,
                     offset: const Offset(0, 5),
                   ),
@@ -137,7 +137,7 @@ class WalletScreen extends ConsumerWidget {
                   Text(
                     wallet.isNegative ? 'Solde à rembourser' : 'Solde disponible',
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.9),
+                      color: Colors.white.withValues(alpha: 0.9),
                       fontSize: 14,
                     ),
                   ),
@@ -182,7 +182,7 @@ class WalletScreen extends ConsumerWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.15),
+                        color: Colors.white.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
@@ -425,7 +425,7 @@ class WalletScreen extends ConsumerWidget {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -437,7 +437,7 @@ class WalletScreen extends ConsumerWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(icon, color: color, size: 20),

@@ -38,22 +38,48 @@ class IsBusinessOrAdmin(permissions.BasePermission):
 
 class HasAPIKeyOrIsBusinessOrAdmin(permissions.BasePermission):
     """
-    Combined permission: API Key OR authenticated business/admin user.
-    Allows access via either:
-    - A valid API key in the Authorization header
-    - An authenticated session with BUSINESS or ADMIN role
+    Combined permission: Partner API Key OR authenticated business/admin user.
+    
+    When authenticated via API Key:
+    - Looks up the PartnerAPIKey to identify the partner
+    - Injects `request.partner` with the partner User instance
+    - The view MUST verify that shop_id == request.partner.id
+    
+    When authenticated via session:
+    - request.partner = request.user (for BUSINESS role)
     """
     
     def has_permission(self, request, view):
-        # Check API key first
-        api_key_permission = HasAPIKey()
-        if api_key_permission.has_permission(request, view):
-            return True
+        from partners.models import PartnerAPIKey
+        
+        # Try API Key authentication first
+        raw_key = self._extract_key(request)
+        if raw_key:
+            try:
+                api_key = PartnerAPIKey.objects.get_from_key(raw_key)
+                if api_key and not api_key.revoked:
+                    # Inject the partner into the request for downstream use
+                    request.partner = api_key.partner
+                    return True
+            except Exception:
+                pass
         
         # Fall back to session-based business/admin check
         if not request.user.is_authenticated:
             return False
-        return request.user.role in [UserRole.BUSINESS, UserRole.ADMIN]
+        
+        if request.user.role in [UserRole.BUSINESS, UserRole.ADMIN]:
+            request.partner = request.user
+            return True
+        
+        return False
+    
+    def _extract_key(self, request):
+        """Extract API key from Authorization header."""
+        auth_header = request.META.get('HTTP_AUTHORIZATION', '')
+        if auth_header.startswith('Api-Key '):
+            return auth_header[8:].strip()
+        return None
 
 
 class NeighborhoodViewSet(viewsets.ReadOnlyModelViewSet):
@@ -132,7 +158,7 @@ class DeliveryViewSet(viewsets.ModelViewSet):
         
         # Calculate price
         safety_margin = 0.2 if estimation_type == 'neighborhood' else 0.0
-        distance_km, total_price, platform_fee, courier_earning = pricing_engine.calculate_price(
+        distance_km, total_price, platform_fee, courier_earning = pricing_engine().calculate_price(
             origin=pickup_point,
             destination=dropoff_point,
             safety_margin=safety_margin
@@ -409,7 +435,7 @@ class PublicQuoteAPIView(APIView):
         
         # Calculate price
         try:
-            distance_km, total_price, platform_fee, courier_earning = pricing_engine.calculate_price(
+            distance_km, total_price, platform_fee, courier_earning = pricing_engine().calculate_price(
                 origin=shop_location,
                 destination=destination,
                 safety_margin=safety_margin
@@ -464,6 +490,14 @@ class QuoteAPIView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
         
+        # SECURITY: Verify shop_id matches the authenticated partner
+        partner = getattr(request, 'partner', None)
+        if partner and partner.role != UserRole.ADMIN and str(shop.pk) != str(partner.pk):
+            return Response(
+                {'error': 'Vous ne pouvez pas effectuer de devis pour une autre boutique.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
         if not shop.last_location:
             return Response(
                 {'error': 'La boutique n\'a pas de position GPS enregistrée.'},
@@ -505,7 +539,7 @@ class QuoteAPIView(APIView):
         
         # Calculate price
         try:
-            distance_km, total_price, platform_fee, courier_earning = pricing_engine.calculate_price(
+            distance_km, total_price, platform_fee, courier_earning = pricing_engine().calculate_price(
                 origin=shop.last_location,
                 destination=destination,
                 safety_margin=safety_margin
@@ -556,6 +590,15 @@ class OrderAPIView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
         
+        # SECURITY: Verify shop_id matches the authenticated partner
+        # Prevents partner A from creating orders and debiting partner B's wallet
+        partner = getattr(request, 'partner', None)
+        if partner and partner.role != UserRole.ADMIN and str(shop.pk) != str(partner.pk):
+            return Response(
+                {'error': 'Accès refusé. Vous ne pouvez créer des commandes que pour votre propre boutique.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
         # Get neighborhood
         try:
             neighborhood = Neighborhood.objects.get(
@@ -575,7 +618,7 @@ class OrderAPIView(APIView):
             )
         
         # Calculate price
-        distance_km, total_price, platform_fee, courier_earning = pricing_engine.estimate_from_neighborhood(
+        distance_km, total_price, platform_fee, courier_earning = pricing_engine().estimate_from_neighborhood(
             shop_location=shop.last_location,
             neighborhood_center=neighborhood.center_geo
         )
@@ -594,15 +637,19 @@ class OrderAPIView(APIView):
                 status=status.HTTP_402_PAYMENT_REQUIRED
             )
         
-        # Create or get client user
+        # Create or get client user (for tracking / future orders)
         client, created = User.objects.get_or_create(
             phone_number=data['customer_phone'],
-            defaults={'role': UserRole.CLIENT}
+            defaults={
+                'role': UserRole.CLIENT,
+                'full_name': data.get('customer_name', ''),
+            }
         )
         
         # Create delivery
+        # B2B: sender = SHOP (expéditeur), recipient = CUSTOMER (destinataire)
         delivery = Delivery.objects.create(
-            sender=client,
+            sender=shop,
             recipient_phone=data['customer_phone'],
             recipient_name=data.get('customer_name', ''),
             pickup_geo=shop.last_location,
@@ -708,7 +755,7 @@ class PublicOrderCreateAPIView(APIView):
             shop_location = Point(9.7679, 4.0511, srid=4326)  # Default Akwa
         
         # Calculate price
-        distance_km, total_price, platform_fee, courier_earning = pricing_engine.estimate_from_neighborhood(
+        distance_km, total_price, platform_fee, courier_earning = pricing_engine().estimate_from_neighborhood(
             shop_location=shop_location,
             neighborhood_center=neighborhood.center_geo
         )
@@ -728,8 +775,9 @@ class PublicOrderCreateAPIView(APIView):
             client.save(update_fields=['full_name'])
         
         # Create delivery with CASH payment (COD - Cash on Delivery)
+        # Public checkout: sender = SHOP (expéditeur), recipient = CLIENT (destinataire)
         delivery = Delivery.objects.create(
-            sender=client,
+            sender=shop,
             recipient_phone=data['client_phone'],
             recipient_name=data['client_name'],
             pickup_geo=shop_location,

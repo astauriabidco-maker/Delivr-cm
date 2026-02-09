@@ -1,0 +1,76 @@
+# ===========================================
+# DELIVR-CM Docker Ignore
+# Optimized to reduce build context (~500MB -> ~10MB)
+# ===========================================
+
+# Version Control
+.git
+.gitignore
+
+# Virtual Environments
+venv/
+.venv/
+ENV/
+
+# Mobile App (Flutter - not needed in backend container)
+mobile/
+wp-plugin/
+
+# IDE & Editor
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Python Caches
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.eggs/
+*.egg
+dist/
+
+# Testing & Quality
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
+.mypy_cache/
+
+# Docker (avoid recursive)
+.docker/
+docker-compose.yml
+docker-compose.*.yml
+Dockerfile
+
+# Documentation & Context
+*.md
+LICENSE
+CONTEXT.md
+
+# Environment Files (injected via env_file)
+.env
+.env.*
+!.env.example
+
+# Django Generated
+staticfiles/
+media/
+db.sqlite3
+*.log
+celerybeat-schedule
+celerybeat.pid
+
+# Agent/AI Config
+.agent/
+.gemini/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride

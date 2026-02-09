@@ -9,11 +9,13 @@ import logging
 from decimal import Decimal
 from django.utils import timezone
 from django.db.models import Q, Sum, Count
+from django.contrib.auth import get_user_model
 from django.contrib.gis.geos import Point
 from rest_framework import viewsets, status, permissions
 from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.parsers import MultiPartParser
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from core.models import User, UserRole
@@ -140,6 +142,105 @@ class CourierRefreshTokenView(APIView):
                 {'error': 'Token invalide ou expiré'},
                 status=status.HTTP_401_UNAUTHORIZED
             )
+
+
+class CourierActivateView(APIView):
+    """
+    Activate courier account with activation code.
+    
+    POST /api/mobile/activate/
+    { "activation_code": "ABC123" }
+    
+    The activation code is sent to the courier via WhatsApp
+    during the onboarding process.
+    """
+    permission_classes = [permissions.AllowAny]
+    
+    def post(self, request):
+        code = request.data.get('activation_code', '').strip()
+        
+        if not code:
+            return Response(
+                {'detail': 'Code d\'activation requis'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        User = get_user_model()
+        
+        try:
+            courier = User.objects.get(
+                activation_code=code,
+                role='COURIER',
+                is_active=True
+            )
+        except User.DoesNotExist:
+            return Response(
+                {'detail': 'Code invalide ou expiré'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Clear the activation code (single use)
+        courier.activation_code = None
+        courier.save(update_fields=['activation_code'])
+        
+        # Generate JWT tokens
+        refresh = RefreshToken.for_user(courier)
+        
+        return Response({
+            'access': str(refresh.access_token),
+            'refresh': str(refresh),
+            'courier_id': str(courier.id),
+            'phone': str(courier.phone_number),
+        })
+
+
+class ProfilePhotoUploadView(APIView):
+    """
+    Upload or update courier profile photo.
+    
+    POST /api/mobile/profile/photo/
+    - photo: File (image)
+    """
+    permission_classes = [IsCourier]
+    parser_classes = [MultiPartParser]
+    
+    def post(self, request):
+        photo = request.FILES.get('photo')
+        
+        if not photo:
+            return Response(
+                {'error': 'Photo requise'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Validate file type
+        allowed_types = ['image/jpeg', 'image/png', 'image/webp']
+        if photo.content_type not in allowed_types:
+            return Response(
+                {'error': 'Format non supporté. Utilisez JPEG, PNG ou WebP.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Validate file size (max 5MB)
+        if photo.size > 5 * 1024 * 1024:
+            return Response(
+                {'error': 'Photo trop volumineuse (max 5 Mo)'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        courier = request.user
+        
+        # Save photo to courier profile
+        if hasattr(courier, 'profile_photo'):
+            courier.profile_photo = photo
+            courier.save(update_fields=['profile_photo'])
+        
+        logger.info(f"Profile photo uploaded for courier {courier.id}")
+        
+        return Response({
+            'message': 'Photo de profil mise à jour',
+            'photo_url': courier.profile_photo.url if hasattr(courier, 'profile_photo') and courier.profile_photo else None,
+        })
 
 
 # ============================================
@@ -579,7 +680,27 @@ class UpdateLocationView(APIView):
         courier.last_location_at = timezone.now()
         courier.save(update_fields=['current_location', 'last_location_at'])
         
-        return Response({'success': True})
+        # Feed into traffic service
+        speed = None
+        traffic_level = None
+        try:
+            from logistics.services.traffic_service import TrafficService
+            speed = TrafficService.ingest_location(
+                courier_id=str(courier.id),
+                latitude=float(lat),
+                longitude=float(lng)
+            )
+            if speed is not None:
+                traffic_level = TrafficService.speed_to_level(speed)
+        except Exception as e:
+            logger.debug(f"Traffic ingestion error: {e}")
+        
+        response = {'success': True}
+        if speed is not None:
+            response['current_speed_kmh'] = round(speed, 1)
+            response['traffic_level'] = traffic_level
+        
+        return Response(response)
 
 
 # ============================================

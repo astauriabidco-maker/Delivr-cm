@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/theme.dart';
 import '../../../core/api/api_client.dart';
-import '../providers/delivery_provider.dart';
+
 
 /// Deliveries list screen with active and completed tabs
 class DeliveriesScreen extends ConsumerStatefulWidget {

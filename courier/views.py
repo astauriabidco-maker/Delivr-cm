@@ -211,14 +211,36 @@ class BadgesView(CourierRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         courier = self.request.user
         
-        context['badges'] = get_courier_badges_summary(courier)
+        # Get summary from gamification service
+        summary = get_courier_badges_summary(courier)
+        context['badges_summary'] = summary
         
-        # All available badges for display
+        # List of earned badge objects (from summary dict)
+        context['earned_badges'] = summary['badges']
+        
+        # List of earned badge codes for easy checking
+        earned_codes = [b['type'] for b in summary['badges']]
+        context['earned_codes'] = earned_codes
+        
+        # All available badges with descriptions
         from core.courier_profile import BadgeType
-        context['all_badges'] = [
-            {'type': bt.value, 'display': bt.label}
-            for bt in BadgeType
-        ]
+        from core.gamification import BADGE_CRITERIA
+        
+        available_badges = []
+        for badge_type in BadgeType:
+            criteria = BADGE_CRITERIA.get(badge_type.value, {})
+            # Get emoji icon from display name
+            display = badge_type.label
+            icon = display.split()[-1] if display else '🏅'
+            
+            available_badges.append({
+                'code': badge_type.value,
+                'display': display,
+                'icon': icon,
+                'hint': criteria.get('description', '')
+            })
+            
+        context['available_badges'] = available_badges
         
         return context
 
@@ -243,7 +265,7 @@ class DeliveryHistoryView(CourierRequiredMixin, TemplateView):
         # Base queryset - courier's assigned deliveries
         qs = Delivery.objects.filter(
             courier=courier
-        ).select_related('pickup_neighborhood', 'dropoff_neighborhood')
+        ).select_related('dropoff_neighborhood')
         
         # Apply filters
         if status:
@@ -362,7 +384,7 @@ def export_delivery_history_csv(request):
     
     qs = Delivery.objects.filter(
         courier=courier
-    ).select_related('pickup_neighborhood', 'dropoff_neighborhood')
+    ).select_related('dropoff_neighborhood')
     
     if status:
         qs = qs.filter(status=status)
@@ -402,7 +424,7 @@ def export_delivery_history_csv(request):
     for d in deliveries:
         writer.writerow([
             d.created_at.strftime('%Y-%m-%d %H:%M'),
-            d.pickup_neighborhood.name if d.pickup_neighborhood else 'N/A',
+            d.pickup_address,
             d.dropoff_neighborhood.name if d.dropoff_neighborhood else 'N/A',
             f"{d.distance_km:.1f}" if d.distance_km else '0',
             d.get_status_display(),

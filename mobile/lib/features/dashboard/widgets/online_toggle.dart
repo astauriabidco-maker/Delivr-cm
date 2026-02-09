@@ -16,8 +16,8 @@ class OnlineToggle extends ConsumerWidget {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: isOnline
-              ? [DelivrColors.success, DelivrColors.success.withOpacity(0.8)]
-              : [DelivrColors.offline, DelivrColors.offline.withOpacity(0.8)],
+              ? [DelivrColors.success, DelivrColors.success.withValues(alpha: 0.8)]
+              : [DelivrColors.offline, DelivrColors.offline.withValues(alpha: 0.8)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -25,7 +25,7 @@ class OnlineToggle extends ConsumerWidget {
         boxShadow: [
           BoxShadow(
             color: (isOnline ? DelivrColors.success : DelivrColors.offline)
-                .withOpacity(0.3),
+                .withValues(alpha: 0.3),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -38,7 +38,7 @@ class OnlineToggle extends ConsumerWidget {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
+              color: Colors.white.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
@@ -69,7 +69,7 @@ class OnlineToggle extends ConsumerWidget {
                       : 'Appuyez pour recevoir des courses',
                   style: TextStyle(
                     fontSize: 12,
-                    color: Colors.white.withOpacity(0.8),
+                    color: Colors.white.withValues(alpha: 0.8),
                   ),
                 ),
               ],
@@ -84,10 +84,10 @@ class OnlineToggle extends ConsumerWidget {
               onChanged: (value) {
                 ref.read(onlineStatusProvider.notifier).toggle();
               },
-              activeColor: Colors.white,
-              activeTrackColor: Colors.white.withOpacity(0.3),
+              activeThumbColor: Colors.white,
+              activeTrackColor: Colors.white.withValues(alpha: 0.3),
               inactiveThumbColor: Colors.white,
-              inactiveTrackColor: Colors.white.withOpacity(0.3),
+              inactiveTrackColor: Colors.white.withValues(alpha: 0.3),
             ),
           ),
         ],

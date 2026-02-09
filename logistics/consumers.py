@@ -225,11 +225,18 @@ class CourierConsumer(AsyncJsonWebsocketConsumer):
             if latitude and longitude:
                 await self.update_courier_location(latitude, longitude)
                 
-                await self.send_json({
+                # Feed into crowdsourced traffic service
+                speed = await self.ingest_traffic_data(latitude, longitude)
+                
+                response = {
                     'type': 'location_confirmed',
                     'latitude': latitude,
                     'longitude': longitude,
-                })
+                }
+                if speed is not None:
+                    response['current_speed_kmh'] = round(speed, 1)
+                
+                await self.send_json(response)
         
         elif message_type == 'accept_order':
             order_id = content.get('order_id')
@@ -311,6 +318,22 @@ class CourierConsumer(AsyncJsonWebsocketConsumer):
             )
         except Exception as e:
             logger.error(f"[WS] Failed to update courier location: {e}")
+    
+    @sync_to_async
+    def ingest_traffic_data(self, latitude: float, longitude: float):
+        """Feed courier GPS data into the traffic service."""
+        if not self.courier_id:
+            return None
+        try:
+            from logistics.services.traffic_service import TrafficService
+            return TrafficService.ingest_location(
+                courier_id=self.courier_id,
+                latitude=latitude,
+                longitude=longitude
+            )
+        except Exception as e:
+            logger.debug(f"[WS] Traffic ingestion error: {e}")
+            return None
     
     @database_sync_to_async
     def accept_order(self, order_id: str) -> Dict[str, Any]:

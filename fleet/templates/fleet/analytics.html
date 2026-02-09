@@ -1,0 +1,103 @@
+{% extends 'fleet/base.html' %}
+
+{% block title %}Analytics{% endblock %}
+{% block page_title %}📈 Analytics{% endblock %}
+
+{% block content %}
+<!-- KPIs 7 jours -->
+<h3 style="margin-bottom:1rem;">📊 Derniers 7 jours</h3>
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-card-header">
+            <span class="stat-card-title">Livraisons</span>
+            <div class="stat-card-icon success">📦</div>
+        </div>
+        <div class="stat-value">{{ kpis_7d.total_deliveries|default:"0" }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-header">
+            <span class="stat-card-title">Complétées</span>
+            <div class="stat-card-icon success">✅</div>
+        </div>
+        <div class="stat-value">{{ kpis_7d.completed|default:"0" }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-header">
+            <span class="stat-card-title">Annulées</span>
+            <div class="stat-card-icon danger">❌</div>
+        </div>
+        <div class="stat-value">{{ kpis_7d.cancelled|default:"0" }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-header">
+            <span class="stat-card-title">CA Total</span>
+            <div class="stat-card-icon info">💰</div>
+        </div>
+        <div class="stat-value">{{ kpis_7d.total_revenue|default:"0" }} <small style="font-size:0.5em">XAF</small></div>
+    </div>
+</div>
+
+<!-- KPIs 30 jours -->
+<h3 style="margin:2rem 0 1rem;">📅 Derniers 30 jours</h3>
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-card-header">
+            <span class="stat-card-title">Livraisons</span>
+            <div class="stat-card-icon success">📦</div>
+        </div>
+        <div class="stat-value">{{ kpis_30d.total_deliveries|default:"0" }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-header">
+            <span class="stat-card-title">Complétées</span>
+            <div class="stat-card-icon success">✅</div>
+        </div>
+        <div class="stat-value">{{ kpis_30d.completed|default:"0" }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-header">
+            <span class="stat-card-title">Annulées</span>
+            <div class="stat-card-icon danger">❌</div>
+        </div>
+        <div class="stat-value">{{ kpis_30d.cancelled|default:"0" }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-header">
+            <span class="stat-card-title">CA Total</span>
+            <div class="stat-card-icon info">💰</div>
+        </div>
+        <div class="stat-value">{{ kpis_30d.total_revenue|default:"0" }} <small style="font-size:0.5em">XAF</small>
+        </div>
+    </div>
+</div>
+
+<!-- Response Times -->
+<div class="card" style="margin-top:2rem;">
+    <div class="card-header">
+        <h3 class="card-title">⏱️ Temps de Réponse</h3>
+        <a href="{% url 'fleet:analytics-advanced' %}" class="card-link">Analytics avancées →</a>
+    </div>
+    <div class="card-body">
+        <div class="stats-grid" style="margin-bottom:0;">
+            <div class="stat-card">
+                <div class="stat-card-header">
+                    <span class="stat-card-title">Temps moyen acceptation</span>
+                </div>
+                <div class="stat-value">{{ response_times.avg_acceptance_time|default:"—" }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card-header">
+                    <span class="stat-card-title">Temps moyen livraison</span>
+                </div>
+                <div class="stat-value">{{ response_times.avg_delivery_time|default:"—" }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card-header">
+                    <span class="stat-card-title">Taux d'acceptation</span>
+                </div>
+                <div class="stat-value">{{ response_times.acceptance_rate|default:"—" }}%</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

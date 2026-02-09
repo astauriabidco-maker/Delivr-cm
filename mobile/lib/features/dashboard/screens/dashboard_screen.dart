@@ -149,7 +149,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           width: 48,
           height: 48,
           decoration: BoxDecoration(
-            color: DelivrColors.primary.withOpacity(0.1),
+            color: DelivrColors.primary.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
           ),
           child: const Icon(
@@ -521,7 +521,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         color: DelivrColors.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: _getMockStatusColor(delivery.status).withOpacity(0.3),
+          color: _getMockStatusColor(delivery.status).withValues(alpha: 0.3),
           width: 1,
         ),
       ),
@@ -531,7 +531,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: _getMockStatusColor(delivery.status).withOpacity(0.1),
+            color: _getMockStatusColor(delivery.status).withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(
@@ -551,7 +551,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
-                color: _getMockStatusColor(delivery.status).withOpacity(0.1),
+                color: _getMockStatusColor(delivery.status).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(4),
               ),
               child: Text(
@@ -652,7 +652,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: _getStatusColor(delivery.status).withOpacity(0.1),
+            color: _getStatusColor(delivery.status).withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(

@@ -54,7 +54,30 @@ def _handle_new_delivery(delivery: Delivery):
     
     logger.info(f"[SIGNAL] New delivery created: {delivery.id}")
     
-    # Broadcast new delivery event
+    # =============================================
+    # Send OTP codes via WhatsApp
+    # =============================================
+    try:
+        from bot.whatsapp_service import (
+            send_order_confirmation_to_sender,
+            send_otp_to_recipient,
+        )
+        
+        # Send both OTPs (pickup + delivery) to the sender
+        send_order_confirmation_to_sender(delivery)
+        logger.info(f"[SIGNAL] Order confirmation + OTPs sent to sender for {str(delivery.id)[:8]}")
+        
+        # Send the delivery OTP to the recipient
+        if delivery.recipient_phone:
+            send_otp_to_recipient(delivery)
+            logger.info(f"[SIGNAL] Delivery OTP sent to recipient for {str(delivery.id)[:8]}")
+        
+    except Exception as e:
+        logger.warning(f"[SIGNAL] WhatsApp OTP notification failed: {e}")
+    
+    # =============================================
+    # Broadcast new delivery event (WebSocket)
+    # =============================================
     try:
         from logistics.events import broadcast_new_delivery
         
@@ -142,6 +165,37 @@ def _handle_delivery_update(delivery: Delivery):
         )
     except Exception as e:
         logger.warning(f"[SIGNAL] Status broadcast failed: {e}")
+    
+    # =============================================
+    # WhatsApp notifications on status change
+    # =============================================
+    try:
+        from bot.whatsapp_service import (
+            send_pickup_confirmed_notification,
+            send_otp_to_recipient,
+            send_delivery_completed_notification,
+            send_delivery_status_notification,
+        )
+        
+        if delivery.status == DeliveryStatus.PICKED_UP:
+            # Notify sender that the courier has picked up the package
+            send_pickup_confirmed_notification(delivery)
+            
+        elif delivery.status == DeliveryStatus.IN_TRANSIT:
+            # Re-send OTP to recipient (reminder: courier is on the way)
+            if delivery.recipient_phone:
+                send_otp_to_recipient(delivery)
+            
+        elif delivery.status == DeliveryStatus.COMPLETED:
+            # Notify sender that delivery is done
+            send_delivery_completed_notification(delivery)
+        
+        elif delivery.status in (DeliveryStatus.ASSIGNED,):
+            # Generic status notification to sender
+            send_delivery_status_notification(delivery, delivery.status)
+            
+    except Exception as e:
+        logger.warning(f"[SIGNAL] WhatsApp status notification failed: {e}")
     
     # Handle completion - trigger financial transactions
     if delivery.status == DeliveryStatus.COMPLETED:
