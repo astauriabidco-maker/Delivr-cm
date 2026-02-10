@@ -190,8 +190,8 @@
                         class="text-gray-600 hover:text-brand-blue font-medium transition-colors">Comment ça marche</a>
                     <a href="#technologie"
                         class="text-gray-600 hover:text-brand-blue font-medium transition-colors">Technologie</a>
-                    <a href="#partenaire"
-                        class="text-gray-600 hover:text-brand-blue font-medium transition-colors">Partenaires</a>
+                    <a href="#vendeurs"
+                        class="text-gray-600 hover:text-brand-blue font-medium transition-colors">Vendeurs</a>
                     <a href="#coursier"
                         class="text-gray-600 hover:text-brand-blue font-medium transition-colors">Coursiers</a>
                     <a href="#tarifs"
@@ -199,8 +199,8 @@
                 </nav>
                 <div class="hidden md:flex items-center gap-3">
                     <a href="{% url 'partners:login' %}"
-                        class="px-4 py-2 text-brand-blue font-semibold border-2 border-brand-blue rounded-lg hover:bg-brand-blue hover:text-white transition-all">Espace
-                        Partenaire</a>
+                        class="px-4 py-2 text-brand-blue font-semibold border-2 border-brand-blue rounded-lg hover:bg-brand-blue hover:text-white transition-all">Mon
+                        Espace</a>
                     <a href="{% url 'partners:signup' %}"
                         class="px-4 py-2 bg-brand-orange text-white font-semibold rounded-lg hover:bg-brand-orange-dark transition-all shadow-lg shadow-brand-orange/25">S'inscrire</a>
                 </div>
@@ -212,7 +212,7 @@
             <nav class="flex flex-col px-4 pt-2 gap-2">
                 <a href="#comment-ca-marche" class="py-2 text-gray-600 font-medium">Comment ça marche</a>
                 <a href="#technologie" class="py-2 text-gray-600 font-medium">Technologie</a>
-                <a href="#partenaire" class="py-2 text-gray-600 font-medium">Partenaires</a>
+                <a href="#vendeurs" class="py-2 text-gray-600 font-medium">Vendeurs</a>
                 <a href="#coursier" class="py-2 text-gray-600 font-medium">Coursiers</a>
                 <a href="#tarifs" class="py-2 text-gray-600 font-medium">Tarifs</a>
                 <hr class="my-2">
@@ -250,7 +250,7 @@
                         class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start slide-up slide-up-delay-3">
                         <a href="{% url 'partners:signup' %}"
                             class="inline-flex items-center justify-center gap-2 px-7 py-4 bg-brand-orange text-white font-bold rounded-xl hover:bg-brand-orange-dark transition-all shadow-lg shadow-brand-orange/25 text-lg">
-                            <i class="fas fa-rocket"></i> Devenir Partenaire
+                            <i class="fas fa-rocket"></i> Commencer à livrer
                         </a>
                         <a href="{% url 'courier:onboarding' %}"
                             class="inline-flex items-center justify-center gap-2 px-7 py-4 bg-brand-blue text-white font-bold rounded-xl hover:bg-brand-blue-dark transition-all shadow-lg shadow-brand-blue/25 text-lg">
@@ -345,41 +345,61 @@
     <section class="py-16 lg:py-24 bg-white" id="comment-ca-marche">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-12 lg:mb-16">
-                <div class="inline-flex items-center gap-2 px-3 py-1 bg-brand-blue/5 text-brand-blue rounded-full text-sm font-semibold mb-4"><i class="fas fa-play-circle"></i> Simple comme bonjour</div>
+                <div
+                    class="inline-flex items-center gap-2 px-3 py-1 bg-brand-blue/5 text-brand-blue rounded-full text-sm font-semibold mb-4">
+                    <i class="fas fa-play-circle"></i> Simple comme bonjour
+                </div>
                 <h2 class="text-3xl lg:text-5xl font-black text-gray-900 mb-4">Comment ça marche ?</h2>
-                <p class="text-lg text-gray-600 max-w-2xl mx-auto">4 étapes, de la commande à la livraison confirmée. Le tout en moins de 45 minutes.</p>
+                <p class="text-lg text-gray-600 max-w-2xl mx-auto">4 étapes, de la commande à la livraison confirmée. Le
+                    tout en moins de 45 minutes.</p>
             </div>
             <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
                 <div class="relative text-center bento-card">
-                    <div class="w-16 h-16 bg-gradient-to-br from-brand-orange to-orange-400 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg shadow-brand-orange/20">
+                    <div
+                        class="w-16 h-16 bg-gradient-to-br from-brand-orange to-orange-400 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg shadow-brand-orange/20">
                         <span class="text-white text-2xl font-black">1</span>
                     </div>
                     <h3 class="text-lg font-bold text-gray-900 mb-2">Commande créée</h3>
-                    <p class="text-gray-600 text-sm">Via votre dashboard, un lien de checkout, l'API ou le plugin WooCommerce.</p>
-                    <div class="hidden lg:block absolute top-8 left-[calc(50%+48px)] w-[calc(100%-96px)] h-0.5 bg-gradient-to-r from-brand-orange/30 to-brand-blue/30"></div>
+                    <p class="text-gray-600 text-sm">Via votre dashboard, un lien de checkout, l'API ou le plugin
+                        WooCommerce.</p>
+                    <div
+                        class="hidden lg:block absolute top-8 left-[calc(50%+48px)] w-[calc(100%-96px)] h-0.5 bg-gradient-to-r from-brand-orange/30 to-brand-blue/30">
+                    </div>
                 </div>
                 <div class="relative text-center bento-card">
-                    <div class="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-400 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg shadow-green-500/20">
+                    <div
+                        class="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-400 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg shadow-green-500/20">
                         <span class="text-white text-2xl font-black">2</span>
                     </div>
                     <h3 class="text-lg font-bold text-gray-900 mb-2">GPS via WhatsApp</h3>
-                    <p class="text-gray-600 text-sm">Le client reçoit un message WhatsApp et partage sa position exacte. <strong>Fini les adresses floues.</strong></p>
-                    <div class="hidden lg:block absolute top-8 left-[calc(50%+48px)] w-[calc(100%-96px)] h-0.5 bg-gradient-to-r from-green-500/30 to-blue-500/30"></div>
+                    <p class="text-gray-600 text-sm">Le client reçoit un message WhatsApp et partage sa position exacte.
+                        <strong>Fini les adresses floues.</strong>
+                    </p>
+                    <div
+                        class="hidden lg:block absolute top-8 left-[calc(50%+48px)] w-[calc(100%-96px)] h-0.5 bg-gradient-to-r from-green-500/30 to-blue-500/30">
+                    </div>
                 </div>
                 <div class="relative text-center bento-card">
-                    <div class="w-16 h-16 bg-gradient-to-br from-brand-blue to-blue-400 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg shadow-brand-blue/20">
+                    <div
+                        class="w-16 h-16 bg-gradient-to-br from-brand-blue to-blue-400 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg shadow-brand-blue/20">
                         <span class="text-white text-2xl font-black">3</span>
                     </div>
                     <h3 class="text-lg font-bold text-gray-900 mb-2">Smart Routing</h3>
-                    <p class="text-gray-600 text-sm">Le coursier suit un itinéraire optimisé avec notre trafic temps réel. Navigation Google Maps/Waze intégrée.</p>
-                    <div class="hidden lg:block absolute top-8 left-[calc(50%+48px)] w-[calc(100%-96px)] h-0.5 bg-gradient-to-r from-blue-500/30 to-purple-500/30"></div>
+                    <p class="text-gray-600 text-sm">Le coursier suit un itinéraire optimisé avec notre trafic temps
+                        réel. Navigation Google Maps/Waze intégrée.</p>
+                    <div
+                        class="hidden lg:block absolute top-8 left-[calc(50%+48px)] w-[calc(100%-96px)] h-0.5 bg-gradient-to-r from-blue-500/30 to-purple-500/30">
+                    </div>
                 </div>
                 <div class="text-center bento-card">
-                    <div class="w-16 h-16 bg-gradient-to-br from-purple-500 to-violet-400 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg shadow-purple-500/20">
+                    <div
+                        class="w-16 h-16 bg-gradient-to-br from-purple-500 to-violet-400 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg shadow-purple-500/20">
                         <span class="text-white text-2xl font-black">4</span>
                     </div>
                     <h3 class="text-lg font-bold text-gray-900 mb-2">Livré & Vérifié</h3>
-                    <p class="text-gray-600 text-sm">Pickup sécurisé par <strong>photo</strong>, livraison confirmée par <strong>code OTP</strong> envoyé au client.</p>
+                    <p class="text-gray-600 text-sm">Pickup sécurisé par <strong>photo</strong>, livraison confirmée par
+                        <strong>code OTP</strong> envoyé au client.
+                    </p>
                 </div>
             </div>
         </div>
@@ -389,33 +409,43 @@
     <section class="py-16 lg:py-24 bg-gradient-to-b from-gray-50 to-white" id="problemes">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-12 lg:mb-16">
-                <h2 class="text-3xl lg:text-4xl font-extrabold text-gray-900 mb-4">Le e-commerce africain mérite <span class="gradient-text">mieux</span></h2>
-                <p class="text-lg text-gray-600 max-w-2xl mx-auto">Les solutions occidentales ne comprennent pas vos défis. Nous, oui.</p>
+                <h2 class="text-3xl lg:text-4xl font-extrabold text-gray-900 mb-4">Le e-commerce africain mérite <span
+                        class="gradient-text">mieux</span></h2>
+                <p class="text-lg text-gray-600 max-w-2xl mx-auto">Les solutions occidentales ne comprennent pas vos
+                    défis. Nous, oui.</p>
             </div>
             <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div class="bg-red-50 rounded-2xl p-8 border border-red-100 bento-card">
-                    <div class="w-14 h-14 bg-red-100 rounded-xl flex items-center justify-center mb-5"><i class="fas fa-map-marked-alt text-2xl text-red-500"></i></div>
+                    <div class="w-14 h-14 bg-red-100 rounded-xl flex items-center justify-center mb-5"><i
+                            class="fas fa-map-marked-alt text-2xl text-red-500"></i></div>
                     <h3 class="text-lg font-bold text-gray-900 mb-2">Adresses floues</h3>
                     <p class="text-gray-600 text-sm"><em>"À côté du manguier"</em> n'est pas une adresse.</p>
-                    <p class="text-green-600 font-semibold text-sm mt-3"><i class="fas fa-check mr-1"></i>Résolu : GPS WhatsApp</p>
+                    <p class="text-green-600 font-semibold text-sm mt-3"><i class="fas fa-check mr-1"></i>Résolu : GPS
+                        WhatsApp</p>
                 </div>
                 <div class="bg-amber-50 rounded-2xl p-8 border border-amber-100 bento-card">
-                    <div class="w-14 h-14 bg-amber-100 rounded-xl flex items-center justify-center mb-5"><i class="fas fa-traffic-light text-2xl text-amber-500"></i></div>
+                    <div class="w-14 h-14 bg-amber-100 rounded-xl flex items-center justify-center mb-5"><i
+                            class="fas fa-traffic-light text-2xl text-amber-500"></i></div>
                     <h3 class="text-lg font-bold text-gray-900 mb-2">Embouteillages</h3>
                     <p class="text-gray-600 text-sm">Douala à 18h, c'est l'enfer. Pas de visibilité sur le trafic.</p>
-                    <p class="text-green-600 font-semibold text-sm mt-3"><i class="fas fa-check mr-1"></i>Résolu : Trafic Temps Réel</p>
+                    <p class="text-green-600 font-semibold text-sm mt-3"><i class="fas fa-check mr-1"></i>Résolu :
+                        Trafic Temps Réel</p>
                 </div>
                 <div class="bg-purple-50 rounded-2xl p-8 border border-purple-100 bento-card">
-                    <div class="w-14 h-14 bg-purple-100 rounded-xl flex items-center justify-center mb-5"><i class="fas fa-money-bill-wave text-2xl text-purple-500"></i></div>
+                    <div class="w-14 h-14 bg-purple-100 rounded-xl flex items-center justify-center mb-5"><i
+                            class="fas fa-money-bill-wave text-2xl text-purple-500"></i></div>
                     <h3 class="text-lg font-bold text-gray-900 mb-2">Cash non sécurisé</h3>
                     <p class="text-gray-600 text-sm">95% cash. Risque de vol et gestion chaotique.</p>
-                    <p class="text-green-600 font-semibold text-sm mt-3"><i class="fas fa-check mr-1"></i>Résolu : Mobile Money</p>
+                    <p class="text-green-600 font-semibold text-sm mt-3"><i class="fas fa-check mr-1"></i>Résolu :
+                        Mobile Money</p>
                 </div>
                 <div class="bg-blue-50 rounded-2xl p-8 border border-blue-100 bento-card">
-                    <div class="w-14 h-14 bg-blue-100 rounded-xl flex items-center justify-center mb-5"><i class="fas fa-eye-slash text-2xl text-blue-500"></i></div>
+                    <div class="w-14 h-14 bg-blue-100 rounded-xl flex items-center justify-center mb-5"><i
+                            class="fas fa-eye-slash text-2xl text-blue-500"></i></div>
                     <h3 class="text-lg font-bold text-gray-900 mb-2">Zéro visibilité</h3>
                     <p class="text-gray-600 text-sm">Aucun suivi, aucune donnée. Où est mon colis ?</p>
-                    <p class="text-green-600 font-semibold text-sm mt-3"><i class="fas fa-check mr-1"></i>Résolu : Suivi Live</p>
+                    <p class="text-green-600 font-semibold text-sm mt-3"><i class="fas fa-check mr-1"></i>Résolu : Suivi
+                        Live</p>
                 </div>
             </div>
         </div>
@@ -425,42 +455,79 @@
     <section class="py-16 lg:py-24 bg-white" id="technologie">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-12 lg:mb-16">
-                <div class="inline-flex items-center gap-2 px-3 py-1 bg-purple-50 text-purple-700 rounded-full text-sm font-semibold mb-4"><i class="fas fa-microchip"></i> Technologie propriétaire</div>
-                <h2 class="text-3xl lg:text-5xl font-black text-gray-900 mb-4">Pas juste un service de livraison.<br><span class="gradient-text">Une plateforme intelligente.</span></h2>
-                <p class="text-lg text-gray-600 max-w-3xl mx-auto">Nous avons construit notre propre infrastructure technologique — trafic temps réel crowdsourcé, routage intelligent et navigation optimisée.</p>
+                <div
+                    class="inline-flex items-center gap-2 px-3 py-1 bg-purple-50 text-purple-700 rounded-full text-sm font-semibold mb-4">
+                    <i class="fas fa-microchip"></i> Technologie propriétaire
+                </div>
+                <h2 class="text-3xl lg:text-5xl font-black text-gray-900 mb-4">Pas juste un service de
+                    livraison.<br><span class="gradient-text">Une plateforme intelligente.</span></h2>
+                <p class="text-lg text-gray-600 max-w-3xl mx-auto">Nous avons construit notre propre infrastructure
+                    technologique — trafic temps réel crowdsourcé, routage intelligent et navigation optimisée.</p>
             </div>
             <div class="grid lg:grid-cols-3 gap-8">
                 <!-- Smart Routing -->
-                <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-3xl p-8 border border-blue-100 bento-card">
-                    <div class="w-14 h-14 bg-gradient-to-br from-brand-blue to-blue-500 rounded-2xl flex items-center justify-center mb-6 shadow-lg"><i class="fas fa-route text-2xl text-white"></i></div>
+                <div
+                    class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-3xl p-8 border border-blue-100 bento-card">
+                    <div
+                        class="w-14 h-14 bg-gradient-to-br from-brand-blue to-blue-500 rounded-2xl flex items-center justify-center mb-6 shadow-lg">
+                        <i class="fas fa-route text-2xl text-white"></i>
+                    </div>
                     <h3 class="text-xl font-bold text-gray-900 mb-3">Smart Routing</h3>
-                    <p class="text-gray-600 mb-4">Notre algorithme combine <strong>OSRM</strong> (moteur de routing open-source) avec nos données de trafic en temps réel pour calculer l'itinéraire optimal.</p>
+                    <p class="text-gray-600 mb-4">Notre algorithme combine <strong>OSRM</strong> (moteur de routing
+                        open-source) avec nos données de trafic en temps réel pour calculer l'itinéraire optimal.</p>
                     <ul class="space-y-2 text-sm text-gray-600">
-                        <li class="flex items-start gap-2"><i class="fas fa-check-circle text-green-500 mt-0.5"></i>Évitement automatique des embouteillages</li>
-                        <li class="flex items-start gap-2"><i class="fas fa-check-circle text-green-500 mt-0.5"></i>Waypoints stratégiques vers Google Maps/Waze</li>
-                        <li class="flex items-start gap-2"><i class="fas fa-check-circle text-green-500 mt-0.5"></i>ETA précis au quartier de Douala</li>
+                        <li class="flex items-start gap-2"><i
+                                class="fas fa-check-circle text-green-500 mt-0.5"></i>Évitement automatique des
+                            embouteillages</li>
+                        <li class="flex items-start gap-2"><i
+                                class="fas fa-check-circle text-green-500 mt-0.5"></i>Waypoints stratégiques vers Google
+                            Maps/Waze</li>
+                        <li class="flex items-start gap-2"><i class="fas fa-check-circle text-green-500 mt-0.5"></i>ETA
+                            précis au quartier de Douala</li>
                     </ul>
                 </div>
                 <!-- Trafic Crowdsourcé -->
-                <div class="bg-gradient-to-br from-orange-50 to-amber-50 rounded-3xl p-8 border border-orange-100 bento-card">
-                    <div class="w-14 h-14 bg-gradient-to-br from-brand-orange to-orange-400 rounded-2xl flex items-center justify-center mb-6 shadow-lg"><i class="fas fa-broadcast-tower text-2xl text-white"></i></div>
+                <div
+                    class="bg-gradient-to-br from-orange-50 to-amber-50 rounded-3xl p-8 border border-orange-100 bento-card">
+                    <div
+                        class="w-14 h-14 bg-gradient-to-br from-brand-orange to-orange-400 rounded-2xl flex items-center justify-center mb-6 shadow-lg">
+                        <i class="fas fa-broadcast-tower text-2xl text-white"></i>
+                    </div>
                     <h3 class="text-xl font-bold text-gray-900 mb-3">Trafic Crowdsourcé</h3>
-                    <p class="text-gray-600 mb-4">Comme Waze, mais pour Douala. Nos coursiers alimentent en temps réel une <strong>carte de chaleur</strong> du trafic urbain.</p>
+                    <p class="text-gray-600 mb-4">Comme Waze, mais pour Douala. Nos coursiers alimentent en temps réel
+                        une <strong>carte de chaleur</strong> du trafic urbain.</p>
                     <ul class="space-y-2 text-sm text-gray-600">
-                        <li class="flex items-start gap-2"><i class="fas fa-check-circle text-green-500 mt-0.5"></i>Heatmap trafic en direct sur la carte</li>
-                        <li class="flex items-start gap-2"><i class="fas fa-check-circle text-green-500 mt-0.5"></i>Signalement d'incidents (accidents, routes coupées)</li>
-                        <li class="flex items-start gap-2"><i class="fas fa-check-circle text-green-500 mt-0.5"></i>Détection auto des ralentissements GPS</li>
+                        <li class="flex items-start gap-2"><i
+                                class="fas fa-check-circle text-green-500 mt-0.5"></i>Heatmap trafic en direct sur la
+                            carte</li>
+                        <li class="flex items-start gap-2"><i
+                                class="fas fa-check-circle text-green-500 mt-0.5"></i>Signalement d'incidents
+                            (accidents, routes coupées)</li>
+                        <li class="flex items-start gap-2"><i
+                                class="fas fa-check-circle text-green-500 mt-0.5"></i>Détection auto des ralentissements
+                            GPS</li>
                     </ul>
                 </div>
                 <!-- Sécurité -->
-                <div class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-3xl p-8 border border-green-100 bento-card">
-                    <div class="w-14 h-14 bg-gradient-to-br from-green-500 to-emerald-400 rounded-2xl flex items-center justify-center mb-6 shadow-lg"><i class="fas fa-shield-alt text-2xl text-white"></i></div>
+                <div
+                    class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-3xl p-8 border border-green-100 bento-card">
+                    <div
+                        class="w-14 h-14 bg-gradient-to-br from-green-500 to-emerald-400 rounded-2xl flex items-center justify-center mb-6 shadow-lg">
+                        <i class="fas fa-shield-alt text-2xl text-white"></i>
+                    </div>
                     <h3 class="text-xl font-bold text-gray-900 mb-3">Double Sécurité</h3>
-                    <p class="text-gray-600 mb-4">Chaque livraison est protégée à chaque étape. Aucun colis ne se perd, aucune fraude possible.</p>
+                    <p class="text-gray-600 mb-4">Chaque livraison est protégée à chaque étape. Aucun colis ne se perd,
+                        aucune fraude possible.</p>
                     <ul class="space-y-2 text-sm text-gray-600">
-                        <li class="flex items-start gap-2"><i class="fas fa-check-circle text-green-500 mt-0.5"></i><strong>Photo obligatoire</strong> au pickup du colis</li>
-                        <li class="flex items-start gap-2"><i class="fas fa-check-circle text-green-500 mt-0.5"></i><strong>Code OTP 4 chiffres</strong> à la livraison</li>
-                        <li class="flex items-start gap-2"><i class="fas fa-check-circle text-green-500 mt-0.5"></i>Preuve de livraison horodatée + géolocalisée</li>
+                        <li class="flex items-start gap-2"><i
+                                class="fas fa-check-circle text-green-500 mt-0.5"></i><strong>Photo obligatoire</strong>
+                            au pickup du colis</li>
+                        <li class="flex items-start gap-2"><i
+                                class="fas fa-check-circle text-green-500 mt-0.5"></i><strong>Code OTP 4
+                                chiffres</strong> à la livraison</li>
+                        <li class="flex items-start gap-2"><i
+                                class="fas fa-check-circle text-green-500 mt-0.5"></i>Preuve de livraison horodatée +
+                            géolocalisée</li>
                     </ul>
                 </div>
             </div>
@@ -472,35 +539,78 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="grid lg:grid-cols-2 gap-12 items-center">
                 <div>
-                    <div class="inline-flex items-center gap-2 px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-semibold mb-6">
+                    <div
+                        class="inline-flex items-center gap-2 px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-semibold mb-6">
                         <span class="w-2 h-2 bg-green-500 rounded-full pulse-dot"></span> WebSocket temps réel
                     </div>
-                    <h2 class="text-3xl lg:text-4xl font-extrabold text-gray-900 mb-6">Suivez chaque colis <span class="gradient-text">en direct</span></h2>
-                    <p class="text-lg text-gray-600 mb-8">Vos clients et vous voyez le coursier se déplacer seconde par seconde sur la carte. Pas de refresh, pas d'attente.</p>
+                    <h2 class="text-3xl lg:text-4xl font-extrabold text-gray-900 mb-6">Suivez chaque colis <span
+                            class="gradient-text">en direct</span></h2>
+                    <p class="text-lg text-gray-600 mb-8">Vos clients et vous voyez le coursier se déplacer seconde par
+                        seconde sur la carte. Pas de refresh, pas d'attente.</p>
                     <div class="space-y-4">
-                        <div class="flex items-start gap-4"><div class="w-10 h-10 bg-brand-blue/10 rounded-lg flex items-center justify-center flex-shrink-0"><i class="fas fa-satellite-dish text-brand-blue"></i></div><div><h4 class="font-bold text-gray-900">Position live toutes les 5 sec</h4><p class="text-gray-600 text-sm">WebSocket bi-directionnel. Le coursier transmet sa position GPS en continu.</p></div></div>
-                        <div class="flex items-start gap-4"><div class="w-10 h-10 bg-brand-orange/10 rounded-lg flex items-center justify-center flex-shrink-0"><i class="fab fa-whatsapp text-green-600"></i></div><div><h4 class="font-bold text-gray-900">Notifications WhatsApp</h4><p class="text-gray-600 text-sm">Pris en charge → En route → Arrivé → Livré. Chaque étape notifiée au client.</p></div></div>
-                        <div class="flex items-start gap-4"><div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0"><i class="fas fa-share-alt text-purple-600"></i></div><div><h4 class="font-bold text-gray-900">Lien de suivi partageable</h4><p class="text-gray-600 text-sm">Envoyez un lien court au client. Il suit la livraison sans installer d'app.</p></div></div>
+                        <div class="flex items-start gap-4">
+                            <div
+                                class="w-10 h-10 bg-brand-blue/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <i class="fas fa-satellite-dish text-brand-blue"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-gray-900">Position live toutes les 5 sec</h4>
+                                <p class="text-gray-600 text-sm">WebSocket bi-directionnel. Le coursier transmet sa
+                                    position GPS en continu.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-4">
+                            <div
+                                class="w-10 h-10 bg-brand-orange/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <i class="fab fa-whatsapp text-green-600"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-gray-900">Notifications WhatsApp</h4>
+                                <p class="text-gray-600 text-sm">Pris en charge → En route → Arrivé → Livré. Chaque
+                                    étape notifiée au client.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-4">
+                            <div
+                                class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <i class="fas fa-share-alt text-purple-600"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-gray-900">Lien de suivi partageable</h4>
+                                <p class="text-gray-600 text-sm">Envoyez un lien court au client. Il suit la livraison
+                                    sans installer d'app.</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="relative">
                     <div class="bg-gray-100 rounded-3xl p-6 shadow-xl border border-gray-200">
                         <div class="bg-white rounded-2xl overflow-hidden">
                             <div class="bg-brand-blue px-4 py-3 flex items-center justify-between">
-                                <span class="text-white font-semibold text-sm"><i class="fas fa-map-marked-alt mr-2"></i>Suivi #DLV-2847</span>
-                                <span class="text-xs text-white/70 flex items-center gap-1"><span class="w-2 h-2 bg-green-400 rounded-full pulse-dot"></span>En direct</span>
+                                <span class="text-white font-semibold text-sm"><i
+                                        class="fas fa-map-marked-alt mr-2"></i>Suivi #DLV-2847</span>
+                                <span class="text-xs text-white/70 flex items-center gap-1"><span
+                                        class="w-2 h-2 bg-green-400 rounded-full pulse-dot"></span>En direct</span>
                             </div>
-                            <div class="h-56 bg-gradient-to-br from-blue-50 to-green-50 relative flex items-center justify-center">
+                            <div
+                                class="h-56 bg-gradient-to-br from-blue-50 to-green-50 relative flex items-center justify-center">
                                 <div class="text-center">
-                                    <div class="w-16 h-16 bg-brand-blue/10 rounded-full flex items-center justify-center mx-auto mb-3 float-anim"><i class="fas fa-motorcycle text-3xl text-brand-blue"></i></div>
+                                    <div
+                                        class="w-16 h-16 bg-brand-blue/10 rounded-full flex items-center justify-center mx-auto mb-3 float-anim">
+                                        <i class="fas fa-motorcycle text-3xl text-brand-blue"></i>
+                                    </div>
                                     <p class="text-sm font-semibold text-gray-700">Paul K. en route</p>
                                     <p class="text-xs text-gray-500">Arrivée : <strong>12 min</strong></p>
                                 </div>
-                                <div class="absolute bottom-3 left-3 bg-white rounded-lg px-3 py-2 shadow text-xs"><i class="fas fa-store text-brand-orange mr-1"></i>Fashion Store</div>
-                                <div class="absolute top-3 right-3 bg-white rounded-lg px-3 py-2 shadow text-xs"><i class="fas fa-home text-green-600 mr-1"></i>Akwa</div>
+                                <div class="absolute bottom-3 left-3 bg-white rounded-lg px-3 py-2 shadow text-xs"><i
+                                        class="fas fa-store text-brand-orange mr-1"></i>Fashion Store</div>
+                                <div class="absolute top-3 right-3 bg-white rounded-lg px-3 py-2 shadow text-xs"><i
+                                        class="fas fa-home text-green-600 mr-1"></i>Akwa</div>
                             </div>
                             <div class="px-4 py-3 flex items-center justify-between border-t">
-                                <div class="flex items-center gap-2 text-xs"><span class="w-3 h-3 bg-green-500 rounded-full"></span><span class="font-semibold text-green-700">EN ROUTE</span></div>
+                                <div class="flex items-center gap-2 text-xs"><span
+                                        class="w-3 h-3 bg-green-500 rounded-full"></span><span
+                                        class="font-semibold text-green-700">EN ROUTE</span></div>
                                 <div class="flex items-center gap-3 text-xs text-gray-500">
                                     <span><i class="fas fa-camera text-blue-500 mr-1"></i>Photo ✓</span>
                                     <span>2 500 FCFA</span>
@@ -517,82 +627,128 @@
     <section class="py-16 lg:py-24 bg-white" id="fonctionnalites">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-12 lg:mb-16">
-                <h2 class="text-3xl lg:text-4xl font-extrabold text-gray-900 mb-4">Une solution pour <span class="gradient-text">chaque vendeur</span></h2>
-                <p class="text-lg text-gray-600 max-w-2xl mx-auto">Que vous vendiez sur Instagram ou via un site WooCommerce, nous avons la solution.</p>
+                <h2 class="text-3xl lg:text-4xl font-extrabold text-gray-900 mb-4">Une solution pour <span
+                        class="gradient-text">chaque vendeur</span></h2>
+                <p class="text-lg text-gray-600 max-w-2xl mx-auto">Que vous vendiez sur Instagram ou via un site
+                    WooCommerce, nous avons la solution.</p>
             </div>
             <div class="grid lg:grid-cols-2 gap-8">
-                <div class="bg-gradient-to-br from-pink-50 to-purple-50 rounded-3xl p-8 lg:p-10 shadow-lg border border-pink-100 bento-card">
+                <div
+                    class="bg-gradient-to-br from-pink-50 to-purple-50 rounded-3xl p-8 lg:p-10 shadow-lg border border-pink-100 bento-card">
                     <div class="flex items-start gap-4 mb-6">
-                        <div class="w-16 h-16 bg-gradient-to-br from-pink-500 to-purple-600 rounded-2xl flex items-center justify-center flex-shrink-0"><i class="fab fa-instagram text-3xl text-white"></i></div>
-                        <div><h3 class="text-2xl font-bold text-gray-900">Vendeurs Instagram</h3><p class="text-brand-orange font-semibold">Le Lien Magique</p></div>
+                        <div
+                            class="w-16 h-16 bg-gradient-to-br from-pink-500 to-purple-600 rounded-2xl flex items-center justify-center flex-shrink-0">
+                            <i class="fab fa-instagram text-3xl text-white"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-2xl font-bold text-gray-900">Vendeurs Instagram</h3>
+                            <p class="text-brand-orange font-semibold">Le Lien Magique</p>
+                        </div>
                     </div>
-                    <p class="text-gray-600 mb-6">Générez un <strong>lien de commande unique</strong>, partagez-le dans votre bio ou en DM. Vos clients commandent en 30 secondes, avec suivi temps réel.</p>
+                    <p class="text-gray-600 mb-6">Générez un <strong>lien de commande unique</strong>, partagez-le dans
+                        votre bio ou en DM. Vos clients commandent en 30 secondes, avec suivi temps réel.</p>
                     <ul class="space-y-3 mb-8">
-                        <li class="flex items-center gap-3 text-gray-700"><i class="fas fa-check-circle text-green-500"></i>Zéro compétence technique requise</li>
-                        <li class="flex items-center gap-3 text-gray-700"><i class="fas fa-check-circle text-green-500"></i>Page checkout à vos couleurs</li>
-                        <li class="flex items-center gap-3 text-gray-700"><i class="fas fa-check-circle text-green-500"></i>Notifications WhatsApp automatiques</li>
+                        <li class="flex items-center gap-3 text-gray-700"><i
+                                class="fas fa-check-circle text-green-500"></i>Zéro compétence technique requise</li>
+                        <li class="flex items-center gap-3 text-gray-700"><i
+                                class="fas fa-check-circle text-green-500"></i>Page checkout à vos couleurs</li>
+                        <li class="flex items-center gap-3 text-gray-700"><i
+                                class="fas fa-check-circle text-green-500"></i>Notifications WhatsApp automatiques</li>
                     </ul>
-                    <a href="{% url 'partners:signup' %}" class="inline-flex items-center gap-2 text-brand-orange font-semibold hover:underline">Créer mon lien <i class="fas fa-arrow-right"></i></a>
+                    <a href="{% url 'partners:signup' %}"
+                        class="inline-flex items-center gap-2 text-brand-orange font-semibold hover:underline">Créer mon
+                        lien <i class="fas fa-arrow-right"></i></a>
                 </div>
-                <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-3xl p-8 lg:p-10 shadow-lg border border-blue-100 bento-card">
+                <div
+                    class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-3xl p-8 lg:p-10 shadow-lg border border-blue-100 bento-card">
                     <div class="flex items-start gap-4 mb-6">
-                        <div class="w-16 h-16 bg-gradient-to-br from-brand-blue to-blue-600 rounded-2xl flex items-center justify-center flex-shrink-0"><i class="fas fa-code text-3xl text-white"></i></div>
-                        <div><h3 class="text-2xl font-bold text-gray-900">Sites E-commerce</h3><p class="text-brand-blue font-semibold">Plugin & API REST</p></div>
+                        <div
+                            class="w-16 h-16 bg-gradient-to-br from-brand-blue to-blue-600 rounded-2xl flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-code text-3xl text-white"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-2xl font-bold text-gray-900">Sites E-commerce</h3>
+                            <p class="text-brand-blue font-semibold">Plugin & API REST</p>
+                        </div>
                     </div>
-                    <p class="text-gray-600 mb-6">Un <strong>plugin WooCommerce</strong> ou une API REST robuste pour automatiser 100% du flux. Webhooks, tracking, facturation automatique.</p>
+                    <p class="text-gray-600 mb-6">Un <strong>plugin WooCommerce</strong> ou une API REST robuste pour
+                        automatiser 100% du flux. Webhooks, tracking, facturation automatique.</p>
                     <ul class="space-y-3 mb-8">
-                        <li class="flex items-center gap-3 text-gray-700"><i class="fas fa-check-circle text-green-500"></i>Documentation Swagger complète</li>
-                        <li class="flex items-center gap-3 text-gray-700"><i class="fas fa-check-circle text-green-500"></i>Webhooks temps réel configurables</li>
-                        <li class="flex items-center gap-3 text-gray-700"><i class="fas fa-check-circle text-green-500"></i>Facturation PDF automatisée</li>
+                        <li class="flex items-center gap-3 text-gray-700"><i
+                                class="fas fa-check-circle text-green-500"></i>Documentation Swagger complète</li>
+                        <li class="flex items-center gap-3 text-gray-700"><i
+                                class="fas fa-check-circle text-green-500"></i>Webhooks temps réel configurables</li>
+                        <li class="flex items-center gap-3 text-gray-700"><i
+                                class="fas fa-check-circle text-green-500"></i>Facturation PDF automatisée</li>
                     </ul>
-                    <a href="#api" class="inline-flex items-center gap-2 text-brand-blue font-semibold hover:underline">Documentation API <i class="fas fa-arrow-right"></i></a>
+                    <a href="#api"
+                        class="inline-flex items-center gap-2 text-brand-blue font-semibold hover:underline">Documentation
+                        API <i class="fas fa-arrow-right"></i></a>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- ==================== PORTAIL PARTENAIRE ==================== -->
-    <section class="py-16 lg:py-24 bg-gray-50" id="partenaire">
+    <!-- ==================== ESPACE VENDEUR ==================== -->
+    <section class="py-16 lg:py-24 bg-gray-50" id="vendeurs">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-12 lg:mb-16">
-                <h2 class="text-3xl lg:text-4xl font-extrabold text-gray-900 mb-4">Votre <span class="gradient-blue">Portail Partenaire</span> B2B</h2>
-                <p class="text-lg text-gray-600 max-w-2xl mx-auto">Un back-office complet pour piloter vos livraisons, analyser vos performances et automatiser la facturation.</p>
+                <h2 class="text-3xl lg:text-4xl font-extrabold text-gray-900 mb-4">Votre <span
+                        class="gradient-blue">Espace de Gestion</span></h2>
+                <p class="text-lg text-gray-600 max-w-2xl mx-auto">Un back-office complet pour piloter vos livraisons,
+                    analyser vos performances et automatiser la facturation.</p>
             </div>
             <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div class="bg-white rounded-2xl p-6 shadow-md border border-gray-100 bento-card lg:col-span-2 lg:row-span-2">
-                    <div class="w-12 h-12 bg-brand-blue/10 rounded-xl flex items-center justify-center mb-4"><i class="fas fa-chart-line text-2xl text-brand-blue"></i></div>
+                <div
+                    class="bg-white rounded-2xl p-6 shadow-md border border-gray-100 bento-card lg:col-span-2 lg:row-span-2">
+                    <div class="w-12 h-12 bg-brand-blue/10 rounded-xl flex items-center justify-center mb-4"><i
+                            class="fas fa-chart-line text-2xl text-brand-blue"></i></div>
                     <h3 class="text-xl font-bold text-gray-900 mb-2">Dashboard Analytics</h3>
-                    <p class="text-gray-600 mb-4">Volume, taux de réussite, revenus, zones actives. Filtrable par période.</p>
+                    <p class="text-gray-600 mb-4">Volume, taux de réussite, revenus, zones actives. Filtrable par
+                        période.</p>
                     <div class="bg-gray-50 rounded-xl p-4 space-y-3">
-                        <div class="flex justify-between items-center"><span class="text-sm text-gray-600">Livraisons ce mois</span><span class="font-bold text-brand-blue">247</span></div>
-                        <div class="w-full bg-gray-200 rounded-full h-2"><div class="bg-brand-blue h-2 rounded-full" style="width: 78%"></div></div>
-                        <div class="flex justify-between items-center"><span class="text-sm text-gray-600">Taux de livraison</span><span class="font-bold text-green-600">96.4%</span></div>
-                        <div class="w-full bg-gray-200 rounded-full h-2"><div class="bg-green-500 h-2 rounded-full" style="width: 96%"></div></div>
+                        <div class="flex justify-between items-center"><span class="text-sm text-gray-600">Livraisons ce
+                                mois</span><span class="font-bold text-brand-blue">247</span></div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-brand-blue h-2 rounded-full" style="width: 78%"></div>
+                        </div>
+                        <div class="flex justify-between items-center"><span class="text-sm text-gray-600">Taux de
+                                livraison</span><span class="font-bold text-green-600">96.4%</span></div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-green-500 h-2 rounded-full" style="width: 96%"></div>
+                        </div>
                     </div>
                 </div>
                 <div class="bg-white rounded-2xl p-6 shadow-md border border-gray-100 bento-card">
-                    <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mb-4"><i class="fas fa-boxes text-xl text-purple-600"></i></div>
+                    <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mb-4"><i
+                            class="fas fa-boxes text-xl text-purple-600"></i></div>
                     <h3 class="text-lg font-bold text-gray-900 mb-2">Gestion Commandes</h3>
                     <p class="text-gray-600 text-sm">Filtrez par statut, exportez CSV, suivez en temps réel.</p>
                 </div>
                 <div class="bg-white rounded-2xl p-6 shadow-md border border-gray-100 bento-card">
-                    <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mb-4"><i class="fas fa-file-invoice text-xl text-green-600"></i></div>
+                    <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mb-4"><i
+                            class="fas fa-file-invoice text-xl text-green-600"></i></div>
                     <h3 class="text-lg font-bold text-gray-900 mb-2">Factures PDF</h3>
-                    <p class="text-gray-600 text-sm">Générées automatiquement chaque mois, téléchargeables en un clic.</p>
+                    <p class="text-gray-600 text-sm">Générées automatiquement chaque mois, téléchargeables en un clic.
+                    </p>
                 </div>
                 <div class="bg-white rounded-2xl p-6 shadow-md border border-gray-100 bento-card">
-                    <div class="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center mb-4"><i class="fas fa-link text-xl text-amber-600"></i></div>
+                    <div class="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center mb-4"><i
+                            class="fas fa-link text-xl text-amber-600"></i></div>
                     <h3 class="text-lg font-bold text-gray-900 mb-2">Webhooks</h3>
                     <p class="text-gray-600 text-sm">Mises à jour en temps réel dans votre système via webhooks.</p>
                 </div>
                 <div class="bg-white rounded-2xl p-6 shadow-md border border-gray-100 bento-card">
-                    <div class="w-12 h-12 bg-pink-100 rounded-xl flex items-center justify-center mb-4"><i class="fas fa-palette text-xl text-pink-600"></i></div>
+                    <div class="w-12 h-12 bg-pink-100 rounded-xl flex items-center justify-center mb-4"><i
+                            class="fas fa-palette text-xl text-pink-600"></i></div>
                     <h3 class="text-lg font-bold text-gray-900 mb-2">Branding</h3>
                     <p class="text-gray-600 text-sm">Checkout aux couleurs de votre marque. Logo, couleurs, message.</p>
                 </div>
             </div>
             <div class="text-center mt-10">
-                <a href="{% url 'partners:signup' %}" class="inline-flex items-center gap-2 px-8 py-4 bg-brand-blue text-white font-bold rounded-xl hover:bg-brand-blue-dark transition-all shadow-lg text-lg"><i class="fas fa-external-link-alt"></i> Découvrir l'Espace Partenaire</a>
+                <a href="{% url 'partners:signup' %}"
+                    class="inline-flex items-center gap-2 px-8 py-4 bg-brand-blue text-white font-bold rounded-xl hover:bg-brand-blue-dark transition-all shadow-lg text-lg"><i
+                        class="fas fa-external-link-alt"></i> Créer mon compte vendeur</a>
             </div>
         </div>
     </section>
@@ -604,44 +760,92 @@
                 <div class="order-2 lg:order-1">
                     <div class="bg-white/5 rounded-3xl p-6 border border-white/10 max-w-sm mx-auto">
                         <div class="bg-white rounded-2xl overflow-hidden">
-                            <div class="bg-brand-blue px-4 py-3"><p class="text-white font-bold text-center">🏍️ Mon Dashboard</p></div>
+                            <div class="bg-brand-blue px-4 py-3">
+                                <p class="text-white font-bold text-center">🏍️ Mon Dashboard</p>
+                            </div>
                             <div class="p-4 space-y-3">
                                 <div class="grid grid-cols-2 gap-3">
-                                    <div class="bg-green-50 rounded-xl p-3 text-center"><p class="text-2xl font-extrabold text-green-600">47</p><p class="text-xs text-gray-500">Courses ce mois</p></div>
-                                    <div class="bg-blue-50 rounded-xl p-3 text-center"><p class="text-2xl font-extrabold text-brand-blue">85K</p><p class="text-xs text-gray-500">FCFA gagnés</p></div>
+                                    <div class="bg-green-50 rounded-xl p-3 text-center">
+                                        <p class="text-2xl font-extrabold text-green-600">47</p>
+                                        <p class="text-xs text-gray-500">Courses ce mois</p>
+                                    </div>
+                                    <div class="bg-blue-50 rounded-xl p-3 text-center">
+                                        <p class="text-2xl font-extrabold text-brand-blue">85K</p>
+                                        <p class="text-xs text-gray-500">FCFA gagnés</p>
+                                    </div>
                                 </div>
-                                <div class="bg-amber-50 rounded-xl p-3 flex items-center gap-3"><i class="fas fa-trophy text-amber-500 text-xl"></i><div><p class="font-bold text-gray-900 text-sm">Rang #3</p><p class="text-xs text-gray-500">Leaderboard Douala</p></div></div>
-                                <div class="bg-red-50 rounded-xl p-3 flex items-center gap-3"><i class="fas fa-fire text-red-500 text-xl"></i><div><p class="font-bold text-gray-900 text-sm">Trafic Dense</p><p class="text-xs text-gray-500">Ndokotti — Smart Route actif</p></div></div>
+                                <div class="bg-amber-50 rounded-xl p-3 flex items-center gap-3"><i
+                                        class="fas fa-trophy text-amber-500 text-xl"></i>
+                                    <div>
+                                        <p class="font-bold text-gray-900 text-sm">Rang #3</p>
+                                        <p class="text-xs text-gray-500">Leaderboard Douala</p>
+                                    </div>
+                                </div>
+                                <div class="bg-red-50 rounded-xl p-3 flex items-center gap-3"><i
+                                        class="fas fa-fire text-red-500 text-xl"></i>
+                                    <div>
+                                        <p class="font-bold text-gray-900 text-sm">Trafic Dense</p>
+                                        <p class="text-xs text-gray-500">Ndokotti — Smart Route actif</p>
+                                    </div>
+                                </div>
                                 <div class="flex gap-2">
-                                    <div class="bg-purple-100 rounded-lg px-2 py-1 flex items-center gap-1"><i class="fas fa-medal text-purple-600 text-xs"></i><span class="text-xs font-semibold text-purple-700">Speed Demon</span></div>
-                                    <div class="bg-blue-100 rounded-lg px-2 py-1 flex items-center gap-1"><i class="fas fa-star text-blue-600 text-xs"></i><span class="text-xs font-semibold text-blue-700">5★ Rating</span></div>
+                                    <div class="bg-purple-100 rounded-lg px-2 py-1 flex items-center gap-1"><i
+                                            class="fas fa-medal text-purple-600 text-xs"></i><span
+                                            class="text-xs font-semibold text-purple-700">Speed Demon</span></div>
+                                    <div class="bg-blue-100 rounded-lg px-2 py-1 flex items-center gap-1"><i
+                                            class="fas fa-star text-blue-600 text-xs"></i><span
+                                            class="text-xs font-semibold text-blue-700">5★ Rating</span></div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="order-1 lg:order-2">
-                    <h2 class="text-3xl lg:text-4xl font-extrabold mb-6">L'app qui <span class="text-brand-orange">motive</span> vos coursiers</h2>
-                    <p class="text-gray-300 text-lg mb-8">App mobile Flutter complète avec gamification, wallet intégré et navigation optimisée.</p>
+                    <h2 class="text-3xl lg:text-4xl font-extrabold mb-6">L'app qui <span
+                            class="text-brand-orange">motive</span> vos coursiers</h2>
+                    <p class="text-gray-300 text-lg mb-8">App mobile Flutter complète avec gamification, wallet intégré
+                        et navigation optimisée.</p>
                     <div class="space-y-4 mb-8">
                         <div class="glass rounded-xl p-4 flex items-center gap-4">
-                            <div class="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center"><i class="fas fa-wallet text-green-400"></i></div>
-                            <div><h4 class="font-bold">Wallet & Retraits</h4><p class="text-gray-400 text-sm">Suivi des gains en temps réel, historique, demandes de retrait.</p></div>
+                            <div class="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center"><i
+                                    class="fas fa-wallet text-green-400"></i></div>
+                            <div>
+                                <h4 class="font-bold">Wallet & Retraits</h4>
+                                <p class="text-gray-400 text-sm">Suivi des gains en temps réel, historique, demandes de
+                                    retrait.</p>
+                            </div>
                         </div>
                         <div class="glass rounded-xl p-4 flex items-center gap-4">
-                            <div class="w-10 h-10 bg-amber-500/20 rounded-lg flex items-center justify-center"><i class="fas fa-trophy text-amber-400"></i></div>
-                            <div><h4 class="font-bold">Badges & Leaderboard</h4><p class="text-gray-400 text-sm">Gamification complète : badges, classement, niveaux. La compétition booste la performance.</p></div>
+                            <div class="w-10 h-10 bg-amber-500/20 rounded-lg flex items-center justify-center"><i
+                                    class="fas fa-trophy text-amber-400"></i></div>
+                            <div>
+                                <h4 class="font-bold">Badges & Leaderboard</h4>
+                                <p class="text-gray-400 text-sm">Gamification complète : badges, classement, niveaux. La
+                                    compétition booste la performance.</p>
+                            </div>
                         </div>
                         <div class="glass rounded-xl p-4 flex items-center gap-4">
-                            <div class="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center"><i class="fas fa-route text-blue-400"></i></div>
-                            <div><h4 class="font-bold">Smart Navigation</h4><p class="text-gray-400 text-sm">Lancement vers Google Maps/Waze avec waypoints optimisés anti-bouchons.</p></div>
+                            <div class="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center"><i
+                                    class="fas fa-route text-blue-400"></i></div>
+                            <div>
+                                <h4 class="font-bold">Smart Navigation</h4>
+                                <p class="text-gray-400 text-sm">Lancement vers Google Maps/Waze avec waypoints
+                                    optimisés anti-bouchons.</p>
+                            </div>
                         </div>
                         <div class="glass rounded-xl p-4 flex items-center gap-4">
-                            <div class="w-10 h-10 bg-red-500/20 rounded-lg flex items-center justify-center"><i class="fas fa-traffic-light text-red-400"></i></div>
-                            <div><h4 class="font-bold">Alertes Trafic</h4><p class="text-gray-400 text-sm">Heatmap trafic sur la carte, signalement d'incidents, détection auto de ralentissements.</p></div>
+                            <div class="w-10 h-10 bg-red-500/20 rounded-lg flex items-center justify-center"><i
+                                    class="fas fa-traffic-light text-red-400"></i></div>
+                            <div>
+                                <h4 class="font-bold">Alertes Trafic</h4>
+                                <p class="text-gray-400 text-sm">Heatmap trafic sur la carte, signalement d'incidents,
+                                    détection auto de ralentissements.</p>
+                            </div>
                         </div>
                     </div>
-                    <a href="{% url 'courier:onboarding' %}" class="inline-flex items-center gap-2 px-8 py-4 bg-brand-orange text-white font-bold rounded-xl hover:bg-brand-orange-dark transition-all shadow-lg text-lg"><i class="fas fa-motorcycle"></i> Devenir Coursier</a>
+                    <a href="{% url 'courier:onboarding' %}"
+                        class="inline-flex items-center gap-2 px-8 py-4 bg-brand-orange text-white font-bold rounded-xl hover:bg-brand-orange-dark transition-all shadow-lg text-lg"><i
+                            class="fas fa-motorcycle"></i> Devenir Coursier</a>
                 </div>
             </div>
         </div>
@@ -651,35 +855,64 @@
     <section class="py-16 lg:py-24 bg-white" id="paiement">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-12 lg:mb-16">
-                <div class="inline-flex items-center gap-2 px-4 py-2 bg-amber-50 text-amber-700 rounded-full text-sm font-semibold mb-4"><i class="fas fa-bolt"></i> Bientôt disponible</div>
-                <h2 class="text-3xl lg:text-4xl font-extrabold text-gray-900 mb-4">Paiement <span class="gradient-text">Mobile Money</span> intégré</h2>
-                <p class="text-lg text-gray-600 max-w-2xl mx-auto">Plus besoin de gérer le cash. Vos clients paient via MTN MoMo ou Orange Money.</p>
+                <div
+                    class="inline-flex items-center gap-2 px-4 py-2 bg-amber-50 text-amber-700 rounded-full text-sm font-semibold mb-4">
+                    <i class="fas fa-bolt"></i> Bientôt disponible
+                </div>
+                <h2 class="text-3xl lg:text-4xl font-extrabold text-gray-900 mb-4">Paiement <span
+                        class="gradient-text">Mobile Money</span> intégré</h2>
+                <p class="text-lg text-gray-600 max-w-2xl mx-auto">Plus besoin de gérer le cash. Vos clients paient via
+                    MTN MoMo ou Orange Money.</p>
             </div>
             <div class="max-w-4xl mx-auto">
-                <div class="bg-gradient-to-r from-amber-50 to-orange-50 rounded-3xl p-8 lg:p-12 border border-amber-100">
+                <div
+                    class="bg-gradient-to-r from-amber-50 to-orange-50 rounded-3xl p-8 lg:p-12 border border-amber-100">
                     <div class="grid md:grid-cols-3 gap-8 items-center">
                         <div class="text-center">
-                            <div class="w-20 h-20 bg-yellow-400 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg"><span class="text-3xl font-extrabold text-black">MTN</span></div>
+                            <div
+                                class="w-20 h-20 bg-yellow-400 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                                <span class="text-3xl font-extrabold text-black">MTN</span>
+                            </div>
                             <h4 class="font-bold text-gray-900">MTN MoMo</h4>
                             <p class="text-sm text-gray-600 mt-1">Paiement par USSD ou app</p>
                         </div>
                         <div class="text-center hidden md:block">
                             <div class="space-y-3">
-                                <div class="flex items-center gap-3"><div class="w-8 h-8 bg-brand-blue rounded-full flex items-center justify-center text-white text-xs font-bold">1</div><span class="text-sm text-gray-700">Client choisit Mobile Money</span></div>
-                                <div class="flex items-center gap-3"><div class="w-8 h-8 bg-brand-blue rounded-full flex items-center justify-center text-white text-xs font-bold">2</div><span class="text-sm text-gray-700">Validation sur le téléphone</span></div>
-                                <div class="flex items-center gap-3"><div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white text-xs font-bold">✓</div><span class="text-sm text-gray-700 font-semibold">Partenaire crédité auto</span></div>
+                                <div class="flex items-center gap-3">
+                                    <div
+                                        class="w-8 h-8 bg-brand-blue rounded-full flex items-center justify-center text-white text-xs font-bold">
+                                        1</div><span class="text-sm text-gray-700">Client choisit Mobile Money</span>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <div
+                                        class="w-8 h-8 bg-brand-blue rounded-full flex items-center justify-center text-white text-xs font-bold">
+                                        2</div><span class="text-sm text-gray-700">Validation sur le téléphone</span>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <div
+                                        class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                                        ✓</div><span class="text-sm text-gray-700 font-semibold">Compte crédité
+                                        automatiquement</span>
+                                </div>
                             </div>
                         </div>
                         <div class="text-center">
-                            <div class="w-20 h-20 bg-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg"><span class="text-2xl font-extrabold text-white">OM</span></div>
+                            <div
+                                class="w-20 h-20 bg-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                                <span class="text-2xl font-extrabold text-white">OM</span>
+                            </div>
                             <h4 class="font-bold text-gray-900">Orange Money</h4>
                             <p class="text-sm text-gray-600 mt-1">Paiement sécurisé</p>
                         </div>
                     </div>
-                    <div class="mt-8 pt-6 border-t border-amber-200 flex flex-wrap items-center justify-center gap-6 text-sm text-gray-600">
-                        <div class="flex items-center gap-2"><i class="fas fa-lock text-green-600"></i>Transactions sécurisées</div>
-                        <div class="flex items-center gap-2"><i class="fas fa-sync text-brand-blue"></i>Réconciliation automatique</div>
-                        <div class="flex items-center gap-2"><i class="fas fa-receipt text-brand-orange"></i>Reçu instantané</div>
+                    <div
+                        class="mt-8 pt-6 border-t border-amber-200 flex flex-wrap items-center justify-center gap-6 text-sm text-gray-600">
+                        <div class="flex items-center gap-2"><i class="fas fa-lock text-green-600"></i>Transactions
+                            sécurisées</div>
+                        <div class="flex items-center gap-2"><i class="fas fa-sync text-brand-blue"></i>Réconciliation
+                            automatique</div>
+                        <div class="flex items-center gap-2"><i class="fas fa-receipt text-brand-orange"></i>Reçu
+                            instantané</div>
                     </div>
                 </div>
             </div>
@@ -691,22 +924,45 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
                 <div class="text-white">
-                    <div class="inline-flex items-center gap-2 px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-sm font-mono mb-6">
+                    <div
+                        class="inline-flex items-center gap-2 px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-sm font-mono mb-6">
                         <span class="w-2 h-2 bg-green-400 rounded-full pulse-dot"></span> API Status: Operational
                     </div>
-                    <h2 class="text-3xl lg:text-4xl font-extrabold mb-6">Conçu pour les <span class="text-brand-orange">développeurs</span></h2>
-                    <p class="text-gray-300 text-lg mb-8">API REST moderne et documentée. Intégrez la livraison en quelques lignes de code.</p>
+                    <h2 class="text-3xl lg:text-4xl font-extrabold mb-6">Conçu pour les <span
+                            class="text-brand-orange">développeurs</span></h2>
+                    <p class="text-gray-300 text-lg mb-8">API REST moderne et documentée. Intégrez la livraison en
+                        quelques lignes de code.</p>
                     <div class="space-y-4 mb-8">
-                        <div class="flex items-center gap-3"><div class="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center"><i class="fas fa-book text-brand-orange"></i></div><span class="text-gray-200">Documentation Swagger interactive</span></div>
-                        <div class="flex items-center gap-3"><div class="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center"><i class="fas fa-bolt text-brand-orange"></i></div><span class="text-gray-200">Webhooks temps réel configurables</span></div>
-                        <div class="flex items-center gap-3"><div class="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center"><i class="fas fa-flask text-brand-orange"></i></div><span class="text-gray-200">Sandbox pour tests sans risque</span></div>
-                        <div class="flex items-center gap-3"><div class="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center"><i class="fab fa-wordpress text-brand-orange"></i></div><span class="text-gray-200">Plugin WooCommerce prêt à l'emploi</span></div>
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center"><i
+                                    class="fas fa-book text-brand-orange"></i></div><span
+                                class="text-gray-200">Documentation Swagger interactive</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center"><i
+                                    class="fas fa-bolt text-brand-orange"></i></div><span class="text-gray-200">Webhooks
+                                temps réel configurables</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center"><i
+                                    class="fas fa-flask text-brand-orange"></i></div><span class="text-gray-200">Sandbox
+                                pour tests sans risque</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center"><i
+                                    class="fab fa-wordpress text-brand-orange"></i></div><span
+                                class="text-gray-200">Plugin WooCommerce prêt à l'emploi</span>
+                        </div>
                     </div>
-                    <a href="/api/docs/" class="inline-flex items-center gap-2 px-6 py-3 bg-brand-orange text-white font-semibold rounded-xl hover:bg-brand-orange-dark transition-all"><i class="fas fa-external-link-alt"></i> Explorer l'API</a>
+                    <a href="/api/docs/"
+                        class="inline-flex items-center gap-2 px-6 py-3 bg-brand-orange text-white font-semibold rounded-xl hover:bg-brand-orange-dark transition-all"><i
+                            class="fas fa-external-link-alt"></i> Explorer l'API</a>
                 </div>
                 <div class="bg-[#0d1117] rounded-2xl p-6 shadow-2xl border border-gray-700/50">
                     <div class="flex items-center gap-2 mb-4">
-                        <div class="w-3 h-3 bg-red-500 rounded-full"></div><div class="w-3 h-3 bg-yellow-500 rounded-full"></div><div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                        <div class="w-3 h-3 bg-red-500 rounded-full"></div>
+                        <div class="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                        <div class="w-3 h-3 bg-green-500 rounded-full"></div>
                         <span class="ml-4 text-gray-500 text-sm font-mono">create_delivery.sh</span>
                     </div>
                     <pre class="text-sm overflow-x-auto"><code class="text-gray-300">
@@ -739,24 +995,38 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-12 lg:mb-16">
                 <h2 class="text-3xl lg:text-4xl font-extrabold text-gray-900 mb-4">Tarifs simples et transparents</h2>
-                <p class="text-lg text-gray-600 max-w-2xl mx-auto">Payez uniquement quand vous livrez. Pas d'abonnement, pas de frais cachés.</p>
+                <p class="text-lg text-gray-600 max-w-2xl mx-auto">Payez uniquement quand vous livrez. Pas d'abonnement,
+                    pas de frais cachés.</p>
             </div>
             <div class="max-w-md mx-auto">
-                <div class="bg-gradient-to-br from-brand-blue to-brand-blue-dark rounded-3xl p-8 text-white text-center relative overflow-hidden">
-                    <div class="absolute top-0 right-0 w-32 h-32 bg-brand-orange/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+                <div
+                    class="bg-gradient-to-br from-brand-blue to-brand-blue-dark rounded-3xl p-8 text-white text-center relative overflow-hidden">
+                    <div
+                        class="absolute top-0 right-0 w-32 h-32 bg-brand-orange/10 rounded-full -translate-y-1/2 translate-x-1/2">
+                    </div>
                     <p class="text-brand-orange font-semibold mb-2">À partir de</p>
-                    <div class="flex items-baseline justify-center gap-2 mb-4"><span class="text-5xl font-extrabold">500</span><span class="text-xl">FCFA</span></div>
+                    <div class="flex items-baseline justify-center gap-2 mb-4"><span
+                            class="text-5xl font-extrabold">500</span><span class="text-xl">FCFA</span></div>
                     <p class="text-white/70 mb-6">par livraison réussie</p>
                     <ul class="text-left space-y-3 mb-8">
-                        <li class="flex items-center gap-3"><i class="fas fa-check text-green-400"></i><span>GPS WhatsApp inclus</span></li>
-                        <li class="flex items-center gap-3"><i class="fas fa-check text-green-400"></i><span>Suivi temps réel sur carte</span></li>
-                        <li class="flex items-center gap-3"><i class="fas fa-check text-green-400"></i><span>Smart Routing + trafic live</span></li>
-                        <li class="flex items-center gap-3"><i class="fas fa-check text-green-400"></i><span>OTP + photo de confirmation</span></li>
-                        <li class="flex items-center gap-3"><i class="fas fa-check text-green-400"></i><span>Portail partenaire complet</span></li>
-                        <li class="flex items-center gap-3"><i class="fas fa-check text-green-400"></i><span>API + Webhooks + Plugin WooCommerce</span></li>
-                        <li class="flex items-center gap-3"><i class="fas fa-check text-green-400"></i><span>Facturation PDF automatique</span></li>
+                        <li class="flex items-center gap-3"><i class="fas fa-check text-green-400"></i><span>GPS
+                                WhatsApp inclus</span></li>
+                        <li class="flex items-center gap-3"><i class="fas fa-check text-green-400"></i><span>Suivi temps
+                                réel sur carte</span></li>
+                        <li class="flex items-center gap-3"><i class="fas fa-check text-green-400"></i><span>Smart
+                                Routing + trafic live</span></li>
+                        <li class="flex items-center gap-3"><i class="fas fa-check text-green-400"></i><span>OTP + photo
+                                de confirmation</span></li>
+                        <li class="flex items-center gap-3"><i class="fas fa-check text-green-400"></i><span>Tableau de
+                                bord complet</span></li>
+                        <li class="flex items-center gap-3"><i class="fas fa-check text-green-400"></i><span>API +
+                                Webhooks + Plugin WooCommerce</span></li>
+                        <li class="flex items-center gap-3"><i class="fas fa-check text-green-400"></i><span>Facturation
+                                PDF automatique</span></li>
                     </ul>
-                    <a href="{% url 'partners:signup' %}" class="block w-full py-4 bg-brand-orange text-white font-bold rounded-xl hover:bg-brand-orange-dark transition-all text-lg">Créer mon compte gratuit</a>
+                    <a href="{% url 'partners:signup' %}"
+                        class="block w-full py-4 bg-brand-orange text-white font-bold rounded-xl hover:bg-brand-orange-dark transition-all text-lg">Créer
+                        mon compte gratuit</a>
                 </div>
             </div>
         </div>
@@ -765,22 +1035,56 @@
     <!-- ==================== TEMOIGNAGES ==================== -->
     <section class="py-16 lg:py-24 bg-gray-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-12"><h2 class="text-3xl lg:text-4xl font-extrabold text-gray-900 mb-4">Ils nous font confiance</h2></div>
+            <div class="text-center mb-12">
+                <h2 class="text-3xl lg:text-4xl font-extrabold text-gray-900 mb-4">Ils nous font confiance</h2>
+            </div>
             <div class="grid md:grid-cols-3 gap-8">
                 <div class="bg-white rounded-2xl p-8 shadow-md border border-gray-100 bento-card">
-                    <div class="flex items-center gap-1 mb-4 text-amber-400"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
-                    <p class="text-gray-600 mb-6">"Avant DELIVR-CM, je perdais 3 commandes sur 10 à cause des adresses. Maintenant, le GPS WhatsApp règle tout. <strong>Mon taux de livraison est passé à 97%.</strong>"</p>
-                    <div class="flex items-center gap-3"><div class="w-10 h-10 bg-pink-100 rounded-full flex items-center justify-center"><i class="fab fa-instagram text-pink-500"></i></div><div><p class="font-bold text-gray-900 text-sm">Marie N.</p><p class="text-xs text-gray-500">Vendeuse Instagram, Douala</p></div></div>
+                    <div class="flex items-center gap-1 mb-4 text-amber-400"><i class="fas fa-star"></i><i
+                            class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i
+                            class="fas fa-star"></i></div>
+                    <p class="text-gray-600 mb-6">"Avant DELIVR-CM, je perdais 3 commandes sur 10 à cause des adresses.
+                        Maintenant, le GPS WhatsApp règle tout. <strong>Mon taux de livraison est passé à 97%.</strong>"
+                    </p>
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-pink-100 rounded-full flex items-center justify-center"><i
+                                class="fab fa-instagram text-pink-500"></i></div>
+                        <div>
+                            <p class="font-bold text-gray-900 text-sm">Marie N.</p>
+                            <p class="text-xs text-gray-500">Vendeuse Instagram, Douala</p>
+                        </div>
+                    </div>
                 </div>
                 <div class="bg-white rounded-2xl p-8 shadow-md border border-gray-100 bento-card">
-                    <div class="flex items-center gap-1 mb-4 text-amber-400"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
-                    <p class="text-gray-600 mb-6">"L'API s'intègre en 10 minutes à notre WooCommerce. Les webhooks nous alertent en temps réel. On a <strong>automatisé 100% de notre logistique</strong>."</p>
-                    <div class="flex items-center gap-3"><div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center"><i class="fas fa-store text-brand-blue"></i></div><div><p class="font-bold text-gray-900 text-sm">Tech Gadgets CM</p><p class="text-xs text-gray-500">E-commerce, Yaoundé</p></div></div>
+                    <div class="flex items-center gap-1 mb-4 text-amber-400"><i class="fas fa-star"></i><i
+                            class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i
+                            class="fas fa-star"></i></div>
+                    <p class="text-gray-600 mb-6">"L'API s'intègre en 10 minutes à notre WooCommerce. Les webhooks nous
+                        alertent en temps réel. On a <strong>automatisé 100% de notre logistique</strong>."</p>
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center"><i
+                                class="fas fa-store text-brand-blue"></i></div>
+                        <div>
+                            <p class="font-bold text-gray-900 text-sm">Tech Gadgets CM</p>
+                            <p class="text-xs text-gray-500">E-commerce, Yaoundé</p>
+                        </div>
+                    </div>
                 </div>
                 <div class="bg-white rounded-2xl p-8 shadow-md border border-gray-100 bento-card">
-                    <div class="flex items-center gap-1 mb-4 text-amber-400"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star-half-alt"></i></div>
-                    <p class="text-gray-600 mb-6">"Les badges et le leaderboard me motivent. Je vois le trafic sur la carte et le smart routing me fait gagner 15 minutes par course. <strong>Meilleure app coursier au Cameroun.</strong>"</p>
-                    <div class="flex items-center gap-3"><div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center"><i class="fas fa-motorcycle text-green-600"></i></div><div><p class="font-bold text-gray-900 text-sm">Paul K.</p><p class="text-xs text-gray-500">Coursier, Douala</p></div></div>
+                    <div class="flex items-center gap-1 mb-4 text-amber-400"><i class="fas fa-star"></i><i
+                            class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i
+                            class="fas fa-star-half-alt"></i></div>
+                    <p class="text-gray-600 mb-6">"Les badges et le leaderboard me motivent. Je vois le trafic sur la
+                        carte et le smart routing me fait gagner 15 minutes par course. <strong>Meilleure app coursier
+                            au Cameroun.</strong>"</p>
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center"><i
+                                class="fas fa-motorcycle text-green-600"></i></div>
+                        <div>
+                            <p class="font-bold text-gray-900 text-sm">Paul K.</p>
+                            <p class="text-xs text-gray-500">Coursier, Douala</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -789,31 +1093,66 @@
     <!-- ==================== FAQ ==================== -->
     <section class="py-16 lg:py-24 bg-white" id="faq">
         <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-12"><h2 class="text-3xl lg:text-4xl font-extrabold text-gray-900 mb-4">Questions fréquentes</h2></div>
+            <div class="text-center mb-12">
+                <h2 class="text-3xl lg:text-4xl font-extrabold text-gray-900 mb-4">Questions fréquentes</h2>
+            </div>
             <div class="space-y-4" id="faqContainer">
                 <div class="border border-gray-200 rounded-xl overflow-hidden">
-                    <button onclick="toggleFaq(this)" class="w-full px-6 py-4 text-left flex items-center justify-between bg-white hover:bg-gray-50 transition"><span class="font-semibold text-gray-900">Quelles villes sont couvertes ?</span><i class="fas fa-chevron-down text-gray-400 transition-transform"></i></button>
-                    <div class="hidden px-6 pb-4 text-gray-600">Nous opérons à <strong>Douala</strong> et <strong>Yaoundé</strong>. D'autres villes seront ajoutées progressivement en fonction de la demande.</div>
+                    <button onclick="toggleFaq(this)"
+                        class="w-full px-6 py-4 text-left flex items-center justify-between bg-white hover:bg-gray-50 transition"><span
+                            class="font-semibold text-gray-900">Quelles villes sont couvertes ?</span><i
+                            class="fas fa-chevron-down text-gray-400 transition-transform"></i></button>
+                    <div class="hidden px-6 pb-4 text-gray-600">Nous opérons à <strong>Douala</strong> et
+                        <strong>Yaoundé</strong>. D'autres villes seront ajoutées progressivement en fonction de la
+                        demande.
+                    </div>
                 </div>
                 <div class="border border-gray-200 rounded-xl overflow-hidden">
-                    <button onclick="toggleFaq(this)" class="w-full px-6 py-4 text-left flex items-center justify-between bg-white hover:bg-gray-50 transition"><span class="font-semibold text-gray-900">Comment fonctionne la localisation WhatsApp ?</span><i class="fas fa-chevron-down text-gray-400 transition-transform"></i></button>
-                    <div class="hidden px-6 pb-4 text-gray-600">Notre bot WhatsApp contacte automatiquement le destinataire et lui demande de partager sa position GPS. Le coursier reçoit les coordonnées exactes — fini les adresses approximatives.</div>
+                    <button onclick="toggleFaq(this)"
+                        class="w-full px-6 py-4 text-left flex items-center justify-between bg-white hover:bg-gray-50 transition"><span
+                            class="font-semibold text-gray-900">Comment fonctionne la localisation WhatsApp ?</span><i
+                            class="fas fa-chevron-down text-gray-400 transition-transform"></i></button>
+                    <div class="hidden px-6 pb-4 text-gray-600">Notre bot WhatsApp contacte automatiquement le
+                        destinataire et lui demande de partager sa position GPS. Le coursier reçoit les coordonnées
+                        exactes — fini les adresses approximatives.</div>
                 </div>
                 <div class="border border-gray-200 rounded-xl overflow-hidden">
-                    <button onclick="toggleFaq(this)" class="w-full px-6 py-4 text-left flex items-center justify-between bg-white hover:bg-gray-50 transition"><span class="font-semibold text-gray-900">Comment intégrer DELIVR-CM à mon site ?</span><i class="fas fa-chevron-down text-gray-400 transition-transform"></i></button>
-                    <div class="hidden px-6 pb-4 text-gray-600">Deux options : installez notre <strong>plugin WooCommerce</strong> en un clic, ou utilisez notre <strong>API REST</strong> documentée avec Swagger. L'intégration prend moins de 10 minutes.</div>
+                    <button onclick="toggleFaq(this)"
+                        class="w-full px-6 py-4 text-left flex items-center justify-between bg-white hover:bg-gray-50 transition"><span
+                            class="font-semibold text-gray-900">Comment intégrer DELIVR-CM à mon site ?</span><i
+                            class="fas fa-chevron-down text-gray-400 transition-transform"></i></button>
+                    <div class="hidden px-6 pb-4 text-gray-600">Deux options : installez notre <strong>plugin
+                            WooCommerce</strong> en un clic, ou utilisez notre <strong>API REST</strong> documentée avec
+                        Swagger. L'intégration prend moins de 10 minutes.</div>
                 </div>
                 <div class="border border-gray-200 rounded-xl overflow-hidden">
-                    <button onclick="toggleFaq(this)" class="w-full px-6 py-4 text-left flex items-center justify-between bg-white hover:bg-gray-50 transition"><span class="font-semibold text-gray-900">Comment la livraison est-elle sécurisée ?</span><i class="fas fa-chevron-down text-gray-400 transition-transform"></i></button>
-                    <div class="hidden px-6 pb-4 text-gray-600">Double sécurité : le pickup est validé par <strong>photo obligatoire</strong> du colis, et la livraison finale est confirmée par un <strong>code OTP à 4 chiffres</strong> envoyé au destinataire par WhatsApp. Chaque preuve est horodatée et géolocalisée.</div>
+                    <button onclick="toggleFaq(this)"
+                        class="w-full px-6 py-4 text-left flex items-center justify-between bg-white hover:bg-gray-50 transition"><span
+                            class="font-semibold text-gray-900">Comment la livraison est-elle sécurisée ?</span><i
+                            class="fas fa-chevron-down text-gray-400 transition-transform"></i></button>
+                    <div class="hidden px-6 pb-4 text-gray-600">Double sécurité : le pickup est validé par <strong>photo
+                            obligatoire</strong> du colis, et la livraison finale est confirmée par un <strong>code OTP
+                            à 4 chiffres</strong> envoyé au destinataire par WhatsApp. Chaque preuve est horodatée et
+                        géolocalisée.</div>
                 </div>
                 <div class="border border-gray-200 rounded-xl overflow-hidden">
-                    <button onclick="toggleFaq(this)" class="w-full px-6 py-4 text-left flex items-center justify-between bg-white hover:bg-gray-50 transition"><span class="font-semibold text-gray-900">Qu'est-ce que le Smart Routing ?</span><i class="fas fa-chevron-down text-gray-400 transition-transform"></i></button>
-                    <div class="hidden px-6 pb-4 text-gray-600">Notre algorithme combine <strong>OSRM</strong> (moteur de routing open-source) avec les données GPS de nos coursiers pour analyser le trafic en temps réel. Il calcule l'itinéraire le plus rapide en évitant les embouteillages, et envoie les waypoints optimisés directement dans Google Maps ou Waze.</div>
+                    <button onclick="toggleFaq(this)"
+                        class="w-full px-6 py-4 text-left flex items-center justify-between bg-white hover:bg-gray-50 transition"><span
+                            class="font-semibold text-gray-900">Qu'est-ce que le Smart Routing ?</span><i
+                            class="fas fa-chevron-down text-gray-400 transition-transform"></i></button>
+                    <div class="hidden px-6 pb-4 text-gray-600">Notre algorithme combine <strong>OSRM</strong> (moteur
+                        de routing open-source) avec les données GPS de nos coursiers pour analyser le trafic en temps
+                        réel. Il calcule l'itinéraire le plus rapide en évitant les embouteillages, et envoie les
+                        waypoints optimisés directement dans Google Maps ou Waze.</div>
                 </div>
                 <div class="border border-gray-200 rounded-xl overflow-hidden">
-                    <button onclick="toggleFaq(this)" class="w-full px-6 py-4 text-left flex items-center justify-between bg-white hover:bg-gray-50 transition"><span class="font-semibold text-gray-900">Le paiement Mobile Money est-il disponible ?</span><i class="fas fa-chevron-down text-gray-400 transition-transform"></i></button>
-                    <div class="hidden px-6 pb-4 text-gray-600">L'intégration MTN MoMo et Orange Money est en phase finale de test. Elle sera déployée très prochainement pour tous les partenaires, avec réconciliation automatique et reçu instantané.</div>
+                    <button onclick="toggleFaq(this)"
+                        class="w-full px-6 py-4 text-left flex items-center justify-between bg-white hover:bg-gray-50 transition"><span
+                            class="font-semibold text-gray-900">Le paiement Mobile Money est-il disponible ?</span><i
+                            class="fas fa-chevron-down text-gray-400 transition-transform"></i></button>
+                    <div class="hidden px-6 pb-4 text-gray-600">L'intégration MTN MoMo et Orange Money est en phase
+                        finale de test. Elle sera déployée très prochainement pour tous les vendeurs, avec
+                        réconciliation automatique et reçu instantané.</div>
                 </div>
             </div>
         </div>
@@ -822,12 +1161,21 @@
     <!-- ==================== CTA FINAL ==================== -->
     <section class="py-16 lg:py-24 bg-gradient-to-br from-gray-50 to-orange-50">
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h2 class="text-3xl lg:text-5xl font-black text-gray-900 mb-6">Prêt à <span class="gradient-text">révolutionner</span> vos livraisons ?</h2>
-            <p class="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">Rejoignez les e-commerçants camerounais qui ont choisi une solution locale, conçue pour leurs défis. GPS WhatsApp, trafic temps réel, smart routing — tout est inclus.</p>
+            <h2 class="text-3xl lg:text-5xl font-black text-gray-900 mb-6">Prêt à <span
+                    class="gradient-text">révolutionner</span> vos livraisons ?</h2>
+            <p class="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">Rejoignez les e-commerçants camerounais qui ont
+                choisi une solution locale, conçue pour leurs défis. GPS WhatsApp, trafic temps réel, smart routing —
+                tout est inclus.</p>
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                <a href="{% url 'partners:signup' %}" class="inline-flex items-center justify-center gap-2 px-8 py-4 bg-brand-orange text-white font-bold rounded-xl hover:bg-brand-orange-dark transition-all shadow-lg shadow-brand-orange/25 text-lg"><i class="fas fa-rocket"></i> Devenir Partenaire</a>
-                <a href="{% url 'courier:onboarding' %}" class="inline-flex items-center justify-center gap-2 px-8 py-4 bg-brand-blue text-white font-bold rounded-xl hover:bg-brand-blue-dark transition-all shadow-lg text-lg"><i class="fas fa-motorcycle"></i> Devenir Coursier</a>
-                <a href="https://wa.me/237690000000" target="_blank" class="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white text-brand-blue font-bold rounded-xl border-2 border-gray-200 hover:border-brand-green hover:text-brand-green transition-all text-lg"><i class="fab fa-whatsapp text-green-500"></i> Nous Contacter</a>
+                <a href="{% url 'partners:signup' %}"
+                    class="inline-flex items-center justify-center gap-2 px-8 py-4 bg-brand-orange text-white font-bold rounded-xl hover:bg-brand-orange-dark transition-all shadow-lg shadow-brand-orange/25 text-lg"><i
+                        class="fas fa-rocket"></i> Commencer à livrer</a>
+                <a href="{% url 'courier:onboarding' %}"
+                    class="inline-flex items-center justify-center gap-2 px-8 py-4 bg-brand-blue text-white font-bold rounded-xl hover:bg-brand-blue-dark transition-all shadow-lg text-lg"><i
+                        class="fas fa-motorcycle"></i> Devenir Coursier</a>
+                <a href="https://wa.me/237690000000" target="_blank"
+                    class="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white text-brand-blue font-bold rounded-xl border-2 border-gray-200 hover:border-brand-green hover:text-brand-green transition-all text-lg"><i
+                        class="fab fa-whatsapp text-green-500"></i> Nous Contacter</a>
             </div>
         </div>
     </section>
@@ -837,33 +1185,55 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="grid md:grid-cols-4 gap-8 mb-12">
                 <div class="md:col-span-2">
-                    <a href="{% url 'home:home' %}" class="flex items-center gap-2 mb-4"><span class="text-2xl">🚀</span><span class="text-xl font-extrabold text-white">DELIVR<span class="text-brand-orange">-CM</span></span></a>
-                    <p class="text-gray-400 max-w-sm mb-4">La plateforme logistique intelligente pour le e-commerce camerounais. GPS WhatsApp, smart routing, trafic temps réel, app coursier gamifiée.</p>
+                    <a href="{% url 'home:home' %}" class="flex items-center gap-2 mb-4"><span
+                            class="text-2xl">🚀</span><span class="text-xl font-extrabold text-white">DELIVR<span
+                                class="text-brand-orange">-CM</span></span></a>
+                    <p class="text-gray-400 max-w-sm mb-4">La plateforme logistique intelligente pour le e-commerce
+                        camerounais. GPS WhatsApp, smart routing, trafic temps réel, app coursier gamifiée.</p>
                     <div class="flex gap-4">
-                        <a href="#" class="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/20 transition-all"><i class="fab fa-facebook-f"></i></a>
-                        <a href="#" class="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/20 transition-all"><i class="fab fa-instagram"></i></a>
-                        <a href="#" class="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/20 transition-all"><i class="fab fa-linkedin-in"></i></a>
-                        <a href="#" class="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/20 transition-all"><i class="fab fa-twitter"></i></a>
+                        <a href="#"
+                            class="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/20 transition-all"><i
+                                class="fab fa-facebook-f"></i></a>
+                        <a href="#"
+                            class="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/20 transition-all"><i
+                                class="fab fa-instagram"></i></a>
+                        <a href="#"
+                            class="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/20 transition-all"><i
+                                class="fab fa-linkedin-in"></i></a>
+                        <a href="#"
+                            class="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/20 transition-all"><i
+                                class="fab fa-twitter"></i></a>
                     </div>
                 </div>
                 <div>
                     <h4 class="text-white font-semibold mb-4">Plateforme</h4>
                     <ul class="space-y-3">
-                        <li><a href="#comment-ca-marche" class="text-gray-400 hover:text-white transition-colors">Comment ça marche</a></li>
-                        <li><a href="#technologie" class="text-gray-400 hover:text-white transition-colors">Technologie</a></li>
-                        <li><a href="#tracking" class="text-gray-400 hover:text-white transition-colors">Tracking temps réel</a></li>
-                        <li><a href="#api" class="text-gray-400 hover:text-white transition-colors">Documentation API</a></li>
+                        <li><a href="#comment-ca-marche"
+                                class="text-gray-400 hover:text-white transition-colors">Comment ça marche</a></li>
+                        <li><a href="#technologie"
+                                class="text-gray-400 hover:text-white transition-colors">Technologie</a></li>
+                        <li><a href="#tracking" class="text-gray-400 hover:text-white transition-colors">Tracking temps
+                                réel</a></li>
+                        <li><a href="#api" class="text-gray-400 hover:text-white transition-colors">Documentation
+                                API</a></li>
                         <li><a href="#tarifs" class="text-gray-400 hover:text-white transition-colors">Tarifs</a></li>
-                        <li><a href="{% url 'partners:login' %}" class="text-gray-400 hover:text-white transition-colors">Espace Partenaire</a></li>
-                        <li><a href="{% url 'courier:onboarding' %}" class="text-gray-400 hover:text-white transition-colors">Devenir Coursier</a></li>
+                        <li><a href="{% url 'partners:login' %}"
+                                class="text-gray-400 hover:text-white transition-colors">Mon Espace</a></li>
+                        <li><a href="{% url 'courier:onboarding' %}"
+                                class="text-gray-400 hover:text-white transition-colors">Devenir Coursier</a></li>
                     </ul>
                 </div>
                 <div>
                     <h4 class="text-white font-semibold mb-4">Contact</h4>
                     <ul class="space-y-3">
-                        <li class="flex items-center gap-2 text-gray-400"><i class="fas fa-map-marker-alt text-brand-orange"></i>Douala & Yaoundé, Cameroun</li>
-                        <li><a href="mailto:contact@delivr.cm" class="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"><i class="fas fa-envelope text-brand-orange"></i>contact@delivr.cm</a></li>
-                        <li><a href="https://wa.me/237690000000" class="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"><i class="fab fa-whatsapp text-green-500"></i>+237 690 000 000</a></li>
+                        <li class="flex items-center gap-2 text-gray-400"><i
+                                class="fas fa-map-marker-alt text-brand-orange"></i>Douala & Yaoundé, Cameroun</li>
+                        <li><a href="mailto:contact@delivr.cm"
+                                class="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"><i
+                                    class="fas fa-envelope text-brand-orange"></i>contact@delivr.cm</a></li>
+                        <li><a href="https://wa.me/237690000000"
+                                class="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"><i
+                                    class="fab fa-whatsapp text-green-500"></i>+237 690 000 000</a></li>
                     </ul>
                 </div>
             </div>
@@ -929,4 +1299,5 @@
         });
     </script>
 </body>
+
 </html>
