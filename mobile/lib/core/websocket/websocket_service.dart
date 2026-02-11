@@ -259,7 +259,7 @@ class WebSocketService {
     final notificationService = _ref.read(notificationServiceProvider);
     
     notificationService.showDeliveryNotification(
-      title: '🚀 Nouvelle Course Disponible!',
+      title: '✅ Nouvelle Course Disponible!',
       body: '${data['pickup_address'] ?? 'Retrait'} → ${data['dropoff_address'] ?? 'Livraison'}\n'
             '💰 ${data['courier_earning'] ?? 0} XAF',
       payload: 'new_order:${data['order_id']}',

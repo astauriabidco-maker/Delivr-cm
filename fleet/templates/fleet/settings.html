@@ -1,0 +1,855 @@
+{% extends "fleet/base.html" %}
+
+{% block title %}Paramètres{% endblock %}
+{% block page_title %}⚙️ Paramètres de la plateforme{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ============================================
+       SETTINGS PAGE STYLES
+       ============================================ */
+    .settings-tabs {
+        display: flex;
+        gap: 0;
+        margin-bottom: 2rem;
+        background: white;
+        border-radius: var(--radius);
+        overflow: hidden;
+        box-shadow: var(--shadow);
+    }
+
+    .settings-tab {
+        flex: 1;
+        padding: 1rem 1.5rem;
+        text-align: center;
+        cursor: pointer;
+        border: none;
+        background: transparent;
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: var(--gray-500);
+        transition: all 0.3s ease;
+        border-bottom: 3px solid transparent;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+    .settings-tab:hover {
+        background: var(--gray-50);
+        color: var(--gray-700);
+    }
+
+    .settings-tab.active {
+        color: var(--primary);
+        border-bottom-color: var(--primary);
+        background: rgba(0, 208, 132, 0.05);
+    }
+
+    .settings-tab .tab-badge {
+        background: var(--primary);
+        color: white;
+        font-size: 0.7rem;
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-weight: 700;
+    }
+
+    .tab-panel {
+        display: none;
+        animation: fadeInUp 0.3s ease;
+    }
+
+    .tab-panel.active {
+        display: block;
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Section cards */
+    .config-section {
+        background: white;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        margin-bottom: 1.5rem;
+        overflow: hidden;
+    }
+
+    .config-section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid var(--gray-100);
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+
+    .config-section-header:hover {
+        background: var(--gray-50);
+    }
+
+    .config-section-title {
+        font-weight: 600;
+        font-size: 1.05rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .config-section-body {
+        padding: 1.5rem;
+    }
+
+    /* Notification Matrix */
+    .notif-matrix {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .notif-matrix th {
+        padding: 0.75rem 1rem;
+        text-align: center;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--gray-500);
+        font-weight: 600;
+        background: var(--gray-50);
+    }
+
+    .notif-matrix th:first-child {
+        text-align: left;
+        width: 40%;
+    }
+
+    .notif-matrix td {
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid var(--gray-100);
+    }
+
+    .notif-matrix td:not(:first-child) {
+        text-align: center;
+    }
+
+    .notif-matrix tr:hover {
+        background: var(--gray-50);
+    }
+
+    .notif-stage {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 500;
+        font-size: 0.9rem;
+    }
+
+    /* Toggle Switch */
+    .toggle-switch {
+        position: relative;
+        display: inline-block;
+        width: 48px;
+        height: 26px;
+    }
+
+    .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .toggle-slider {
+        position: absolute;
+        cursor: pointer;
+        inset: 0;
+        background-color: var(--gray-300);
+        transition: 0.3s;
+        border-radius: 26px;
+    }
+
+    .toggle-slider::before {
+        content: "";
+        position: absolute;
+        height: 20px;
+        width: 20px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        transition: 0.3s;
+        border-radius: 50%;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+
+    .toggle-switch input:checked+.toggle-slider {
+        background-color: var(--primary);
+    }
+
+    .toggle-switch input:checked+.toggle-slider::before {
+        transform: translateX(22px);
+    }
+
+    /* Config form fields */
+    .config-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 1.25rem;
+    }
+
+    .config-field {
+        display: flex;
+        flex-direction: column;
+        gap: 0.375rem;
+    }
+
+    .config-field label {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--gray-600);
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+    }
+
+    .config-field input[type="number"],
+    .config-field input[type="text"],
+    .config-field textarea {
+        padding: 0.625rem 0.875rem;
+        border: 1px solid var(--gray-200);
+        border-radius: 8px;
+        font-size: 0.875rem;
+        font-family: 'Inter', sans-serif;
+        transition: border-color 0.2s, box-shadow 0.2s;
+        background: white;
+    }
+
+    .config-field input:focus,
+    .config-field textarea:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(0, 208, 132, 0.15);
+    }
+
+    .config-field .field-hint {
+        font-size: 0.72rem;
+        color: var(--gray-400);
+    }
+
+    /* Weight bar */
+    .weight-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .weight-label {
+        width: 120px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: var(--gray-700);
+    }
+
+    .weight-bar-container {
+        flex: 1;
+        height: 28px;
+        background: var(--gray-100);
+        border-radius: 14px;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .weight-bar {
+        height: 100%;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        padding-right: 8px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        color: white;
+        transition: width 0.6s ease;
+        min-width: 30px;
+    }
+
+    .weight-input {
+        width: 70px;
+    }
+
+    /* Summary bar */
+    .summary-bar {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 1rem 1.5rem;
+        background: var(--gray-50);
+        border-radius: var(--radius);
+        margin-bottom: 1rem;
+    }
+
+    .summary-bar .progress-track {
+        flex: 1;
+        height: 10px;
+        background: var(--gray-200);
+        border-radius: 5px;
+        overflow: hidden;
+    }
+
+    .summary-bar .progress-fill {
+        height: 100%;
+        border-radius: 5px;
+        transition: width 0.6s ease;
+    }
+
+    .summary-label {
+        font-size: 0.85rem;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    /* Weight total indicator */
+    .weight-total {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        margin-top: 1rem;
+    }
+
+    .weight-total.valid {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .weight-total.invalid {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    /* Action buttons */
+    .config-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.75rem;
+        padding: 1.25rem 1.5rem;
+        border-top: 1px solid var(--gray-100);
+        background: var(--gray-50);
+    }
+
+    .btn-save {
+        background: var(--primary);
+        color: white;
+        padding: 0.625rem 2rem;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-save:hover {
+        background: var(--primary-dark);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 208, 132, 0.3);
+    }
+
+    /* Updated info */
+    .config-meta {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 0.75rem 1.5rem;
+        color: var(--gray-400);
+        font-size: 0.78rem;
+        border-top: 1px solid var(--gray-100);
+    }
+
+    /* Other notif toggles */
+    .other-toggles {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1rem;
+    }
+
+    .other-toggle-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.875rem 1rem;
+        background: var(--gray-50);
+        border-radius: 8px;
+    }
+
+    .other-toggle-label {
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Flash messages -->
+{% if messages %}
+{% for message in messages %}
+<div class="alert-item {% if message.tags %}{{ message.tags }}{% else %}info{% endif %}" style="margin-bottom: 1rem;">
+    <div class="alert-message">{{ message }}</div>
+</div>
+{% endfor %}
+{% endif %}
+
+<!-- Tab Navigation -->
+<div class="settings-tabs">
+    <button class="settings-tab active" data-tab="notifications" onclick="switchTab('notifications')">
+        📱 Notifications WhatsApp
+        <span class="tab-badge">{{ notif_config.summary }}</span>
+    </button>
+    <button class="settings-tab" data-tab="dispatch" onclick="switchTab('dispatch')">
+        🎯 Algorithme de Dispatch
+    </button>
+</div>
+
+<!-- ============================================
+     TAB 1: NOTIFICATIONS
+     ============================================ -->
+<div id="tab-notifications" class="tab-panel active">
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="section" value="notifications">
+
+        <!-- Summary -->
+        {% with notif_config.summary as summary %}
+        <div class="summary-bar">
+            <span style="font-size: 1.2rem;">📱</span>
+            <span class="summary-label">{{ summary }}</span>
+            <div class="progress-track">
+                <div class="progress-fill" style="width: 90%; background: var(--primary);"></div>
+            </div>
+        </div>
+        {% endwith %}
+
+        <!-- Notification Matrix -->
+        <div class="config-section">
+            <div class="config-section-header">
+                <div class="config-section-title">
+                    🔔 Matrice des Notifications par Étape
+                </div>
+                <span style="font-size: 0.8rem; color: var(--gray-400);">
+                    Activez/désactivez chaque notification
+                </span>
+            </div>
+            <div class="config-section-body" style="padding: 0;">
+                <table class="notif-matrix">
+                    <thead>
+                        <tr>
+                            <th>Étape de livraison</th>
+                            <th>📤 Expéditeur</th>
+                            <th>📥 Destinataire</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in notif_matrix %}
+                        <tr>
+                            <td>
+                                <div class="notif-stage">
+                                    {{ item.label }}
+                                </div>
+                            </td>
+                            <td>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" name="{{ item.sender_field }}" {% if item.sender %}checked{%
+                                        endif %}>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </td>
+                            <td>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" name="{{ item.recipient_field }}" {% if item.recipient
+                                        %}checked{% endif %}>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Other Notification Toggles -->
+        <div class="config-section">
+            <div class="config-section-header">
+                <div class="config-section-title">
+                    📊 Autres Notifications
+                </div>
+            </div>
+            <div class="config-section-body">
+                <div class="other-toggles">
+                    <div class="other-toggle-item">
+                        <span class="other-toggle-label">⚖️ Mises à jour litiges</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" name="notify_dispute_updates" {% if
+                                notif_config.notify_dispute_updates %}checked{% endif %}>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="other-toggle-item">
+                        <span class="other-toggle-label">📊 Résumé quotidien coursiers</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" name="notify_daily_summary" {% if notif_config.notify_daily_summary
+                                %}checked{% endif %}>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="other-toggle-item">
+                        <span class="other-toggle-label">⭐ Demande de note après livraison</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" name="notify_rating_request" {% if notif_config.notify_rating_request
+                                %}checked{% endif %}>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notes -->
+        <div class="config-section">
+            <div class="config-section-body">
+                <div class="config-field">
+                    <label>📝 Notes internes</label>
+                    <textarea name="notif_notes" rows="2"
+                        placeholder="Notes sur les changements...">{{ notif_config.notes }}</textarea>
+                </div>
+            </div>
+            <div class="config-actions">
+                <button type="submit" class="btn-save">
+                    💾 Enregistrer les notifications
+                </button>
+            </div>
+            {% if notif_config.updated_at %}
+            <div class="config-meta">
+                <span>🕐 Dernière modification : {{ notif_config.updated_at|date:"d/m/Y H:i" }}</span>
+                {% if notif_config.updated_by %}
+                <span>👤 Par : {{ notif_config.updated_by.full_name|default:notif_config.updated_by.phone_number
+                    }}</span>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<!-- ============================================
+     TAB 2: DISPATCH CONFIGURATION
+     ============================================ -->
+<div id="tab-dispatch" class="tab-panel">
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="section" value="dispatch">
+
+        <!-- Search Parameters -->
+        <div class="config-section">
+            <div class="config-section-header">
+                <div class="config-section-title">
+                    📡 Paramètres de Recherche
+                </div>
+            </div>
+            <div class="config-section-body">
+                <div class="config-grid">
+                    <div class="config-field">
+                        <label>Rayon initial (km)</label>
+                        <input type="number" name="initial_radius_km" value="{{ dispatch_config.initial_radius_km }}"
+                            step="0.1" min="0.1">
+                        <span class="field-hint">Rayon de la première recherche</span>
+                    </div>
+                    <div class="config-field">
+                        <label>Rayon max (km)</label>
+                        <input type="number" name="max_radius_km" value="{{ dispatch_config.max_radius_km }}" step="0.5"
+                            min="1">
+                        <span class="field-hint">Limite de recherche étendue</span>
+                    </div>
+                    <div class="config-field">
+                        <label>Incrément du rayon (km)</label>
+                        <input type="number" name="radius_increment_km"
+                            value="{{ dispatch_config.radius_increment_km }}" step="0.1" min="0.1">
+                        <span class="field-hint">Extension par itération</span>
+                    </div>
+                    <div class="config-field">
+                        <label>Max coursiers à scorer</label>
+                        <input type="number" name="max_couriers_to_score"
+                            value="{{ dispatch_config.max_couriers_to_score }}" min="1" max="50">
+                    </div>
+                    <div class="config-field">
+                        <label>Max coursiers à notifier</label>
+                        <input type="number" name="max_couriers_to_notify"
+                            value="{{ dispatch_config.max_couriers_to_notify }}" min="1" max="20">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scoring Weights -->
+        <div class="config-section">
+            <div class="config-section-header">
+                <div class="config-section-title">
+                    ⚖️ Poids du Score (doivent totaliser 1.0)
+                </div>
+                <div id="weight-indicator" class="weight-total valid">
+                    ✅ Total : <span id="weight-sum">1.00</span>
+                </div>
+            </div>
+            <div class="config-section-body">
+                {% for w in dispatch_weights %}
+                <div class="weight-item">
+                    <span class="weight-label">{{ w.name }}</span>
+                    <div class="weight-bar-container">
+                        <div class="weight-bar" style="width: {{ w.value|floatformat:0 }}%; background: {{ w.color }};"
+                            id="bar-{{ forloop.counter }}">
+                            {{ w.value|floatformat:2 }}
+                        </div>
+                    </div>
+                    <input type="number" class="config-field weight-input" name="weight_{{ w.name|lower|cut:' ' }}"
+                        value="{{ w.value }}" step="0.01" min="0" max="1" data-bar="bar-{{ forloop.counter }}"
+                        data-color="{{ w.color }}" onchange="updateWeights()">
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Thresholds -->
+        <div class="config-section">
+            <div class="config-section-header">
+                <div class="config-section-title">
+                    🎯 Seuils
+                </div>
+            </div>
+            <div class="config-section-body">
+                <div class="config-grid">
+                    <div class="config-field">
+                        <label>Score minimum</label>
+                        <input type="number" name="min_score_threshold"
+                            value="{{ dispatch_config.min_score_threshold }}" step="1" min="0" max="100">
+                        <span class="field-hint">Score min pour recevoir une commande</span>
+                    </div>
+                    <div class="config-field">
+                        <label>Auto-assign threshold</label>
+                        <input type="number" name="auto_assign_threshold"
+                            value="{{ dispatch_config.auto_assign_threshold }}" step="1" min="0" max="100">
+                        <span class="field-hint">Score min pour assign automatique</span>
+                    </div>
+                    <div class="config-field">
+                        <label>Distance parfaite (km)</label>
+                        <input type="number" name="distance_perfect_km"
+                            value="{{ dispatch_config.distance_perfect_km }}" step="0.1">
+                        <span class="field-hint">Score max à cette distance</span>
+                    </div>
+                    <div class="config-field">
+                        <label>Distance zéro (km)</label>
+                        <input type="number" name="distance_zero_km" value="{{ dispatch_config.distance_zero_km }}"
+                            step="0.5">
+                        <span class="field-hint">Score = 0 au-delà de cette distance</span>
+                    </div>
+                    <div class="config-field">
+                        <label>Notes min pour fiabilité</label>
+                        <input type="number" name="min_ratings_for_full_score"
+                            value="{{ dispatch_config.min_ratings_for_full_score }}" min="1">
+                        <span class="field-hint">Nb de notes pour considérer la moyenne fiable</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Level Scores & Bonuses -->
+        <div class="config-section">
+            <div class="config-section-header">
+                <div class="config-section-title">
+                    🏅 Niveaux & Bonus
+                </div>
+            </div>
+            <div class="config-section-body">
+                <div class="config-grid">
+                    <div class="config-field">
+                        <label style="color: var(--bronze);">🥉 Score Bronze</label>
+                        <input type="number" name="level_score_bronze" value="{{ dispatch_config.level_score_bronze }}"
+                            step="1">
+                    </div>
+                    <div class="config-field">
+                        <label style="color: var(--silver);">🥈 Score Silver</label>
+                        <input type="number" name="level_score_silver" value="{{ dispatch_config.level_score_silver }}"
+                            step="1">
+                    </div>
+                    <div class="config-field">
+                        <label style="color: var(--gold);">🥇 Score Gold</label>
+                        <input type="number" name="level_score_gold" value="{{ dispatch_config.level_score_gold }}"
+                            step="1">
+                    </div>
+                    <div class="config-field">
+                        <label style="color: #888;">💎 Score Platinum</label>
+                        <input type="number" name="level_score_platinum"
+                            value="{{ dispatch_config.level_score_platinum }}" step="1">
+                    </div>
+                </div>
+
+                <hr style="margin: 1.25rem 0; border: none; border-top: 1px solid var(--gray-100);">
+
+                <div class="config-grid">
+                    <div class="config-field">
+                        <label>🔥 Bonus streak par livraison</label>
+                        <input type="number" name="streak_bonus_per_delivery"
+                            value="{{ dispatch_config.streak_bonus_per_delivery }}" step="0.5">
+                    </div>
+                    <div class="config-field">
+                        <label>Max streak bonus</label>
+                        <input type="number" name="streak_bonus_max" value="{{ dispatch_config.streak_bonus_max }}"
+                            step="1">
+                    </div>
+                    <div class="config-field">
+                        <label>⚠️ Pénalité probation (%)</label>
+                        <input type="number" name="probation_penalty" value="{{ dispatch_config.probation_penalty }}"
+                            step="1">
+                    </div>
+                    <div class="config-field">
+                        <label>📦 Cache TTL (secondes)</label>
+                        <input type="number" name="courier_stats_cache_ttl"
+                            value="{{ dispatch_config.courier_stats_cache_ttl }}" min="60">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notes & Save -->
+        <div class="config-section">
+            <div class="config-section-body">
+                <div class="config-field">
+                    <label>📝 Notes internes</label>
+                    <textarea name="notes" rows="2"
+                        placeholder="Notes sur les changements de config...">{{ dispatch_config.notes }}</textarea>
+                </div>
+            </div>
+            <div class="config-actions">
+                <button type="submit" class="btn-save">
+                    💾 Enregistrer le dispatch
+                </button>
+            </div>
+            {% if dispatch_config.updated_at %}
+            <div class="config-meta">
+                <span>🕐 Dernière modification : {{ dispatch_config.updated_at|date:"d/m/Y H:i" }}</span>
+                {% if dispatch_config.updated_by %}
+                <span>👤 Par : {{ dispatch_config.updated_by.full_name|default:dispatch_config.updated_by.phone_number
+                    }}</span>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // ============================================
+    // Tab Switching
+    // ============================================
+    function switchTab(tabName) {
+        // Deactivate all tabs
+        document.querySelectorAll('.settings-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+
+        // Activate selected
+        document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+        document.getElementById(`tab-${tabName}`).classList.add('active');
+
+        // Save preference
+        localStorage.setItem('settings_tab', tabName);
+    }
+
+    // Restore tab from localStorage
+    const savedTab = localStorage.getItem('settings_tab');
+    if (savedTab) switchTab(savedTab);
+
+    // ============================================
+    // Weight Calculator (live feedback)
+    // ============================================
+
+    // Fix weight input names to match actual model fields
+    const weightNameMap = {
+        'weight_distance': 'weight_distance',
+        'weight_notemoyenne': 'weight_rating',
+        'weight_historique': 'weight_history',
+        'weight_disponibilité': 'weight_availability',
+        'weight_finance': 'weight_financial',
+        'weight_réponse': 'weight_response',
+        'weight_niveau': 'weight_level',
+        'weight_acceptation': 'weight_acceptance',
+    };
+
+    // On page load, fix the input names
+    document.addEventListener('DOMContentLoaded', () => {
+        const modelFieldNames = [
+            'weight_distance', 'weight_rating', 'weight_history',
+            'weight_availability', 'weight_financial', 'weight_response',
+            'weight_level', 'weight_acceptance'
+        ];
+
+        const weightInputs = document.querySelectorAll('.weight-input[type="number"]');
+        weightInputs.forEach((input, index) => {
+            if (modelFieldNames[index]) {
+                input.name = modelFieldNames[index];
+            }
+        });
+
+        updateWeights();
+    });
+
+    function updateWeights() {
+        const inputs = document.querySelectorAll('.weight-input[type="number"]');
+        let total = 0;
+
+        inputs.forEach(input => {
+            const val = parseFloat(input.value) || 0;
+            total += val;
+
+            // Update visual bar
+            const barId = input.dataset.bar;
+            const bar = document.getElementById(barId);
+            if (bar) {
+                const pct = Math.min(val * 100, 100);
+                bar.style.width = pct + '%';
+                bar.textContent = val.toFixed(2);
+            }
+        });
+
+        // Update indicator
+        const indicator = document.getElementById('weight-indicator');
+        const sumSpan = document.getElementById('weight-sum');
+        sumSpan.textContent = total.toFixed(2);
+
+        if (Math.abs(total - 1.0) < 0.01) {
+            indicator.className = 'weight-total valid';
+            indicator.innerHTML = '✅ Total : <span id="weight-sum">' + total.toFixed(2) + '</span>';
+        } else {
+            indicator.className = 'weight-total invalid';
+            indicator.innerHTML = '❌ Total : <span id="weight-sum">' + total.toFixed(2) + '</span> (doit être 1.0)';
+        }
+    }
+</script>
+{% endblock %}

@@ -63,6 +63,7 @@ INSTALLED_APPS = [
     # API Documentation & Keys
     'drf_spectacular',
     'rest_framework_api_key',
+    'support.apps.SupportConfig',      # Support & Disputes
 ]
 
 
@@ -144,6 +145,7 @@ USE_TZ = True
 # ===========================================
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_DIRS = [BASE_DIR / 'static']
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'

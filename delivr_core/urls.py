@@ -13,7 +13,7 @@ from rest_framework.response import Response
 # ===========================================
 # ADMIN SITE CUSTOMIZATION
 # ===========================================
-admin.site.site_header = "🚀 DELIVR-CM Control Tower"
+admin.site.site_header = "✅ DELIVR-CM Control Tower"
 admin.site.site_title = "DELIVR-CM Admin"
 admin.site.index_title = "Supervision des Opérations"
 
@@ -75,6 +75,7 @@ urlpatterns = [
     
     # Backoffice (Admin Dashboard)
     path('backoffice/integrations/', include('integrations.urls')),
+    path('backoffice/support/', include('support.urls')),
     
     # Public Checkout (Magic Link - No login required)
     path('book/<slug:shop_slug>/', 

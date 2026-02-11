@@ -54,4 +54,8 @@ urlpatterns = [
     
     # Reports
     path('reports/', views.ReportView.as_view(), name='reports'),
+    
+    # Settings (Super Admin only)
+    path('settings/', views.SettingsView.as_view(), name='settings'),
 ]
+

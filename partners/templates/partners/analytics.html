@@ -1,567 +1,225 @@
-<!DOCTYPE html>
-<html lang="fr">
+{% extends 'partners/base.html' %}
+{% load static %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analytiques Avancées - DELIVR-CM</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+{% block title %}Analytiques Avancées{% endblock %}
+{% block page_title %}📈 Analytiques Avancées<span>depuis le {{ start_date|date:"d/m/Y" }}</span>{% endblock %}
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            min-height: 100vh;
-            color: #fff;
-        }
+{% block extra_css %}
+<style>
+    .period-filter {
+        display: flex;
+        gap: 4px;
+        background: rgba(255, 255, 255, 0.05);
+        padding: 4px;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
 
-        /* Sidebar */
-        .sidebar {
-            position: fixed;
-            left: 0;
-            top: 0;
-            width: 260px;
-            height: 100vh;
-            background: rgba(0, 0, 0, 0.3);
-            border-right: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 24px 0;
-            z-index: 100;
-        }
+    .period-btn {
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        color: rgba(255, 255, 255, 0.6);
+        background: transparent;
+        text-decoration: none;
+        transition: all 0.2s;
+    }
 
-        .sidebar-logo {
-            padding: 0 24px 24px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            margin-bottom: 24px;
-        }
+    .period-btn:hover {
+        color: #fff;
+        background: rgba(255, 255, 255, 0.1);
+    }
 
-        .sidebar-logo h1 {
-            font-size: 1.4rem;
-        }
+    .period-btn.active {
+        background: linear-gradient(135deg, #00d084, #00a86b);
+        color: #fff;
+    }
 
-        .sidebar-logo span {
-            color: #00d084;
-        }
+    .chart-container {
+        height: 300px;
+        position: relative;
+    }
 
-        .sidebar-nav a {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 14px 24px;
-            color: rgba(255, 255, 255, 0.6);
-            text-decoration: none;
-            transition: all 0.2s;
-            border-left: 3px solid transparent;
-        }
+    .stat-bar-container {
+        flex: 1;
+        margin: 0 16px;
+        height: 6px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 3px;
+        overflow: hidden;
+    }
 
-        .sidebar-nav a:hover,
-        .sidebar-nav a.active {
-            background: rgba(0, 208, 132, 0.1);
-            color: #00d084;
-            border-left-color: #00d084;
-        }
+    .stat-bar {
+        height: 100%;
+        background: linear-gradient(90deg, #00d084, #00a86b);
+        border-radius: 3px;
+    }
 
-        .sidebar-user {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            padding: 20px 24px;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            background: rgba(0, 0, 0, 0.2);
-        }
+    .insights-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+    }
 
-        .sidebar-user .name {
-            font-weight: 600;
-            margin-bottom: 4px;
-        }
+    .insight-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
+        padding: 16px;
+    }
+</style>
+{% endblock %}
 
-        .sidebar-user .status {
-            font-size: 0.8rem;
-            color: #00d084;
-        }
+{% block content %}
+<div style="display: flex; justify-content: flex-end; margin-bottom: 24px;">
+    <div class="period-filter">
+        <a href="?period=week" class="period-btn {% if period == 'week' %}active{% endif %}">7 jours</a>
+        <a href="?period=month" class="period-btn {% if period == 'month' %}active{% endif %}">30 jours</a>
+        <a href="?period=quarter" class="period-btn {% if period == 'quarter' %}active{% endif %}">90 jours</a>
+        <a href="?period=year" class="period-btn {% if period == 'year' %}active{% endif %}">1 an</a>
+    </div>
+</div>
 
-        /* Main Content */
-        .main-content {
-            margin-left: 260px;
-            padding: 32px;
-        }
+<!-- KPI Cards -->
+<div class="kpi-grid" style="grid-template-columns: repeat(6, 1fr);">
+    <div class="kpi-card">
+        <div class="icon">📦</div>
+        <div class="value" style="color: #42a5f5;">{{ stats.total_orders }}</div>
+        <div class="label">Commandes</div>
+    </div>
+    <div class="kpi-card">
+        <div class="icon">✅</div>
+        <div class="value" style="color: #00d084;">{{ stats.completed_orders }}</div>
+        <div class="label">Succès</div>
+    </div>
+    <div class="kpi-card">
+        <div class="icon">❌</div>
+        <div class="value" style="color: #ff5252;">{{ stats.cancelled_orders }}</div>
+        <div class="label">Annulées</div>
+    </div>
+    <div class="kpi-card">
+        <div class="icon">⚖️</div>
+        <div class="value" style="color: #ffc107;">{{ stats.total_disputes }}</div>
+        <div class="label">Litiges</div>
+    </div>
+    <div class="kpi-card">
+        <div class="icon">💰</div>
+        <div class="value" style="color: #00bcd4;">{{ stats.total_revenue|floatformat:0 }}</div>
+        <div class="label">Volume (XAF)</div>
+    </div>
+    <div class="kpi-card">
+        <div class="icon">📊</div>
+        <div class="value" style="color: #ab47bc;">{{ stats.success_rate }}%</div>
+        <div class="label">Taux Succès</div>
+    </div>
+</div>
 
-        .page-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 32px;
-            flex-wrap: wrap;
-            gap: 16px;
-        }
-
-        .page-title {
-            font-size: 1.8rem;
-            font-weight: 700;
-        }
-
-        .page-title span {
-            color: rgba(255, 255, 255, 0.5);
-            font-size: 1rem;
-            font-weight: 400;
-            margin-left: 12px;
-        }
-
-        /* Period Filter */
-        .period-filter {
-            display: flex;
-            gap: 4px;
-            background: rgba(255, 255, 255, 0.05);
-            padding: 4px;
-            border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .period-btn {
-            padding: 8px 16px;
-            border: none;
-            border-radius: 8px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            cursor: pointer;
-            color: rgba(255, 255, 255, 0.6);
-            background: transparent;
-            text-decoration: none;
-            transition: all 0.2s;
-        }
-
-        .period-btn:hover {
-            color: #fff;
-            background: rgba(255, 255, 255, 0.1);
-        }
-
-        .period-btn.active {
-            background: linear-gradient(135deg, #00d084, #00a86b);
-            color: #fff;
-        }
-
-        /* KPI Cards */
-        .kpi-grid {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 16px;
-            margin-bottom: 28px;
-        }
-
-        .kpi-card {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(20px);
-            border-radius: 16px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 20px;
-            transition: all 0.3s;
-        }
-
-        .kpi-card:hover {
-            border-color: rgba(0, 208, 132, 0.3);
-            transform: translateY(-2px);
-        }
-
-        .kpi-card .icon {
-            font-size: 1.8rem;
-            margin-bottom: 10px;
-        }
-
-        .kpi-card .value {
-            font-size: 1.8rem;
-            font-weight: 700;
-            margin-bottom: 4px;
-        }
-
-        .kpi-card .label {
-            color: rgba(255, 255, 255, 0.5);
-            font-size: 0.8rem;
-        }
-
-        .kpi-card .value.green {
-            color: #00d084;
-        }
-
-        .kpi-card .value.red {
-            color: #ff5252;
-        }
-
-        .kpi-card .value.blue {
-            color: #42a5f5;
-        }
-
-        .kpi-card .value.yellow {
-            color: #ffc107;
-        }
-
-        .kpi-card .value.purple {
-            color: #ab47bc;
-        }
-
-        /* Cards */
-        .card {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(20px);
-            border-radius: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 24px;
-            margin-bottom: 24px;
-        }
-
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .card-header h2 {
-            font-size: 1.1rem;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .card-subtitle {
-            color: rgba(255, 255, 255, 0.5);
-            font-size: 0.85rem;
-        }
-
-        /* Grid Layouts */
-        .grid-2 {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 24px;
-        }
-
-        .grid-3 {
-            display: grid;
-            grid-template-columns: 2fr 1fr 1fr;
-            gap: 24px;
-        }
-
-        /* Chart Container */
-        .chart-container {
-            height: 300px;
-            position: relative;
-        }
-
-        .chart-container-sm {
-            height: 220px;
-            position: relative;
-        }
-
-        /* Stat Items */
-        .stat-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .stat-row:last-child {
-            border-bottom: none;
-        }
-
-        .stat-row .name {
-            color: rgba(255, 255, 255, 0.7);
-            font-size: 0.9rem;
-        }
-
-        .stat-row .value {
-            font-weight: 600;
-            color: #00d084;
-        }
-
-        .stat-bar-container {
-            flex: 1;
-            margin: 0 16px;
-            height: 6px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 3px;
-            overflow: hidden;
-        }
-
-        .stat-bar {
-            height: 100%;
-            background: linear-gradient(90deg, #00d084, #00a86b);
-            border-radius: 3px;
-            transition: width 0.5s ease;
-        }
-
-        /* Insight Cards */
-        .insights-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 16px;
-        }
-
-        .insight-card {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 12px;
-            padding: 16px;
-        }
-
-        .insight-card .insight-icon {
-            font-size: 1.5rem;
-            margin-bottom: 8px;
-        }
-
-        .insight-card .insight-title {
-            font-weight: 600;
-            font-size: 0.9rem;
-            margin-bottom: 4px;
-        }
-
-        .insight-card .insight-desc {
-            color: rgba(255, 255, 255, 0.5);
-            font-size: 0.8rem;
-            line-height: 1.4;
-        }
-
-        /* Responsive */
-        @media (max-width: 1400px) {
-            .kpi-grid {
-                grid-template-columns: repeat(3, 1fr);
-            }
-
-            .grid-3 {
-                grid-template-columns: 1fr 1fr;
-            }
-        }
-
-        @media (max-width: 1200px) {
-            .kpi-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-
-            .grid-2,
-            .grid-3 {
-                grid-template-columns: 1fr;
-            }
-
-            .insights-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .sidebar {
-                display: none;
-            }
-
-            .main-content {
-                margin-left: 0;
-            }
-
-            .kpi-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
-</head>
-
-<body>
-    <!-- Sidebar -->
-    <nav class="sidebar">
-        <div class="sidebar-logo">
-            <h1>🚀 DELIVR<span>-CM</span></h1>
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
+    <div class="card">
+        <div class="card-header">
+            <h2>📈 Évolution des Commandes</h2>
         </div>
-        <div class="sidebar-nav">
-            <a href="{% url 'partners:dashboard' %}">📊 Dashboard</a>
-            <a href="{% url 'partners:orders' %}">📦 Mes Commandes</a>
-            <a href="{% url 'partners:tracking' %}">🗺️ Suivi Live</a>
-            <a href="{% url 'partners:wallet' %}">💰 Wallet</a>
-            <a href="{% url 'partners:analytics' %}" class="active">📈 Analytiques</a>
-            <a href="{% url 'partners:notifications' %}">🔔 Notifications</a>
-            <a href="{% url 'partners:invoices' %}">🧾 Factures</a>
-            <a href="{% url 'partners:webhooks' %}">⚙️ Webhooks</a>
-            <a href="{% url 'partners:branding' %}">🎨 Personnalisation</a>
-            <a href="{% url 'partners:profile' %}">👤 Profil</a>
-            <a href="{% url 'partners:docs' %}">📖 Documentation</a>
+        <div class="chart-container">
+            <canvas id="dailyChart"></canvas>
         </div>
-        <div class="sidebar-user">
-            <div class="name">{{ request.user.full_name }}</div>
-            <div class="status">✓ Compte Vérifié</div>
+    </div>
+    <div class="card">
+        <div class="card-header">
+            <h2>🎯 Répartition par Statut</h2>
         </div>
-    </nav>
+        <div class="chart-container">
+            <canvas id="statusChart"></canvas>
+        </div>
+    </div>
+</div>
 
-    <!-- Main Content -->
-    <main class="main-content">
-        <!-- Header -->
-        <div class="page-header">
-            <h1 class="page-title">📈 Analytiques Avancées<span>depuis le {{ start_date|date:"d/m/Y" }}</span></h1>
-            <div class="period-filter">
-                <a href="?period=week" class="period-btn {% if period == 'week' %}active{% endif %}">7 jours</a>
-                <a href="?period=month" class="period-btn {% if period == 'month' %}active{% endif %}">30 jours</a>
-                <a href="?period=quarter" class="period-btn {% if period == 'quarter' %}active{% endif %}">90 jours</a>
-                <a href="?period=year" class="period-btn {% if period == 'year' %}active{% endif %}">1 an</a>
+<div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px;">
+    <div class="card">
+        <div class="card-header">
+            <h2>⏰ Heures de Pointe</h2>
+        </div>
+        <div class="chart-container" style="height: 220px;">
+            <canvas id="hourlyChart"></canvas>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-header">
+            <h2>🏘️ Top Quartiers</h2>
+        </div>
+        <div class="chart-container" style="height: 220px;">
+            <canvas id="neighborhoodChart"></canvas>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-header">
+            <h2>📋 Métriques Clés</h2>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+            <div
+                style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                <span style="color: rgba(255,255,255,0.5);">Valeur moyenne</span>
+                <span style="font-weight: 600; color: #00d084;">{{ stats.avg_order_value|floatformat:0 }} XAF</span>
+            </div>
+            <div
+                style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                <span style="color: rgba(255,255,255,0.5);">Taux litiges</span>
+                <span
+                    style="font-weight: 600; color: {% if stats.dispute_rate < 5 %}#00d084{% else %}#ff5252{% endif %};">{{
+                    stats.dispute_rate }}%</span>
+            </div>
+            <div
+                style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                <span style="color: rgba(255,255,255,0.5);">Litiges résolus</span>
+                <span style="font-weight: 600;">{{ stats.resolved_disputes }} / {{ stats.total_disputes }}</span>
             </div>
         </div>
+    </div>
+</div>
 
-        <!-- KPI Cards -->
-        <div class="kpi-grid">
-            <div class="kpi-card">
-                <div class="icon">📦</div>
-                <div class="value blue">{{ stats.total_orders }}</div>
-                <div class="label">Commandes totales</div>
-            </div>
-            <div class="kpi-card">
-                <div class="icon">✅</div>
-                <div class="value green">{{ stats.completed_orders }}</div>
-                <div class="label">Livrées avec succès</div>
-            </div>
-            <div class="kpi-card">
-                <div class="icon">❌</div>
-                <div class="value red">{{ stats.cancelled_orders }}</div>
-                <div class="label">Annulées</div>
-            </div>
-            <div class="kpi-card">
-                <div class="icon">💰</div>
-                <div class="value yellow">{{ stats.total_revenue|floatformat:0 }}</div>
-                <div class="label">Dépensé (XAF)</div>
-            </div>
-            <div class="kpi-card">
-                <div class="icon">📊</div>
-                <div class="value purple">{{ stats.success_rate }}%</div>
-                <div class="label">Taux de succès</div>
+<div class="card">
+    <div class="card-header">
+        <h2>💡 Insights Automatiques</h2>
+    </div>
+    <div class="insights-grid">
+        <div class="insight-card">
+            <div style="font-size: 1.5rem; margin-bottom: 8px;">📊</div>
+            <div style="font-weight: 600; font-size: 0.9rem; margin-bottom: 4px;">Commande Moyenne</div>
+            <div style="color: rgba(255, 255, 255, 0.5); font-size: 0.8rem;">
+                Votre valeur moyenne est de {{ stats.avg_order_value|floatformat:0 }} XAF.
+                {% if stats.avg_order_value > 2000 %}Excellent ! 🔥{% endif %}
             </div>
         </div>
-
-        <!-- Main Charts -->
-        <div class="grid-2">
-            <!-- Daily Orders Chart -->
-            <div class="card">
-                <div class="card-header">
-                    <h2>📈 Évolution des Commandes</h2>
-                    <span class="card-subtitle">Par jour</span>
-                </div>
-                <div class="chart-container">
-                    <canvas id="dailyChart"></canvas>
-                </div>
+        <div class="insight-card">
+            <div style="font-size: 1.5rem; margin-bottom: 8px;">✅</div>
+            <div style="font-weight: 600; font-size: 0.9rem; margin-bottom: 4px;">Fiabilité</div>
+            <div style="color: rgba(255, 255, 255, 0.5); font-size: 0.8rem;">
+                Taux de succès de {{ stats.success_rate }}%.
+                {% if stats.success_rate >= 95 %}🏆 Performance remarquable !{% endif %}
             </div>
-
-            <!-- Hourly Distribution Chart -->
-            <div class="card">
-                <div class="card-header">
-                    <h2>⏰ Heures de Pointe</h2>
-                    <span class="card-subtitle">Distribution horaire</span>
-                </div>
-                <div class="chart-container">
-                    <canvas id="hourlyChart"></canvas>
+        </div>
+        <div class="insight-card">
+            <div style="font-size: 1.5rem; margin-bottom: 8px;">⚖️</div>
+            <div style="font-weight: 600; font-size: 0.9rem; margin-bottom: 4px;">Taux de Litiges</div>
+            <div style="color: rgba(255, 255, 255, 0.5); font-size: 0.8rem;">
+                {{ stats.dispute_rate }}% des commandes.
+                {% if stats.dispute_rate < 2 %}✅ Excellent contrôle qualité.{% else %}⚠️ Attention à la qualité.{% endif %} </div>
+            </div>
+            <div class="insight-card">
+                <div style="font-size: 1.5rem; margin-bottom: 8px;">📦</div>
+                <div style="font-weight: 600; font-size: 0.9rem; margin-bottom: 4px;">Volume de ventes</div>
+                <div style="color: rgba(255, 255, 255, 0.5); font-size: 0.8rem;">
+                    {{ stats.total_orders }} commandes sur la période.
+                    Keep it up ! 🚀
                 </div>
             </div>
         </div>
+    </div>
+    {% endblock %}
 
-        <!-- Secondary Charts -->
-        <div class="grid-3">
-            <!-- Status Distribution -->
-            <div class="card">
-                <div class="card-header">
-                    <h2>🎯 Répartition par Statut</h2>
-                </div>
-                <div class="chart-container">
-                    <canvas id="statusChart"></canvas>
-                </div>
-            </div>
-
-            <!-- Top Neighborhoods -->
-            <div class="card">
-                <div class="card-header">
-                    <h2>🏘️ Top Quartiers</h2>
-                </div>
-                <div class="chart-container-sm" style="height: 100%;">
-                    <canvas id="neighborhoodChart"></canvas>
-                </div>
-            </div>
-
-            <!-- Key Metrics -->
-            <div class="card">
-                <div class="card-header">
-                    <h2>📋 Métriques Clés</h2>
-                </div>
-                <div class="stat-row">
-                    <span class="name">Valeur moyenne</span>
-                    <span class="value">{{ stats.avg_order_value|floatformat:0 }} XAF</span>
-                </div>
-                <div class="stat-row">
-                    <span class="name">Taux de succès</span>
-                    <div class="stat-bar-container">
-                        <div class="stat-bar" style="width: {{ stats.success_rate }}%;"></div>
-                    </div>
-                    <span class="value">{{ stats.success_rate }}%</span>
-                </div>
-                <div class="stat-row">
-                    <span class="name">Commandes complétées</span>
-                    <span class="value">{{ stats.completed_orders }}</span>
-                </div>
-                <div class="stat-row">
-                    <span class="name">Commandes annulées</span>
-                    <span class="value" style="color: #ff5252;">{{ stats.cancelled_orders }}</span>
-                </div>
-                <div class="stat-row">
-                    <span class="name">Total dépensé</span>
-                    <span class="value">{{ stats.total_revenue|floatformat:0 }} XAF</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Insights -->
-        <div class="card">
-            <div class="card-header">
-                <h2>💡 Insights Automatiques</h2>
-            </div>
-            <div class="insights-grid">
-                <div class="insight-card">
-                    <div class="insight-icon">📊</div>
-                    <div class="insight-title">Commande Moyenne</div>
-                    <div class="insight-desc">
-                        Votre valeur de commande moyenne est de {{ stats.avg_order_value|floatformat:0 }} XAF.
-                        {% if stats.avg_order_value > 2000 %}
-                        C'est au-dessus de la moyenne ! 🔥
-                        {% else %}
-                        Augmentez la distance pour des marges plus élevées.
-                        {% endif %}
-                    </div>
-                </div>
-                <div class="insight-card">
-                    <div class="insight-icon">✅</div>
-                    <div class="insight-title">Fiabilité</div>
-                    <div class="insight-desc">
-                        {% if stats.success_rate >= 95 %}
-                        Excellent ! Votre taux de réussite de {{ stats.success_rate }}% est remarquable. 🏆
-                        {% elif stats.success_rate >= 85 %}
-                        Bon taux de réussite à {{ stats.success_rate }}%. Encore quelques efforts ! 💪
-                        {% else %}
-                        Taux de {{ stats.success_rate }}% à améliorer. Contactez le support pour de l'aide.
-                        {% endif %}
-                    </div>
-                </div>
-                <div class="insight-card">
-                    <div class="insight-icon">📦</div>
-                    <div class="insight-title">Volume</div>
-                    <div class="insight-desc">
-                        {{ stats.total_orders }} commandes sur la période.
-                        {% if stats.total_orders > 50 %}
-                        Volume excellent ! Pensez à activer les webhooks pour automatiser. ⚡
-                        {% else %}
-                        Partagez votre lien de vente pour augmenter les commandes.
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-        </div>
-    </main>
-
+    {% block extra_js %}
     <script>
-        // Colors
         const colors = {
             green: '#00d084',
             greenLight: 'rgba(0, 208, 132, 0.1)',
@@ -580,9 +238,7 @@
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: {
-                    labels: { color: colors.textColor, font: { size: 11 } }
-                }
+                legend: { labels: { color: colors.textColor, font: { size: 11 } } }
             },
             scales: {
                 x: {
@@ -597,121 +253,42 @@
             }
         };
 
-        // ========================================
-        // Daily Orders + Revenue Chart
-        // ========================================
         const dailyData = {{ daily_chart_json| safe }};
-
         new Chart(document.getElementById('dailyChart').getContext('2d'), {
             type: 'line',
             data: {
                 labels: dailyData.map(d => d.date),
-                datasets: [
-                    {
-                        label: 'Commandes',
-                        data: dailyData.map(d => d.orders),
-                        borderColor: colors.green,
-                        backgroundColor: colors.greenLight,
-                        fill: true,
-                        tension: 0.4,
-                        pointBackgroundColor: colors.green,
-                        pointBorderColor: '#fff',
-                        pointBorderWidth: 2,
-                        pointRadius: 4,
-                        yAxisID: 'y'
-                    },
-                    {
-                        label: 'Revenus (XAF)',
-                        data: dailyData.map(d => d.revenue),
-                        borderColor: colors.blue,
-                        backgroundColor: colors.blueLight,
-                        fill: false,
-                        tension: 0.4,
-                        pointRadius: 3,
-                        borderDash: [4, 4],
-                        yAxisID: 'y1'
-                    }
-                ]
+                datasets: [{
+                    label: 'Commandes',
+                    data: dailyData.map(d => d.orders),
+                    borderColor: colors.green,
+                    backgroundColor: colors.greenLight,
+                    fill: true,
+                    tension: 0.4
+                }]
             },
-            options: {
-                ...commonOptions,
-                plugins: {
-                    legend: {
-                        labels: { color: colors.textColor }
-                    }
-                },
-                scales: {
-                    x: {
-                        grid: { color: colors.gridColor },
-                        ticks: { color: colors.textColor, maxRotation: 45, font: { size: 10 } }
-                    },
-                    y: {
-                        beginAtZero: true,
-                        position: 'left',
-                        grid: { color: colors.gridColor },
-                        ticks: { color: colors.green, stepSize: 1 },
-                        title: { display: true, text: 'Commandes', color: colors.green }
-                    },
-                    y1: {
-                        beginAtZero: true,
-                        position: 'right',
-                        grid: { display: false },
-                        ticks: { color: colors.blue },
-                        title: { display: true, text: 'Revenus (XAF)', color: colors.blue }
-                    }
-                }
-            }
+            options: commonOptions
         });
 
-        // ========================================
-        // Hourly Distribution Chart
-        // ========================================
         const hourlyData = {{ hourly_data_json| safe }};
-        const hours = Array.from({ length: 24 }, (_, i) => `${i}h`);
-
         new Chart(document.getElementById('hourlyChart').getContext('2d'), {
             type: 'bar',
             data: {
-                labels: hours,
+                labels: Array.from({ length: 24 }, (_, i) => `${i}h`),
                 datasets: [{
                     label: 'Commandes',
                     data: hourlyData,
-                    backgroundColor: hourlyData.map((v, i) => {
-                        const max = Math.max(...hourlyData);
-                        const intensity = max > 0 ? v / max : 0;
-                        return `rgba(0, 208, 132, ${0.2 + intensity * 0.6})`;
-                    }),
-                    borderRadius: 4,
-                    borderSkipped: false
+                    backgroundColor: colors.green,
+                    borderRadius: 4
                 }]
             },
-            options: {
-                ...commonOptions,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        callbacks: {
-                            label: (ctx) => `${ctx.raw} commande${ctx.raw > 1 ? 's' : ''}`
-                        }
-                    }
-                }
-            }
+            options: commonOptions
         });
 
-        // ========================================
-        // Status Distribution Chart
-        // ========================================
         const statusData = {{ status_chart_json| safe }};
         const statusColors = {
-            'PENDING': colors.yellow,
-            'ASSIGNED': colors.blue,
-            'EN_ROUTE_PICKUP': colors.orange,
-            'PICKED_UP': colors.purple,
-            'IN_TRANSIT': colors.teal,
-            'COMPLETED': colors.green,
-            'CANCELLED': colors.red,
+            'PENDING': colors.yellow, 'ASSIGNED': colors.blue, 'COMPLETED': colors.green, 'CANCELLED': colors.red,
         };
-
         new Chart(document.getElementById('statusChart').getContext('2d'), {
             type: 'doughnut',
             data: {
@@ -719,33 +296,17 @@
                 datasets: [{
                     data: statusData.map(s => s.count),
                     backgroundColor: statusData.map(s => statusColors[s.status] || '#666'),
-                    borderWidth: 0,
-                    spacing: 2
+                    borderWidth: 0
                 }]
             },
             options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                cutout: '60%',
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            color: colors.textColor,
-                            padding: 12,
-                            usePointStyle: true,
-                            font: { size: 11 }
-                        }
-                    }
-                }
+                ...commonOptions,
+                cutout: '70%',
+                plugins: { legend: { position: 'bottom' } }
             }
         });
 
-        // ========================================
-        // Neighborhood Chart
-        // ========================================
         const neighborhoodData = {{ neighborhood_chart_json| safe }};
-
         new Chart(document.getElementById('neighborhoodChart').getContext('2d'), {
             type: 'bar',
             data: {
@@ -753,37 +314,11 @@
                 datasets: [{
                     label: 'Commandes',
                     data: neighborhoodData.map(n => n.count),
-                    backgroundColor: 'rgba(0, 208, 132, 0.4)',
-                    borderColor: colors.green,
-                    borderWidth: 1,
-                    borderRadius: 6,
-                    borderSkipped: false
+                    backgroundColor: colors.blue,
+                    borderRadius: 4
                 }]
             },
-            options: {
-                indexAxis: 'y',
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false }
-                },
-                scales: {
-                    x: {
-                        beginAtZero: true,
-                        grid: { color: colors.gridColor },
-                        ticks: { color: colors.textColor, stepSize: 1 }
-                    },
-                    y: {
-                        grid: { display: false },
-                        ticks: {
-                            color: colors.textColor,
-                            font: { size: 11 }
-                        }
-                    }
-                }
-            }
+            options: { ...commonOptions, indexAxis: 'y' }
         });
     </script>
-</body>
-
-</html>
+    {% endblock %}

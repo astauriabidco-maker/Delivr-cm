@@ -1,0 +1,106 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block subject %}{% endblock %}</title>
+    <style>
+        body {
+            font-family: 'Inter', Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f7f6;
+            color: #1e3a5f;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-top: 40px;
+            margin-bottom: 40px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+        }
+
+        .header {
+            background-color: #1e3a5f;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 800;
+            color: #ffffff;
+            text-decoration: none;
+        }
+
+        .logo span {
+            color: #ff6b35;
+        }
+
+        .content {
+            padding: 40px;
+            line-height: 1.6;
+        }
+
+        .button {
+            display: inline-block;
+            background-color: #004d40;
+            color: #ffffff !important;
+            padding: 14px 28px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .footer {
+            padding: 30px;
+            text-align: center;
+            font-size: 12px;
+            color: #7f8c8d;
+            background-color: #fafbfc;
+        }
+
+        .verified-badge {
+            display: inline-flex;
+            align-items: center;
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="https://delivr.cm" class="logo">✅ DELIVR<span>-CM</span></a>
+        </div>
+        <div class="content">
+            <div class="verified-badge">✅ Service Vérifié</div>
+            {% block content %}{% endblock %}
+        </div>
+        <div class="footer">
+            <p>© 2026 <strong>DELIVR-CM</strong> - Livraison Urbaine Intelligence</p>
+            <p>Douala & Yaoundé, Cameroun</p>
+            <div style="margin-top: 15px;">
+                <a href="#" style="color: #1e3a5f; text-decoration: none; margin: 0 10px;">Aide</a>
+                <a href="#" style="color: #1e3a5f; text-decoration: none; margin: 0 10px;">Conditions</a>
+                <a href="#" style="color: #1e3a5f; text-decoration: none; margin: 0 10px;">Confidentialité</a>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

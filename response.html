@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S'inscrire | DELIVR-CM — Expédiez vos colis en 5 min</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'brand-blue': '#1e3a5f',
+                        'brand-blue-dark': '#152a45',
+                        'brand-orange': '#ff6b35',
+                        'brand-orange-dark': '#e55a2b',
+                        'brand-green': '#25d366',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <style>
+        .glass {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+
+<body
+    class="font-sans antialiased bg-gradient-to-br from-brand-blue-dark via-brand-blue to-blue-900 min-h-screen flex items-center justify-center p-4 py-12">
+
+    <div class="w-full max-w-lg">
+        <!-- Logo -->
+        <div class="text-center mb-8">
+            <a href="/" class="inline-flex items-center gap-2">
+                <span class="text-4xl">🚀</span>
+                <span class="text-3xl font-extrabold text-white">DELIVR<span class="text-brand-orange">-CM</span></span>
+            </a>
+            <p class="text-white/70 mt-2">Rejoignez les vendeurs qui réussissent</p>
+        </div>
+
+        <!-- Signup Card -->
+        <div class="glass rounded-3xl p-8 lg:p-10 shadow-2xl">
+            <h1 class="text-3xl font-black text-white text-center mb-2">Créer mon compte</h1>
+            <p class="text-white/60 text-center mb-8">Expédiez vos colis en quelques minutes</p>
+
+            
+
+            
+
+            <form method="post" class="space-y-5">
+                <input type="hidden" name="csrfmiddlewaretoken" value="J7hrZOhHGSjoysbdq7uHDJXnSjMj0opFmcjxrE2evDKxazUSmWmecM8PU8PppdKh">
+
+                <!-- WhatsApp Number -->
+                <div>
+                    <label for="id_phone_number" class="block text-white/80 text-sm font-medium mb-2">
+                        <i class="fas fa-phone mr-2"></i>Numéro WhatsApp
+                    </label>
+                    <div class="flex">
+                        <span
+                            class="inline-flex items-center px-4 bg-white/10 border border-r-0 border-white/20 rounded-l-xl text-white/70">
+                            +237
+                        </span>
+                        <input type="text" name="phone_number" id="id_phone_number" placeholder="6XXXXXXXX"
+                            class="flex-1 px-4 py-3 bg-white/5 border border-white/20 rounded-r-xl text-white placeholder-white/40 focus:outline-none focus:border-brand-orange focus:ring-1 focus:ring-brand-orange transition-all"
+                            required>
+                    </div>
+                </div>
+
+                <!-- Full Name -->
+                <div>
+                    <label for="id_full_name" class="block text-white/80 text-sm font-medium mb-2">
+                        <i class="fas fa-user mr-2"></i>Nom Complet
+                    </label>
+                    <input type="text" name="full_name" id="id_full_name" placeholder="Ex: Jean Kamga"
+                        class="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder-white/40 focus:outline-none focus:border-brand-orange focus:ring-1 focus:ring-brand-orange transition-all"
+                        required>
+                </div>
+
+                <!-- Boutique/Compagnie -->
+                <div>
+                    <label for="id_company_name" class="block text-white/80 text-sm font-medium mb-2">
+                        <i class="fas fa-store mr-2"></i>Nom de votre Boutique
+                    </label>
+                    <input type="text" name="company_name" id="id_company_name" placeholder="Ex: Fashion Store"
+                        class="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder-white/40 focus:outline-none focus:border-brand-orange focus:ring-1 focus:ring-brand-orange transition-all"
+                        required>
+                </div>
+
+                <!-- Business Type -->
+                <div>
+                    <label for="id_business_type" class="block text-white/80 text-sm font-medium mb-2">
+                        <i class="fas fa-bullseye mr-2"></i>Comment vendez-vous ?
+                    </label>
+                    <select name="business_type" id="id_business_type"
+                        class="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white focus:outline-none focus:border-brand-orange focus:ring-1 focus:ring-brand-orange transition-all appearance-none cursor-pointer">
+                        <option value="SOCIAL" class="bg-brand-blue">Réseaux Sociaux (Instagram, FB, WA)</option>
+                        <option value="WEB" class="bg-brand-blue">Site Web (E-commerce)</option>
+                    </select>
+                </div>
+
+                <!-- Password -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                        <label for="id_password" class="block text-white/80 text-sm font-medium mb-2">
+                            <i class="fas fa-lock mr-2"></i>Mot de passe
+                        </label>
+                        <input type="password" name="password" id="id_password" placeholder="••••••••"
+                            class="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder-white/40 focus:outline-none focus:border-brand-orange focus:ring-1 focus:ring-brand-orange transition-all"
+                            required>
+                    </div>
+                    <div>
+                        <label for="id_password_confirm" class="block text-white/80 text-sm font-medium mb-2">
+                            <i class="fas fa-check-double mr-2"></i>Confirmer
+                        </label>
+                        <input type="password" name="password_confirm" id="id_password_confirm" placeholder="••••••••"
+                            class="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder-white/40 focus:outline-none focus:border-brand-orange focus:ring-1 focus:ring-brand-orange transition-all"
+                            required>
+                    </div>
+                </div>
+
+                <div class="pt-4">
+                    <button type="submit"
+                        class="w-full py-4 bg-brand-orange text-white font-bold rounded-xl hover:bg-brand-orange-dark transition-all shadow-lg shadow-brand-orange/25 text-lg">
+                        <i class="fas fa-rocket mr-2"></i>
+                        Expédier mes colis
+                    </button>
+                </div>
+            </form>
+
+            <!-- Divider -->
+            <div class="my-8 flex items-center">
+                <div class="flex-1 border-t border-white/10"></div>
+                <span class="px-4 text-white/40 text-sm">déjà inscrit?</span>
+                <div class="flex-1 border-t border-white/10"></div>
+            </div>
+
+            <!-- Login Link -->
+            <p class="text-center text-white/70">
+                <a href="/partners/login/" class="text-brand-orange font-bold hover:underline">
+                    Se connecter à mon espace
+                </a>
+            </p>
+        </div>
+
+        <!-- Legal -->
+        <p class="text-center mt-8 text-white/40 text-xs px-4">
+            En vous inscrivant, vous acceptez nos <a href="#" class="underline">Conditions d'Utilisaton</a> et notre <a
+                href="#" class="underline">Politique de Confidentialité</a>.
+        </p>
+
+        <!-- Back to Home -->
+        <p class="text-center mt-6">
+            <a href="/" class="text-white/60 hover:text-white transition-colors text-sm">
+                <i class="fas fa-arrow-left mr-2"></i>
+                Retour à l'accueil
+            </a>
+        </p>
+    </div>
+
+</body>
+
+</html>

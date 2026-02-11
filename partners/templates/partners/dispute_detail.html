@@ -1,0 +1,114 @@
+{% extends 'partners/base.html' %}
+{% load static %}
+
+{% block title %}Détail du Litige{% endblock %}
+{% block page_title %}⚖️ Détail du Litige<span>#{{ dispute.id|stringformat:".8s" }}</span>{% endblock %}
+
+{% block content %}
+<div class="grid-2" style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
+    <div>
+        <div class="card">
+            <div class="card-header">
+                <h2>Informations sur le problème</h2>
+                <span class="status-badge status-{{ dispute.status|lower }}">{{ dispute.get_status_display }}</span>
+            </div>
+
+            <div style="margin-bottom: 24px;">
+                <h4
+                    style="color: rgba(255,255,255,0.5); font-size: 0.8rem; text-transform: uppercase; margin-bottom: 8px;">
+                    Raison</h4>
+                <p style="font-size: 1.1rem; font-weight: 600;">{{ dispute.get_reason_display }}</p>
+            </div>
+
+            <div style="margin-bottom: 24px;">
+                <h4
+                    style="color: rgba(255,255,255,0.5); font-size: 0.8rem; text-transform: uppercase; margin-bottom: 8px;">
+                    Description</h4>
+                <p style="line-height: 1.6; color: rgba(255,255,255,0.8);">{{ dispute.description }}</p>
+            </div>
+
+            {% if dispute.photo_evidence %}
+            <div style="margin-bottom: 24px;">
+                <h4
+                    style="color: rgba(255,255,255,0.5); font-size: 0.8rem; text-transform: uppercase; margin-bottom: 12px;">
+                    Preuve Photo</h4>
+                <img src="{{ dispute.photo_evidence.url }}" alt="Preuve"
+                    style="max-width: 100%; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);">
+            </div>
+            {% endif %}
+        </div>
+
+        {% if dispute.status == 'RESOLVED' %}
+        <div class="card" style="border: 1px solid #00d084; background: rgba(0, 208, 132, 0.05);">
+            <div class="card-header">
+                <h2 style="color: #00d084;">✅ Résolution</h2>
+            </div>
+            <p style="line-height: 1.6; margin-bottom: 20px;">{{ dispute.resolution_note }}</p>
+
+            {% if dispute.refund_amount > 0 %}
+            <div
+                style="padding: 16px; background: rgba(0,0,0,0.2); border-radius: 12px; display: flex; justify-content: space-between; align-items: center;">
+                <span>Montant remboursé sur votre wallet :</span>
+                <span style="font-size: 1.2rem; font-weight: 700; color: #00d084;">+ {{
+                    dispute.refund_amount|floatformat:0 }} XAF</span>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+
+    <div>
+        <div class="card">
+            <div class="card-header">
+                <h2>Commande associée</h2>
+            </div>
+            <div style="margin-bottom: 16px;">
+                <code style="color: #00d084; font-size: 0.9rem;">#{{ dispute.delivery.id|stringformat:".8s" }}</code>
+            </div>
+            <p style="margin-bottom: 8px;">{{ dispute.delivery.recipient_name }}</p>
+            <p style="color: rgba(255,255,255,0.5); font-size: 0.85rem; margin-bottom: 20px;">{{
+                dispute.delivery.dropoff_address }}</p>
+
+            <a href="{% url 'partners:order_detail' dispute.delivery.id %}" class="btn btn-secondary btn-sm"
+                style="width: 100%; justify-content: center;">
+                Voir la commande
+            </a>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2>Chronologie</h2>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 20px;">
+                <div style="display: flex; gap: 12px;">
+                    <div style="width: 2px; background: #00d084; position: relative;">
+                        <div
+                            style="position: absolute; top: 0; left: -4px; width: 10px; height: 10px; border-radius: 50%; background: #00d084;">
+                        </div>
+                    </div>
+                    <div>
+                        <p style="font-weight: 600; font-size: 0.9rem;">Signalement créé</p>
+                        <p style="font-size: 0.8rem; color: rgba(255,255,255,0.5);">{{ dispute.created_at|date:"d M Y
+                            H:i" }}</p>
+                    </div>
+                </div>
+
+                {% if dispute.resolved_at %}
+                <div style="display: flex; gap: 12px;">
+                    <div style="width: 2px; background: #00d084; position: relative;">
+                        <div
+                            style="position: absolute; top: 0; left: -4px; width: 10px; height: 10px; border-radius: 50%; background: #00d084;">
+                        </div>
+                    </div>
+                    <div>
+                        <p style="font-weight: 600; font-size: 0.9rem;">Litige résolu</p>
+                        <p style="font-size: 0.8rem; color: rgba(255,255,255,0.5);">{{ dispute.resolved_at|date:"d M Y
+                            H:i" }}</p>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

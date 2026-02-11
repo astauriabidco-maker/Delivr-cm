@@ -3,6 +3,23 @@ LOGISTICS App - Smart Dispatch Service for DELIVR-CM
 
 Intelligent courier dispatch with multi-factor scoring algorithm.
 Uses PostGIS for efficient geo-queries and Redis for caching.
+
+SCORING FACTORS (all configurable by admin via DispatchConfiguration):
+  1. Distance      — Proximity to pickup point
+  2. Rating        — Average customer rating (/5)
+  3. History       — Delivery success rate (30 days)
+  4. Availability  — Time since last delivery (avoid overloading)
+  5. Financial     — Wallet health (debt ratio)
+  6. Response time — Average acceptance speed
+  7. Level         — Courier gamification level (Bronze→Platinum)
+  8. Acceptance    — Order acceptance rate
+  
+BONUSES:
+  + Streak bonus   — Active consecutive success streak
+  - Probation      — Penalty for couriers still in probation
+
+All weights and thresholds are stored in the database and can be
+adjusted by admins in real-time via Django Admin.
 """
 
 import logging
@@ -15,46 +32,14 @@ from django.contrib.gis.geos import Point
 from django.contrib.gis.db.models.functions import Distance
 from django.contrib.gis.measure import D
 from django.db import transaction
-from django.db.models import F, Count, Q, Avg, ExpressionWrapper, DecimalField
+from django.db.models import F, Count, Q, Avg
 from django.utils import timezone
 from django.core.cache import cache
 
-from logistics.models import Delivery, DeliveryStatus
+from logistics.models import Delivery, DeliveryStatus, DispatchConfiguration
 from core.models import User, UserRole
 
 logger = logging.getLogger(__name__)
-
-
-# ============================================
-# SCORING CONFIGURATION
-# ============================================
-
-@dataclass
-class DispatchConfig:
-    """Configuration for smart dispatch algorithm."""
-    
-    # Search parameters
-    initial_radius_km: float = 3.0      # Start with small radius
-    max_radius_km: float = 10.0         # Expand up to this radius
-    radius_increment_km: float = 2.0    # Step size for expansion
-    max_couriers_to_score: int = 20     # Max couriers to evaluate
-    
-    # Scoring weights (must sum to 1.0)
-    weight_distance: float = 0.35       # Proximity to pickup
-    weight_history: float = 0.25        # Delivery success rate
-    weight_availability: float = 0.20   # Time since last delivery
-    weight_financial: float = 0.15      # Wallet health
-    weight_response: float = 0.05       # Response time history
-    
-    # Thresholds
-    min_score_threshold: float = 40.0   # Minimum score to be considered
-    auto_assign_threshold: float = 80.0 # Score above which to auto-assign
-    
-    # Cache TTL
-    courier_stats_cache_ttl: int = 300  # 5 minutes
-
-
-DEFAULT_CONFIG = DispatchConfig()
 
 
 # ============================================
@@ -68,15 +53,25 @@ class CourierScore:
     distance_km: float
     score: float
     score_breakdown: Dict[str, float]
+    bonuses: Dict[str, float]
+    
+    @property
+    def total_with_bonuses(self) -> float:
+        """Final score including bonuses and penalties."""
+        return self.score + sum(self.bonuses.values())
     
     def to_dict(self) -> Dict[str, Any]:
         return {
             'courier_id': str(self.courier.id),
             'phone': self.courier.phone_number,
             'name': self.courier.full_name,
+            'level': self.courier.courier_level,
+            'rating': float(self.courier.average_rating),
             'distance_km': round(self.distance_km, 2),
             'score': round(self.score, 1),
+            'total_score': round(self.total_with_bonuses, 1),
             'breakdown': self.score_breakdown,
+            'bonuses': self.bonuses,
         }
 
 
@@ -86,23 +81,23 @@ class CourierScore:
 
 class SmartDispatchService:
     """
-    Intelligent dispatch service with multi-factor courier scoring.
+    Intelligent dispatch service with admin-configurable multi-factor scoring.
     
-    The scoring algorithm considers:
-    1. Distance: How close is the courier to the pickup point?
-    2. History: What's their delivery success rate?
-    3. Availability: How long since their last delivery?
-    4. Financial health: Is their wallet in good standing?
-    5. Response time: How quickly do they typically accept orders?
+    The scoring algorithm considers 8 weighted factors + bonuses/penalties,
+    all configurable by admins via Django Admin (DispatchConfiguration model).
+    
+    Usage:
+        service = SmartDispatchService()
+        scored_couriers = service.find_optimal_couriers(pickup_point)
     """
     
-    def __init__(self, config: DispatchConfig = None):
-        self.config = config or DEFAULT_CONFIG
+    def __init__(self, config: DispatchConfiguration = None):
+        self.config = config or DispatchConfiguration.get_config()
     
     def find_optimal_couriers(
         self,
         pickup_point: Point,
-        max_results: int = 5
+        max_results: int = None
     ) -> List[CourierScore]:
         """
         Find and score couriers for a delivery.
@@ -113,12 +108,16 @@ class SmartDispatchService:
         Args:
             pickup_point: PostGIS Point of the pickup location
             max_results: Maximum number of scored couriers to return
+                         (defaults to config.max_couriers_to_notify)
         
         Returns:
-            List of CourierScore objects, sorted by score (highest first)
+            List of CourierScore objects, sorted by total score (highest first)
         """
+        if max_results is None:
+            max_results = self.config.max_couriers_to_notify
+        
         current_radius = self.config.initial_radius_km
-        scored_couriers: List[CourierScore] = []
+        candidates = []
         
         while current_radius <= self.config.max_radius_km:
             # Query couriers within current radius
@@ -137,15 +136,15 @@ class SmartDispatchService:
             score = self._calculate_courier_score(courier, distance_km)
             
             # Only include couriers above minimum threshold
-            if score.score >= self.config.min_score_threshold:
+            if score.total_with_bonuses >= self.config.min_score_threshold:
                 scored_couriers.append(score)
         
-        # Sort by score (highest first)
-        scored_couriers.sort(key=lambda x: x.score, reverse=True)
+        # Sort by total score (highest first)
+        scored_couriers.sort(key=lambda x: x.total_with_bonuses, reverse=True)
         
         logger.info(
             f"[SMART_DISPATCH] Found {len(scored_couriers)} qualified couriers "
-            f"(radius: {current_radius}km)"
+            f"(radius: {current_radius}km, threshold: {self.config.min_score_threshold})"
         )
         
         return scored_couriers[:max_results]
@@ -158,13 +157,23 @@ class SmartDispatchService:
         """
         Query couriers within radius using PostGIS.
         
+        Filters:
+        - Role = COURIER
+        - Active account
+        - Online (is_online = True)
+        - Has GPS location
+        - Not blocked by debt
+        - Onboarding approved or in probation
+        
         Returns:
             List of (courier, distance_km) tuples
         """
         couriers = User.objects.filter(
             role=UserRole.COURIER,
             is_active=True,
-            last_location__isnull=False
+            is_online=True,
+            last_location__isnull=False,
+            onboarding_status__in=['APPROVED', 'PROBATION'],
         ).annotate(
             raw_distance=Distance('last_location', pickup_point)
         ).filter(
@@ -175,9 +184,13 @@ class SmartDispatchService:
         for courier in couriers:
             # Check if not blocked by debt
             if courier.wallet_balance <= -courier.debt_ceiling:
+                logger.debug(
+                    f"[SMART_DISPATCH] Skipping {courier.phone_number} — "
+                    f"debt blocked (wallet: {courier.wallet_balance})"
+                )
                 continue
             
-            # Convert distance to km (raw_distance is in meters)
+            # Convert distance to km
             distance_km = courier.raw_distance.km if courier.raw_distance else 999
             result.append((courier, distance_km))
         
@@ -189,24 +202,45 @@ class SmartDispatchService:
         distance_km: float
     ) -> CourierScore:
         """
-        Calculate composite score for a courier.
+        Calculate composite score for a courier using 8 weighted factors.
         
-        Score is 0-100 based on weighted factors.
+        Each factor produces a sub-score from 0 to 100.
+        The total is the weighted sum of all sub-scores + bonuses - penalties.
         """
+        config = self.config
         breakdown = {}
+        bonuses = {}
         
         # ====== 1. DISTANCE SCORE (0-100) ======
-        # Closer is better: 100 at 0km, 50 at 3km, 0 at 6km+
-        if distance_km <= 0.5:
+        # Closer is better: 100 within perfect range, linear decay to 0
+        if distance_km <= config.distance_perfect_km:
             distance_score = 100
-        elif distance_km <= 6:
-            distance_score = max(0, 100 - (distance_km * 16.67))
-        else:
+        elif distance_km >= config.distance_zero_km:
             distance_score = 0
+        else:
+            # Linear interpolation between perfect and zero
+            range_km = config.distance_zero_km - config.distance_perfect_km
+            distance_score = max(0, 100 * (1 - (distance_km - config.distance_perfect_km) / range_km))
         breakdown['distance'] = round(distance_score, 1)
         
-        # ====== 2. HISTORY SCORE (0-100) ======
-        # Based on delivery success rate
+        # ====== 2. RATING SCORE (0-100) ======
+        # Based on average_rating (/5) from the User model
+        rating = float(courier.average_rating)
+        rating_count = courier.total_ratings_count
+        
+        if rating_count < config.min_ratings_for_full_score:
+            # Not enough ratings — use a blended neutral score
+            # Blend between neutral (60) and actual rating as more reviews come in
+            confidence = rating_count / config.min_ratings_for_full_score
+            base_rating_score = (rating / 5) * 100 if rating > 0 else 60
+            rating_score = (base_rating_score * confidence) + (60 * (1 - confidence))
+        else:
+            # Full confidence in the rating
+            rating_score = (rating / 5) * 100
+        breakdown['rating'] = round(rating_score, 1)
+        
+        # ====== 3. HISTORY SCORE (0-100) ======
+        # Based on delivery success rate (last 30 days)
         history = self._get_courier_history(courier)
         if history['total_deliveries'] == 0:
             history_score = 50  # Neutral for new couriers
@@ -215,25 +249,26 @@ class SmartDispatchService:
             history_score = success_rate * 100
         breakdown['history'] = round(history_score, 1)
         
-        # ====== 3. AVAILABILITY SCORE (0-100) ======
+        # ====== 4. AVAILABILITY SCORE (0-100) ======
         # Time since last delivery completion
-        # 100 if > 2 hours, 50 if 30 min, 20 if < 10 min (too recent = busy)
+        # High score = available and not overworked
+        # Low score = just finished a delivery (might be busy)
         last_completed = self._get_last_completion_time(courier)
         if last_completed is None:
-            availability_score = 70  # Good default
+            availability_score = 70  # Good default for idle couriers
         else:
             minutes_since = (timezone.now() - last_completed).total_seconds() / 60
             if minutes_since > 120:
-                availability_score = 100
+                availability_score = 100  # Very available
             elif minutes_since > 30:
                 availability_score = 70 + (minutes_since - 30) * 0.33
             elif minutes_since > 10:
                 availability_score = 30 + (minutes_since - 10) * 2
             else:
-                availability_score = 20  # Too recent, might be busy
-        breakdown['availability'] = round(availability_score, 1)
+                availability_score = 20  # Just finished, likely still busy
+        breakdown['availability'] = round(min(100, availability_score), 1)
         
-        # ====== 4. FINANCIAL HEALTH SCORE (0-100) ======
+        # ====== 5. FINANCIAL HEALTH SCORE (0-100) ======
         # Based on wallet balance relative to debt ceiling
         wallet = float(courier.wallet_balance)
         ceiling = float(courier.debt_ceiling)
@@ -241,30 +276,75 @@ class SmartDispatchService:
         if wallet >= 0:
             financial_score = 100  # No debt = perfect
         else:
-            # Negative wallet: score decreases as debt increases
-            debt_ratio = abs(wallet) / ceiling
+            # Negative wallet: score decreases as debt ratio increases
+            debt_ratio = abs(wallet) / ceiling if ceiling > 0 else 1
             financial_score = max(0, 100 - (debt_ratio * 100))
         breakdown['financial'] = round(financial_score, 1)
         
-        # ====== 5. RESPONSE TIME SCORE (0-100) ======
-        # Average time to accept orders (placeholder for now)
-        response_score = 75  # Default until we have data
+        # ====== 6. RESPONSE TIME SCORE (0-100) ======
+        # Average time to accept orders
+        avg_response = float(courier.average_response_seconds)
+        if avg_response <= 0:
+            response_score = 70  # No data, neutral
+        elif avg_response <= 30:
+            response_score = 100  # Lightning fast
+        elif avg_response <= 60:
+            response_score = 80 + (60 - avg_response) * 0.67  # Good
+        elif avg_response <= 120:
+            response_score = 50 + (120 - avg_response) * 0.5  # OK
+        elif avg_response <= 300:
+            response_score = 20 + (300 - avg_response) * 0.17  # Slow
+        else:
+            response_score = 10  # Very slow
         breakdown['response'] = round(response_score, 1)
+        
+        # ====== 7. LEVEL SCORE (0-100) ======
+        # Based on courier gamification level
+        level_score = config.get_level_score(courier.courier_level)
+        breakdown['level'] = round(level_score, 1)
+        
+        # ====== 8. ACCEPTANCE RATE SCORE (0-100) ======
+        # Based on acceptance_rate field
+        acceptance = float(courier.acceptance_rate)
+        if acceptance <= 0:
+            acceptance_score = 50  # No data
+        else:
+            # Direct mapping: 100% acceptance = 100 score
+            acceptance_score = acceptance
+        breakdown['acceptance'] = round(min(100, acceptance_score), 1)
         
         # ====== WEIGHTED TOTAL ======
         total_score = (
-            breakdown['distance'] * self.config.weight_distance +
-            breakdown['history'] * self.config.weight_history +
-            breakdown['availability'] * self.config.weight_availability +
-            breakdown['financial'] * self.config.weight_financial +
-            breakdown['response'] * self.config.weight_response
+            breakdown['distance'] * config.weight_distance +
+            breakdown['rating'] * config.weight_rating +
+            breakdown['history'] * config.weight_history +
+            breakdown['availability'] * config.weight_availability +
+            breakdown['financial'] * config.weight_financial +
+            breakdown['response'] * config.weight_response +
+            breakdown['level'] * config.weight_level +
+            breakdown['acceptance'] * config.weight_acceptance
         )
+        
+        # ====== BONUSES & PENALTIES ======
+        
+        # Streak bonus
+        if config.streak_bonus_enabled and courier.consecutive_success_streak > 0:
+            streak_bonus = min(
+                courier.consecutive_success_streak * config.streak_bonus_per_delivery,
+                config.streak_bonus_max
+            )
+            bonuses['streak'] = round(streak_bonus, 1)
+        
+        # Probation penalty
+        if courier.onboarding_status == 'PROBATION':
+            bonuses['probation'] = -config.probation_penalty
         
         return CourierScore(
             courier=courier,
             distance_km=distance_km,
-            score=total_score,
-            score_breakdown=breakdown
+            score=round(total_score, 1),
+            score_breakdown=breakdown,
+            bonuses=bonuses
         )
     
     def _get_courier_history(self, courier: User) -> Dict[str, int]:
@@ -275,7 +355,7 @@ class SmartDispatchService:
         if cached:
             return cached
         
-        # Query delivery history
+        # Query delivery history for last 30 days
         stats = Delivery.objects.filter(
             courier=courier,
             created_at__gte=timezone.now() - timedelta(days=30)
@@ -298,14 +378,25 @@ class SmartDispatchService:
     
     def _get_last_completion_time(self, courier: User):
         """Get timestamp of last completed delivery."""
+        cache_key = f"courier_last_completed_{courier.id}"
+        cached = cache.get(cache_key)
+        
+        if cached is not None:
+            return cached if cached != 'NONE' else None
+        
         try:
             last_delivery = Delivery.objects.filter(
                 courier=courier,
                 status=DeliveryStatus.COMPLETED,
                 completed_at__isnull=False
-            ).order_by('-completed_at').first()
+            ).order_by('-completed_at').values_list('completed_at', flat=True).first()
             
-            return last_delivery.completed_at if last_delivery else None
+            cache.set(
+                cache_key,
+                last_delivery if last_delivery else 'NONE',
+                120  # Cache 2 min
+            )
+            return last_delivery
         except Exception:
             return None
 
@@ -318,12 +409,16 @@ def smart_dispatch_order(order_id: str, auto_assign: bool = False) -> Dict[str, 
     """
     Dispatch an order using the smart scoring algorithm.
     
+    Reads scoring weights and thresholds from the database
+    (DispatchConfiguration), so admins can adjust behavior
+    without code changes.
+    
     Args:
         order_id: UUID of the delivery order
         auto_assign: If True, automatically assign to best courier
     
     Returns:
-        Dict with dispatch results
+        Dict with dispatch results including scored courier list
     """
     try:
         delivery = Delivery.objects.get(pk=order_id)
@@ -341,8 +436,11 @@ def smart_dispatch_order(order_id: str, auto_assign: bool = False) -> Dict[str, 
     if not delivery.pickup_geo:
         raise ValueError("La commande n'a pas de point de ramassage")
     
+    # Load config from database (cached)
+    config = DispatchConfiguration.get_config()
+    
     # Find and score couriers
-    service = SmartDispatchService()
+    service = SmartDispatchService(config)
     scored_couriers = service.find_optimal_couriers(delivery.pickup_geo)
     
     if not scored_couriers:
@@ -350,11 +448,15 @@ def smart_dispatch_order(order_id: str, auto_assign: bool = False) -> Dict[str, 
         return {
             'success': False,
             'message': "Aucun coursier qualifié disponible",
-            'couriers': []
+            'couriers': [],
+            'config': {
+                'radius_searched': config.max_radius_km,
+                'min_threshold': config.min_score_threshold,
+            }
         }
     
     # Auto-assign if requested and top courier scores high enough
-    if auto_assign and scored_couriers[0].score >= DEFAULT_CONFIG.auto_assign_threshold:
+    if auto_assign and scored_couriers[0].total_with_bonuses >= config.auto_assign_threshold:
         best_courier = scored_couriers[0]
         
         try:
@@ -362,8 +464,10 @@ def smart_dispatch_order(order_id: str, auto_assign: bool = False) -> Dict[str, 
             accept_order(str(order_id), best_courier.courier)
             
             logger.info(
-                f"[SMART_DISPATCH] Auto-assigned {order_id[:8]} to "
-                f"{best_courier.courier.phone_number} (score: {best_courier.score:.1f})"
+                f"[SMART_DISPATCH] Auto-assigned {str(order_id)[:8]} to "
+                f"{best_courier.courier.phone_number} "
+                f"(score: {best_courier.total_with_bonuses:.1f}, "
+                f"level: {best_courier.courier.courier_level})"
             )
             
             return {
@@ -377,7 +481,7 @@ def smart_dispatch_order(order_id: str, auto_assign: bool = False) -> Dict[str, 
             logger.warning(f"[SMART_DISPATCH] Auto-assign failed: {e}")
     
     # Notify top couriers
-    notified = _notify_scored_couriers(scored_couriers, delivery)
+    notified = _notify_scored_couriers(scored_couriers, delivery, config)
     
     return {
         'success': True,
@@ -389,7 +493,8 @@ def smart_dispatch_order(order_id: str, auto_assign: bool = False) -> Dict[str, 
 
 def _notify_scored_couriers(
     scored_couriers: List[CourierScore],
-    delivery: Delivery
+    delivery: Delivery,
+    config: DispatchConfiguration
 ) -> int:
     """
     Notify scored couriers of the available delivery.
@@ -405,8 +510,9 @@ def _notify_scored_couriers(
     )
     
     notified = 0
+    max_notify = config.max_couriers_to_notify
     
-    for score in scored_couriers[:5]:  # Notify top 5 only
+    for score in scored_couriers[:max_notify]:
         courier = score.courier
         
         try:
@@ -432,7 +538,9 @@ def _notify_scored_couriers(
             notified += 1
             logger.info(
                 f"[SMART_DISPATCH] Queued notification for {courier.phone_number} "
-                f"(score: {score.score:.1f})"
+                f"(score: {score.total_with_bonuses:.1f}, "
+                f"level: {courier.courier_level}, "
+                f"rating: {courier.average_rating}⭐)"
             )
         except Exception as e:
             logger.error(
@@ -475,12 +583,16 @@ def _broadcast_to_couriers(
     
     async_to_sync(channel_layer.group_send)(f'dispatch_{city}', event)
     
-    # Also send directly to scored couriers
+    # Also send directly to scored couriers with their personalized score
     for score in scored_couriers:
-        event['distance_to_pickup'] = score.distance_km
+        personalized_event = {
+            **event,
+            'your_score': round(score.total_with_bonuses, 1),
+            'distance_to_pickup': round(score.distance_km, 2),
+        }
         async_to_sync(channel_layer.group_send)(
             f'courier_{score.courier.id}',
-            event
+            personalized_event
         )
 
 
@@ -507,3 +619,35 @@ def get_courier_score(courier_id: str, pickup_point: Point) -> Optional[CourierS
 def invalidate_courier_cache(courier_id: str):
     """Invalidate cached stats for a courier."""
     cache.delete(f"courier_history_{courier_id}")
+    cache.delete(f"courier_last_completed_{courier_id}")
+
+
+def get_dispatch_config_summary() -> Dict[str, Any]:
+    """
+    Get a human-readable summary of the current dispatch configuration.
+    Useful for debugging or displaying in the admin panel.
+    """
+    config = DispatchConfiguration.get_config()
+    
+    weights = {
+        'Distance': f"{config.weight_distance * 100:.0f}%",
+        'Note moyenne': f"{config.weight_rating * 100:.0f}%",
+        'Historique succès': f"{config.weight_history * 100:.0f}%",
+        'Disponibilité': f"{config.weight_availability * 100:.0f}%",
+        'Santé financière': f"{config.weight_financial * 100:.0f}%",
+        'Temps de réponse': f"{config.weight_response * 100:.0f}%",
+        'Niveau coursier': f"{config.weight_level * 100:.0f}%",
+        "Taux d'acceptation": f"{config.weight_acceptance * 100:.0f}%",
+    }
+    
+    return {
+        'weights': weights,
+        'total_weight': f"{config.total_weight * 100:.0f}%",
+        'weights_valid': config.weights_valid,
+        'search_radius': f"{config.initial_radius_km} → {config.max_radius_km} km",
+        'score_threshold': config.min_score_threshold,
+        'auto_assign_threshold': config.auto_assign_threshold,
+        'streak_bonus': config.streak_bonus_enabled,
+        'probation_penalty': config.probation_penalty,
+        'last_updated': config.updated_at,
+    }

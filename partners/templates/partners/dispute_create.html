@@ -1,0 +1,59 @@
+{% extends 'partners/base.html' %}
+{% load static %}
+
+{% block title %}Signaler un Litige{% endblock %}
+{% block page_title %}⚖️ Nouveau Litige<span>Commande #{{ delivery.id|stringformat:".8s" }}</span>{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 800px; margin: 0 auto;">
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <div style="margin-bottom: 24px;">
+            <label style="display: block; margin-bottom: 8px; color: rgba(255,255,255,0.7);">Raison du litige</label>
+            <select name="reason" required
+                style="width: 100%; padding: 12px; border-radius: 8px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); color: #fff;">
+                {% for code, label in reasons %}
+                <option value="{{ code }}">{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div style="margin-bottom: 24px;">
+            <label style="display: block; margin-bottom: 8px; color: rgba(255,255,255,0.7);">Description
+                détaillée</label>
+            <textarea name="description" required rows="6" placeholder="Veuillez expliquer le problème en détail..."
+                style="width: 100%; padding: 12px; border-radius: 8px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); color: #fff;"></textarea>
+        </div>
+
+        <div style="margin-bottom: 32px;">
+            <label style="display: block; margin-bottom: 8px; color: rgba(255,255,255,0.7);">Preuve Photo
+                (Optionnel)</label>
+            <div style="border: 2px dashed rgba(255,255,255,0.1); border-radius: 12px; padding: 32px; text-align: center; cursor: pointer;"
+                onclick="document.getElementById('photoInput').click()">
+                <div style="font-size: 2rem; margin-bottom: 12px;">📸</div>
+                <p style="color: rgba(255,255,255,0.5);">Cliquez pour ajouter une photo (colis endommagé, etc.)</p>
+                <input type="file" id="photoInput" name="photo" accept="image/*" style="display: none;"
+                    onchange="updateFileName(this)">
+                <p id="fileName" style="margin-top: 12px; color: #00d084; font-weight: 600;"></p>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 16px;">
+            <button type="submit" class="btn btn-primary" style="flex: 1; justify-content: center;">
+                Soumettre le litige
+            </button>
+            <a href="{% url 'partners:order_detail' delivery.id %}" class="btn btn-secondary">
+                Annuler
+            </a>
+        </div>
+    </form>
+</div>
+
+<script>
+    function updateFileName(input) {
+        const fileName = input.files[0] ? input.files[0].name : '';
+        document.getElementById('fileName').textContent = fileName ? '📄 ' + fileName : '';
+    }
+</script>
+{% endblock %}

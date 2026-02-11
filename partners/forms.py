@@ -41,7 +41,7 @@ class PartnerSignupForm(forms.ModelForm):
     
     class Meta:
         model = User
-        fields = ['phone_number', 'full_name']
+        fields = ['phone_number', 'full_name', 'business_type']
         widgets = {
             'phone_number': forms.TextInput(attrs={
                 'class': 'form-control',

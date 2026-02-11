@@ -23,6 +23,9 @@ from .views import (
     PartnerNotificationsView,
     PartnerProfileView,
     PartnerWalletView,
+    PartnerDisputeListView,
+    PartnerDisputeCreateView,
+    PartnerDisputeDetailView,
 )
 
 app_name = 'partners'
@@ -69,6 +72,11 @@ urlpatterns = [
     # Notifications
     path('notifications/', PartnerNotificationsView.as_view(), name='notifications'),
     
+    # Disputes
+    path('disputes/', PartnerDisputeListView.as_view(), name='disputes'),
+    path('disputes/new/<uuid:order_id>/', PartnerDisputeCreateView.as_view(), name='dispute_create'),
+    path('disputes/<uuid:dispute_id>/', PartnerDisputeDetailView.as_view(), name='dispute_detail'),
+
     # API Documentation (Protected - Login Required)
     path('docs/schema/', login_required(SpectacularAPIView.as_view()), name='schema'),
     path('docs/', login_required(SpectacularSwaggerView.as_view(url_name='partners:schema')), name='docs'),

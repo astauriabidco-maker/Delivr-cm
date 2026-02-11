@@ -1,0 +1,55 @@
+{% extends 'partners/base.html' %}
+{% load static %}
+
+{% block title %}Mes Litiges{% endblock %}
+{% block page_title %}⚖️ Gestion des Litiges{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2>Liste des litiges signalés</h2>
+        <a href="{% url 'partners:orders' %}" class="btn btn-primary btn-sm">Signaler un nouveau problème</a>
+    </div>
+
+    {% if disputes %}
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>ID Litige</th>
+                <th>Commande</th>
+                <th>Raison</th>
+                <th>Statut</th>
+                <th>Date</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for dispute in disputes %}
+            <tr>
+                <td><code style="color: #00d084;">#{{ dispute.id|stringformat:".8s" }}</code></td>
+                <td><a href="{% url 'partners:order_detail' dispute.delivery.id %}" style="color: #fff;">#{{
+                        dispute.delivery.id|stringformat:".8s" }}</a></td>
+                <td>{{ dispute.get_reason_display }}</td>
+                <td>
+                    <span class="status-badge status-{{ dispute.status|lower }}">
+                        {{ dispute.get_status_display }}
+                    </span>
+                </td>
+                <td style="color: rgba(255,255,255,0.5);">{{ dispute.created_at|date:"d/m/Y H:i" }}</td>
+                <td>
+                    <a href="{% url 'partners:dispute_detail' dispute.id %}"
+                        class="btn btn-secondary btn-sm">Détails</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div style="text-align: center; padding: 60px; color: rgba(255,255,255,0.5);">
+        <div style="font-size: 3rem; margin-bottom: 20px;">✅</div>
+        <h3>Aucun litige en cours</h3>
+        <p>Tout semble fonctionner parfaitement !</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

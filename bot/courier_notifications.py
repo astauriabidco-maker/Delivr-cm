@@ -27,7 +27,7 @@ class CourierNotificationTemplates:
     """WhatsApp message templates for courier notifications."""
     
     NEW_DELIVERY_AVAILABLE = """
-🚀 *Nouvelle Course Disponible!*
+✅ *Nouvelle Course Disponible!*
 
 📍 *Ramassage:* {pickup_address}
 🏁 *Livraison:* {dropoff_address}
@@ -45,13 +45,13 @@ class CourierNotificationTemplates:
 🏁 *Livraison:* {dropoff_address}
 📱 *Contact expéditeur:* {sender_phone}
 
-🔑 *Code OTP Retrait:* Sera envoyé à l'expéditeur
+🔐 *Code OTP Retrait:* Sera envoyé à l'expéditeur
 
 Rendez-vous au point de ramassage!
 """
 
     URGENT_DELIVERY = """
-🔥 *COURSE URGENTE - Proche de vous!*
+⚡ *COURSE URGENTE - Proche de vous!*
 
 📍 À seulement {distance_m}m de votre position!
 💰 *Gain:* {earning} XAF
@@ -70,14 +70,14 @@ Rendez-vous au point de ramassage ou répondez *ANNULER {delivery_id}*
 """
 
     DAILY_SUMMARY = """
-📊 *Résumé de la Journée*
+📊 *Résumé de la Journée - DELIVR-CM*
 
 📦 Courses complétées: {deliveries_count}
 💰 Gains du jour: {total_earnings} XAF
 📏 Distance parcourue: {total_distance} km
 ⭐ Note moyenne: {average_rating}
 
-Bonne soirée! 🌙
+✅ _Travail accompli avec succès !_
 """
 
     WEEKLY_BONUS = """

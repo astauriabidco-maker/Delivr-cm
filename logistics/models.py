@@ -16,8 +16,11 @@ class DeliveryStatus(models.TextChoices):
     """Delivery status enumeration."""
     PENDING = 'PENDING', 'En attente'
     ASSIGNED = 'ASSIGNED', 'Coursier assigné'
+    EN_ROUTE_PICKUP = 'EN_ROUTE_PICKUP', 'En route pour le retrait'
+    ARRIVED_PICKUP = 'ARRIVED_PICKUP', 'Arrivé au retrait'
     PICKED_UP = 'PICKED_UP', 'Colis récupéré'
     IN_TRANSIT = 'IN_TRANSIT', 'En transit'
+    ARRIVED_DROPOFF = 'ARRIVED_DROPOFF', 'Arrivé à la livraison'
     COMPLETED = 'COMPLETED', 'Livré'
     CANCELLED = 'CANCELLED', 'Annulé'
     FAILED = 'FAILED', 'Échec livraison'
@@ -556,3 +559,255 @@ class TrafficEventVote(models.Model):
     def __str__(self):
         vote = "👍" if self.is_upvote else "👎"
         return f"{vote} {self.voter} sur {self.event}"
+
+
+# ============================================
+# DISPATCH CONFIGURATION (Admin-Configurable)
+# ============================================
+
+class DispatchConfiguration(models.Model):
+    """
+    Singleton model for dynamic dispatch scoring configuration.
+    
+    Allows platform admins to adjust dispatch algorithm weights
+    and thresholds without code changes via Django Admin.
+    
+    Only ONE instance should exist at a time (enforced by save()).
+    """
+    
+    class Meta:
+        verbose_name = "Configuration du dispatch"
+        verbose_name_plural = "Configuration du dispatch"
+    
+    # ---- Search parameters ----
+    initial_radius_km = models.FloatField(
+        default=3.0,
+        verbose_name="Rayon initial (km)",
+        help_text="Rayon de recherche initial pour trouver des coursiers"
+    )
+    max_radius_km = models.FloatField(
+        default=10.0,
+        verbose_name="Rayon maximum (km)",
+        help_text="Rayon maximum de recherche si pas assez de coursiers"
+    )
+    radius_increment_km = models.FloatField(
+        default=2.0,
+        verbose_name="Incrément rayon (km)",
+        help_text="De combien augmenter le rayon à chaque itération"
+    )
+    max_couriers_to_score = models.PositiveIntegerField(
+        default=20,
+        verbose_name="Max coursiers à évaluer",
+        help_text="Nombre maximum de coursiers à scorer par commande"
+    )
+    max_couriers_to_notify = models.PositiveIntegerField(
+        default=5,
+        verbose_name="Max coursiers à notifier",
+        help_text="Nombre de meilleurs coursiers qui recevront la notification"
+    )
+    
+    # ---- Scoring weights (MUST sum to 1.0) ----
+    weight_distance = models.FloatField(
+        default=0.25,
+        verbose_name="⚖️ Poids : Distance",
+        help_text="Proximité au point de pickup (0.0 à 1.0)"
+    )
+    weight_rating = models.FloatField(
+        default=0.20,
+        verbose_name="⚖️ Poids : Note moyenne",
+        help_text="Note /5 donnée par les clients (0.0 à 1.0)"
+    )
+    weight_history = models.FloatField(
+        default=0.15,
+        verbose_name="⚖️ Poids : Historique",
+        help_text="Taux de livraisons réussies sur 30 jours (0.0 à 1.0)"
+    )
+    weight_availability = models.FloatField(
+        default=0.10,
+        verbose_name="⚖️ Poids : Disponibilité",
+        help_text="Temps écoulé depuis la dernière course (0.0 à 1.0)"
+    )
+    weight_financial = models.FloatField(
+        default=0.10,
+        verbose_name="⚖️ Poids : Santé financière",
+        help_text="Ratio dette/plafond (0.0 à 1.0)"
+    )
+    weight_response = models.FloatField(
+        default=0.05,
+        verbose_name="⚖️ Poids : Temps réponse",
+        help_text="Rapidité moyenne d'acceptation des courses (0.0 à 1.0)"
+    )
+    weight_level = models.FloatField(
+        default=0.10,
+        verbose_name="⚖️ Poids : Niveau coursier",
+        help_text="Bonus basé sur le niveau de gamification (0.0 à 1.0)"
+    )
+    weight_acceptance = models.FloatField(
+        default=0.05,
+        verbose_name="⚖️ Poids : Taux d'acceptation",
+        help_text="Pourcentage de courses acceptées vs refusées (0.0 à 1.0)"
+    )
+    
+    # ---- Thresholds ----
+    min_score_threshold = models.FloatField(
+        default=30.0,
+        verbose_name="Score minimum",
+        help_text="Score en dessous duquel un coursier n'est pas considéré (0-100)"
+    )
+    auto_assign_threshold = models.FloatField(
+        default=80.0,
+        verbose_name="Seuil d'auto-assignation",
+        help_text="Score au-dessus duquel le meilleur coursier est assigné automatiquement (0-100)"
+    )
+    
+    # ---- Distance scoring curve ----
+    distance_perfect_km = models.FloatField(
+        default=0.5,
+        verbose_name="Distance parfaite (km)",
+        help_text="Distance en dessous de laquelle le score distance = 100"
+    )
+    distance_zero_km = models.FloatField(
+        default=8.0,
+        verbose_name="Distance nulle (km)",
+        help_text="Distance au-dessus de laquelle le score distance = 0"
+    )
+    
+    # ---- Rating scoring ----
+    min_ratings_for_full_score = models.PositiveIntegerField(
+        default=10,
+        verbose_name="Nb min de notes",
+        help_text="Nombre minimum de notes pour que le score rating soit fiable (sinon score neutre)"
+    )
+    
+    # ---- Level bonus points ----
+    level_score_bronze = models.FloatField(
+        default=25.0,
+        verbose_name="Score niveau Bronze",
+        help_text="Score attribué aux coursiers BRONZE (0-100)"
+    )
+    level_score_silver = models.FloatField(
+        default=50.0,
+        verbose_name="Score niveau Silver",
+        help_text="Score attribué aux coursiers SILVER (0-100)"
+    )
+    level_score_gold = models.FloatField(
+        default=80.0,
+        verbose_name="Score niveau Gold",
+        help_text="Score attribué aux coursiers GOLD (0-100)"
+    )
+    level_score_platinum = models.FloatField(
+        default=100.0,
+        verbose_name="Score niveau Platinum",
+        help_text="Score attribué aux coursiers PLATINUM (0-100)"
+    )
+    
+    # ---- Streak bonus ----
+    streak_bonus_enabled = models.BooleanField(
+        default=True,
+        verbose_name="Bonus streak activé",
+        help_text="Ajouter un bonus au score si le coursier a une série de succès active"
+    )
+    streak_bonus_per_delivery = models.FloatField(
+        default=0.5,
+        verbose_name="Bonus par livraison streak",
+        help_text="Points bonus ajoutés par livraison consécutive réussie (max 10 pts)"
+    )
+    streak_bonus_max = models.FloatField(
+        default=10.0,
+        verbose_name="Bonus streak maximum",
+        help_text="Bonus maximum attribuable via le streak"
+    )
+    
+    # ---- Probation penalty ----
+    probation_penalty = models.FloatField(
+        default=15.0,
+        verbose_name="Pénalité probation",
+        help_text="Points retirés du score total pour les coursiers en probation"
+    )
+    
+    # ---- Cache ----
+    courier_stats_cache_ttl = models.PositiveIntegerField(
+        default=300,
+        verbose_name="Cache stats coursier (sec)",
+        help_text="Durée du cache pour les statistiques des coursiers (en secondes)"
+    )
+    
+    # ---- Metadata ----
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Dernière modification")
+    updated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        verbose_name="Modifié par"
+    )
+    notes = models.TextField(
+        blank=True,
+        verbose_name="Notes admin",
+        help_text="Notes internes sur les changements effectués"
+    )
+    
+    def __str__(self):
+        return "⚙️ Configuration du dispatch"
+    
+    @property
+    def total_weight(self):
+        """Sum of all scoring weights — should be 1.0."""
+        return round(
+            self.weight_distance +
+            self.weight_rating +
+            self.weight_history +
+            self.weight_availability +
+            self.weight_financial +
+            self.weight_response +
+            self.weight_level +
+            self.weight_acceptance,
+            4
+        )
+    
+    @property
+    def weights_valid(self):
+        """Check if weights sum to 1.0 (with tolerance)."""
+        return abs(self.total_weight - 1.0) < 0.01
+    
+    def clean(self):
+        """Validate that weights sum to 1.0."""
+        from django.core.exceptions import ValidationError
+        if not self.weights_valid:
+            raise ValidationError(
+                f"La somme des poids doit être égale à 1.0. "
+                f"Somme actuelle : {self.total_weight}"
+            )
+    
+    def save(self, *args, **kwargs):
+        """Enforce singleton pattern — only one config instance."""
+        self.pk = 1
+        super().save(*args, **kwargs)
+        # Invalidate cache
+        from django.core.cache import cache
+        cache.delete('dispatch_configuration')
+    
+    @classmethod
+    def get_config(cls):
+        """
+        Get the active dispatch configuration.
+        Creates default config if none exists.
+        Uses cache for performance.
+        """
+        from django.core.cache import cache
+        
+        config = cache.get('dispatch_configuration')
+        if config is None:
+            config, _ = cls.objects.get_or_create(pk=1)
+            cache.set('dispatch_configuration', config, 600)  # Cache 10 min
+        return config
+    
+    def get_level_score(self, level: str) -> float:
+        """Get the score for a courier level."""
+        level_map = {
+            'BRONZE': self.level_score_bronze,
+            'SILVER': self.level_score_silver,
+            'GOLD': self.level_score_gold,
+            'PLATINUM': self.level_score_platinum,
+        }
+        return level_map.get(level, self.level_score_bronze)

@@ -82,6 +82,14 @@ def broadcast_delivery_status(
     )
 
 
+def broadcast_delivery_update(delivery):
+    """Convenience wrapper for broadcasting delivery status changes."""
+    return broadcast_delivery_status(
+        delivery_id=str(delivery.id),
+        new_status=delivery.status
+    )
+
+
 def broadcast_courier_location(
     courier_id: str,
     latitude: float,

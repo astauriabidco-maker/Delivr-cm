@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="fr">
 
@@ -315,7 +316,7 @@
 <body>
     <nav class="sidebar">
         <div class="sidebar-logo">
-            <h1>🚀 DELIVR<span>-CM</span></h1>
+            <h1><img src="{% static 'img/logo.png' %}" alt="Logo" style="height: 30px; display: inline-block; vertical-align: middle;"> DELIVR<span>-CM</span></h1>
         </div>
         <div class="sidebar-nav">
             <a href="{% url 'partners:dashboard' %}">📊 Dashboard</a>
@@ -384,8 +385,7 @@
                 <div class="events-grid">
                     {% for event_code, event_name, event_desc in available_events %}
                     <label class="event-checkbox">
-                        <input type="checkbox" name="events" value="{{ event_code }}" {% if event_code in config.events
-                            %}checked{% endif %}>
+                        <input type="checkbox" name="events" value="{{ event_code }}" {% if event_code in config.events %}checked{% endif %}>
                         <div class="event-info">
                             <h4>{{ event_name }}</h4>
                             <p>{{ event_desc }}</p>

@@ -134,6 +134,18 @@ class User(AbstractBaseUser, PermissionsMixin):
         verbose_name="Couleur principale",
         help_text="Code hex, ex: #00d084"
     )
+    class BusinessType(models.TextChoices):
+        SOCIAL = 'SOCIAL', 'Réseaux Sociaux (Instagram, FB, WA)'
+        WEB = 'WEB', 'Site Web (WooCommerce, Shopify...)'
+        BOTH = 'BOTH', 'Les deux (Réseaux Sociaux & Site Web)'
+
+    business_type = models.CharField(
+        max_length=20,
+        choices=BusinessType.choices,
+        default=BusinessType.SOCIAL,
+        verbose_name="Type de business"
+    )
+
     welcome_message = models.TextField(
         blank=True,
         verbose_name="Message de bienvenue",

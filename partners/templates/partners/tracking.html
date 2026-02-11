@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="fr">
 
@@ -469,7 +470,7 @@
     <!-- Sidebar -->
     <nav class="sidebar">
         <div class="sidebar-logo">
-            <h1>🚀 DELIVR<span>-CM</span></h1>
+            <h1><img src="{% static 'img/logo.png' %}" alt="Logo" style="height: 30px; display: inline-block; vertical-align: middle;"> DELIVR<span>-CM</span></h1>
         </div>
         <div class="sidebar-nav">
             <a href="{% url 'partners:dashboard' %}">📊 Dashboard</a>

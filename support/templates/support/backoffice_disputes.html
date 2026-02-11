@@ -1,0 +1,140 @@
+{% extends 'partners/base.html' %}
+{% load static %}
+
+{% block title %}Backoffice Support - Litiges{% endblock %}
+{% block page_title %}⚖️ Support<span>Gestion des litiges</span>{% endblock %}
+
+{% block content %}
+<div class="kpi-grid">
+    <div class="kpi-card">
+        <div class="icon">📑</div>
+        <div class="value">{{ disputes.count }}</div>
+        <div class="label">Total Litiges</div>
+    </div>
+    <div class="kpi-card">
+        <div class="icon">⏳</div>
+        <div class="value yellow">{{ pending_count }}</div>
+        <div class="label">En attente</div>
+    </div>
+    <div class="kpi-card">
+        <div class="icon">🔍</div>
+        <div class="value blue">{{ investigating_count }}</div>
+        <div class="label">En cours</div>
+    </div>
+    <div class="kpi-card">
+        <div class="icon">✅</div>
+        <div class="value green">{{ resolved_count }}</div>
+        <div class="label">Résolus</div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2>📋 Liste des Litiges</h2>
+        <div style="display: flex; gap: 8px;">
+            <a href="?status=PENDING" class="btn btn-secondary btn-sm">En attente</a>
+            <a href="?status=INVESTIGATING" class="btn btn-secondary btn-sm">Investigation</a>
+            <a href="?" class="btn btn-secondary btn-sm">Tout voir</a>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>ID</th>
+                    <th>Commande</th>
+                    <th>Créateur</th>
+                    <th>Raison</th>
+                    <th>Statut</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for dispute in disputes %}
+                <tr>
+                    <td>{{ dispute.created_at|date:"d/m/Y H:i" }}</td>
+                    <td><code>#{{ dispute.id|slice:":8" }}</code></td>
+                    <td><a href="{% url 'partners:order_detail' dispute.delivery.id %}" style="color: #00d084;">#{{
+                            dispute.delivery.id|slice:":8" }}</a></td>
+                    <td>{{ dispute.creator.full_name }}<br><small style="color: rgba(255,255,255,0.5);">{{
+                            dispute.creator.phone_number }}</small></td>
+                    <td>{{ dispute.get_reason_display }}</td>
+                    <td>
+                        <span class="status-badge status-{{ dispute.status|lower }}">
+                            {{ dispute.get_status_display }}
+                        </span>
+                    </td>
+                    <td>
+                        <button onclick="openResolveModal('{{ dispute.id }}', '{{ dispute.delivery.id }}')"
+                            class="btn btn-primary btn-sm">Traiter</button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" style="text-align: center; padding: 40px; color: rgba(255,255,255,0.5);">
+                        Aucun litige trouvé.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Resolve Modal -->
+<div id="resolveModal" class="modal"
+    style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px);">
+    <div
+        style="background: #1a1a2e; margin: 10% auto; padding: 32px; border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; width: 500px; max-width: 90%;">
+        <h2 id="modalTitle" style="margin-bottom: 24px;">Résoudre le litige</h2>
+        <form method="post" id="resolveForm">
+            {% csrf_token %}
+            <input type="hidden" name="dispute_id" id="modalDisputeId">
+
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 8px; color: rgba(255,255,255,0.7);">Note de résolution /
+                    Motif rejection</label>
+                <textarea name="note" required
+                    style="width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 12px; color: #fff; height: 120px;"></textarea>
+            </div>
+
+            <div style="margin-bottom: 24px;">
+                <label style="display: block; margin-bottom: 8px; color: rgba(255,255,255,0.7);">Montant remboursement
+                    (XAF)</label>
+                <input type="number" name="refund_amount" value="0"
+                    style="width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 12px; color: #fff;">
+                <small style="color: #ffc107;">Sera crédité automatiquement sur le wallet du vendeur.</small>
+            </div>
+
+            <div style="display: flex; gap: 12px;">
+                <button type="submit" name="action" value="resolve" class="btn btn-primary" style="flex: 2;">✅ Résoudre
+                    & Rembourser</button>
+                <button type="submit" name="action" value="reject" class="btn btn-danger" style="flex: 1;">❌
+                    Rejeter</button>
+                <button type="button" onclick="closeModal()" class="btn btn-secondary">Annuler</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openResolveModal(disputeId, deliveryId) {
+        document.getElementById('modalDisputeId').value = disputeId;
+        document.getElementById('modalTitle').innerText = 'Traiter le litige - Commande #' + deliveryId.slice(0, 8).toUpperCase();
+        document.getElementById('resolveModal').style.display = 'block';
+    }
+
+    function closeModal() {
+        document.getElementById('resolveModal').style.display = 'none';
+    }
+
+    // Close modal when clicking outside
+    window.onclick = function (event) {
+        if (event.target == document.getElementById('resolveModal')) {
+            closeModal();
+        }
+    }
+</script>
+{% endblock %}

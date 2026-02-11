@@ -124,7 +124,7 @@ class _NewDeliveryPopupState extends ConsumerState<NewDeliveryPopup>
                     const SizedBox(width: 12),
                     const Expanded(
                       child: Text(
-                        '🚀 Nouvelle course !',
+                        '✅ Nouvelle course !',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 18,

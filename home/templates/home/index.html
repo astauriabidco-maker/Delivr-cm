@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="fr">
 
@@ -5,6 +6,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DELIVR-CM | Livraison E-commerce Douala & Yaoundé — GPS WhatsApp, Suivi Temps Réel</title>
+    <link rel="icon" type="image/png" href="{% static 'img/favicon.png' %}">
     <meta name="description"
         content="Service de livraison e-commerce à Douala et Yaoundé. GPS via WhatsApp, suivi temps réel, paiement Mobile Money, smart routing et app coursier gamifiée.">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -181,7 +183,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16 lg:h-20">
                 <a href="{% url 'home:home' %}" class="flex items-center gap-2">
-                    <span class="text-2xl">🚀</span>
+                    <img src="{% static 'img/logo.png' %}" alt="DELIVR-CM Logo" class="h-8 w-auto">
                     <span class="text-xl font-extrabold text-brand-blue">DELIVR<span
                             class="text-brand-orange">-CM</span></span>
                 </a>
@@ -250,7 +252,7 @@
                         class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start slide-up slide-up-delay-3">
                         <a href="{% url 'partners:signup' %}"
                             class="inline-flex items-center justify-center gap-2 px-7 py-4 bg-brand-orange text-white font-bold rounded-xl hover:bg-brand-orange-dark transition-all shadow-lg shadow-brand-orange/25 text-lg">
-                            <i class="fas fa-rocket"></i> Commencer à livrer
+                            <i class="fas fa-check-circle"></i> Expédier mes colis
                         </a>
                         <a href="{% url 'courier:onboarding' %}"
                             class="inline-flex items-center justify-center gap-2 px-7 py-4 bg-brand-blue text-white font-bold rounded-xl hover:bg-brand-blue-dark transition-all shadow-lg shadow-brand-blue/25 text-lg">
@@ -1169,7 +1171,7 @@
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
                 <a href="{% url 'partners:signup' %}"
                     class="inline-flex items-center justify-center gap-2 px-8 py-4 bg-brand-orange text-white font-bold rounded-xl hover:bg-brand-orange-dark transition-all shadow-lg shadow-brand-orange/25 text-lg"><i
-                        class="fas fa-rocket"></i> Commencer à livrer</a>
+                        class="fas fa-check-circle"></i> Expédier mes colis</a>
                 <a href="{% url 'courier:onboarding' %}"
                     class="inline-flex items-center justify-center gap-2 px-8 py-4 bg-brand-blue text-white font-bold rounded-xl hover:bg-brand-blue-dark transition-all shadow-lg text-lg"><i
                         class="fas fa-motorcycle"></i> Devenir Coursier</a>
@@ -1185,9 +1187,11 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="grid md:grid-cols-4 gap-8 mb-12">
                 <div class="md:col-span-2">
-                    <a href="{% url 'home:home' %}" class="flex items-center gap-2 mb-4"><span
-                            class="text-2xl">🚀</span><span class="text-xl font-extrabold text-white">DELIVR<span
-                                class="text-brand-orange">-CM</span></span></a>
+                    <a href="{% url 'home:home' %}" class="flex items-center gap-2 mb-4">
+                        <img src="{% static 'img/logo.png' %}" alt="Logo" class="h-8 w-auto brightness-0 invert">
+                        <span class="text-xl font-extrabold text-white">DELIVR<span
+                                class="text-brand-orange">-CM</span></span>
+                    </a>
                     <p class="text-gray-400 max-w-sm mb-4">La plateforme logistique intelligente pour le e-commerce
                         camerounais. GPS WhatsApp, smart routing, trafic temps réel, app coursier gamifiée.</p>
                     <div class="flex gap-4">

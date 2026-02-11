@@ -23,6 +23,13 @@ websocket_urlpatterns = [
         consumers.CourierConsumer.as_asgi()
     ),
     
+    # Courier tracking (legacy or alternative URL used by mobile app)
+    # ws://localhost:8000/ws/courier/tracking/
+    re_path(
+        r'ws/courier/tracking/$',
+        consumers.CourierConsumer.as_asgi()
+    ),
+    
     # Dispatch zone - monitor all deliveries in a city
     # ws://localhost:8000/ws/dispatch/<city>/
     re_path(

@@ -950,3 +950,177 @@ class ReportView(AdminRequiredMixin, TemplateView):
         
         return context
 
+
+# ============================================
+# SETTINGS / CONFIGURATION VIEW (Super Admin)
+# ============================================
+
+class SuperAdminRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
+    """Only allows superusers (platform owners)."""
+    def test_func(self):
+        return self.request.user.is_superuser
+
+
+class SettingsView(SuperAdminRequiredMixin, TemplateView):
+    """
+    Unified configuration hub for super-admins.
+    
+    Groups all platform configurations in one place:
+    - Dispatch algorithm (weights, thresholds, radii)
+    - Notification toggles (sender/recipient per status)
+    """
+    template_name = 'fleet/settings.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        from logistics.models import DispatchConfiguration
+        from bot.models import NotificationConfiguration
+        
+        dispatch_config = DispatchConfiguration.get_config()
+        notif_config = NotificationConfiguration.get_config()
+        
+        context['dispatch_config'] = dispatch_config
+        context['notif_config'] = notif_config
+        
+        # Build notification matrix for display
+        statuses = [
+            ('📦 Commande créée', 'PENDING', 'order_created'),
+            ('🏍️ Coursier assigné', 'ASSIGNED', 'assigned'),
+            ('🚗 En route pickup', 'EN_ROUTE_PICKUP', 'en_route_pickup'),
+            ('📍 Arrivé pickup', 'ARRIVED_PICKUP', 'arrived_pickup'),
+            ('📤 Colis récupéré', 'PICKED_UP', 'picked_up'),
+            ('🚀 En transit', 'IN_TRANSIT', 'in_transit'),
+            ('📍 Arrivé destination', 'ARRIVED_DROPOFF', 'arrived_dropoff'),
+            ('✅ Livraison terminée', 'COMPLETED', 'completed'),
+            ('❌ Annulée', 'CANCELLED', 'cancelled'),
+            ('❌ Échouée', 'FAILED', 'failed'),
+        ]
+        
+        notif_matrix = []
+        for label, status, key in statuses:
+            notif_matrix.append({
+                'label': label,
+                'status': status,
+                'key': key,
+                'sender': notif_config.is_enabled(status, 'sender'),
+                'recipient': notif_config.is_enabled(status, 'recipient'),
+                'sender_field': f'notify_sender_{key}',
+                'recipient_field': f'notify_recipient_{key}',
+            })
+        context['notif_matrix'] = notif_matrix
+        
+        # Dispatch weights for chart
+        context['dispatch_weights'] = [
+            {'name': 'Distance', 'value': dispatch_config.weight_distance, 'color': '#4CAF50'},
+            {'name': 'Note moyenne', 'value': dispatch_config.weight_rating, 'color': '#2196F3'},
+            {'name': 'Historique', 'value': dispatch_config.weight_history, 'color': '#FF9800'},
+            {'name': 'Disponibilité', 'value': dispatch_config.weight_availability, 'color': '#9C27B0'},
+            {'name': 'Finance', 'value': dispatch_config.weight_financial, 'color': '#F44336'},
+            {'name': 'Réponse', 'value': dispatch_config.weight_response, 'color': '#00BCD4'},
+            {'name': 'Niveau', 'value': dispatch_config.weight_level, 'color': '#FFC107'},
+            {'name': 'Acceptation', 'value': dispatch_config.weight_acceptance, 'color': '#795548'},
+        ]
+        context['dispatch_weights_json'] = json.dumps(context['dispatch_weights'])
+        
+        return context
+    
+    def post(self, request, *args, **kwargs):
+        """Handle config updates."""
+        section = request.POST.get('section', '')
+        
+        if section == 'dispatch':
+            self._update_dispatch_config(request)
+        elif section == 'notifications':
+            self._update_notification_config(request)
+        
+        return redirect('fleet:settings')
+    
+    def _update_dispatch_config(self, request):
+        """Update dispatch configuration from form data."""
+        from logistics.models import DispatchConfiguration
+        
+        config = DispatchConfiguration.get_config()
+        
+        float_fields = [
+            'initial_radius_km', 'max_radius_km', 'radius_increment_km',
+            'weight_distance', 'weight_rating', 'weight_history',
+            'weight_availability', 'weight_financial', 'weight_response',
+            'weight_level', 'weight_acceptance',
+            'min_score_threshold', 'auto_assign_threshold',
+            'distance_perfect_km', 'distance_zero_km',
+            'level_score_bronze', 'level_score_silver',
+            'level_score_gold', 'level_score_platinum',
+            'streak_bonus_per_delivery', 'streak_bonus_max',
+            'probation_penalty',
+        ]
+        
+        int_fields = [
+            'max_couriers_to_score', 'max_couriers_to_notify',
+            'min_ratings_for_full_score', 'courier_stats_cache_ttl',
+        ]
+        
+        for field in float_fields:
+            value = request.POST.get(field)
+            if value:
+                try:
+                    setattr(config, field, float(value))
+                except (ValueError, TypeError):
+                    pass
+        
+        for field in int_fields:
+            value = request.POST.get(field)
+            if value:
+                try:
+                    setattr(config, field, int(value))
+                except (ValueError, TypeError):
+                    pass
+        
+        config.streak_bonus_enabled = 'streak_bonus_enabled' in request.POST
+        config.notes = request.POST.get('notes', config.notes)
+        config.updated_by = request.user
+        
+        # Validate weights
+        if not config.weights_valid:
+            messages.error(
+                request,
+                f"⚠️ La somme des poids doit être 1.0. "
+                f"Somme actuelle : {config.total_weight:.2f}"
+            )
+            return
+        
+        config.save()
+        messages.success(request, "✅ Configuration du dispatch mise à jour !")
+    
+    def _update_notification_config(self, request):
+        """Update notification toggles from form data."""
+        from bot.models import NotificationConfiguration
+        
+        config = NotificationConfiguration.get_config()
+        
+        # Toggle fields (checkboxes)
+        toggle_fields = [
+            'notify_sender_order_created', 'notify_recipient_order_created',
+            'notify_sender_assigned', 'notify_recipient_assigned',
+            'notify_sender_en_route_pickup', 'notify_recipient_en_route_pickup',
+            'notify_sender_arrived_pickup', 'notify_recipient_arrived_pickup',
+            'notify_sender_picked_up', 'notify_recipient_picked_up',
+            'notify_sender_in_transit', 'notify_recipient_in_transit',
+            'notify_sender_arrived_dropoff', 'notify_recipient_arrived_dropoff',
+            'notify_sender_completed', 'notify_recipient_completed',
+            'notify_sender_cancelled', 'notify_recipient_cancelled',
+            'notify_sender_failed', 'notify_recipient_failed',
+            'notify_dispute_updates', 'notify_daily_summary',
+            'notify_rating_request',
+        ]
+        
+        for field in toggle_fields:
+            setattr(config, field, field in request.POST)
+        
+        config.notes = request.POST.get('notif_notes', config.notes)
+        config.updated_by = request.user
+        config.save()
+        
+        messages.success(request, "✅ Configuration des notifications mise à jour !")
+
+

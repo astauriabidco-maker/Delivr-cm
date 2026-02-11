@@ -536,9 +536,9 @@ class BotMessageBuilder:
     @staticmethod
     def welcome() -> str:
         return (
-            "👋 Bienvenue sur DELIVR-CM !\n\n"
+            "👋 Bienvenue sur *DELIVR-CM* !\n\n"
             "📍 Envoyez votre *position GPS* de retrait du colis.\n\n"
-            "_Utilisez le bouton 📎 > Localisation dans WhatsApp_"
+            "✅ _Livré avec confiance_"
         )
     
     @staticmethod
@@ -611,8 +611,8 @@ class BotMessageBuilder:
     @staticmethod
     def help_message() -> str:
         return (
-            "🚀 *DELIVR-CM - Aide*\n\n"
+            "✅ *DELIVR-CM - Aide*\n\n"
             "📦 *NOUVEAU* - Passer une nouvelle commande\n"
             "❓ *AIDE* - Afficher ce message\n\n"
-            "_Service de livraison rapide à Douala et Yaoundé_"
+            "_Livré avec confiance à Douala et Yaoundé_"
         )

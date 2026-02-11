@@ -405,3 +405,216 @@ class TrafficEventAdmin(GISModelAdmin):
         updated = queryset.update(is_active=True, resolved_at=None)
         self.message_user(request, f"{updated} événement(s) réactivé(s).")
 
+
+# ===========================================
+# DISPATCH CONFIGURATION ADMIN
+# ===========================================
+
+from .models import DispatchConfiguration
+
+@admin.register(DispatchConfiguration)
+class DispatchConfigurationAdmin(admin.ModelAdmin):
+    """
+    Admin for dispatch scoring configuration.
+    
+    Singleton model — only one instance exists.
+    Admins can adjust all scoring weights, thresholds, and bonuses.
+    """
+    
+    list_display = (
+        '__str__',
+        'weights_status',
+        'radius_display',
+        'threshold_display',
+        'updated_at',
+        'updated_by_display',
+    )
+    
+    readonly_fields = ('updated_at', 'weight_total_display')
+    
+    fieldsets = (
+        ('📊 Résumé des poids', {
+            'fields': ('weight_total_display',),
+            'description': (
+                '<p style="font-size:14px;color:#666;">'
+                'La somme de tous les poids <strong>doit être égale à 1.0</strong> (100%). '
+                'Si ce n\'est pas le cas, un message d\'erreur s\'affichera à la sauvegarde.</p>'
+            ),
+        }),
+        ('🔍 Paramètres de recherche', {
+            'fields': (
+                ('initial_radius_km', 'max_radius_km', 'radius_increment_km'),
+                ('max_couriers_to_score', 'max_couriers_to_notify'),
+            ),
+            'description': (
+                '<p>Contrôle la zone de recherche des coursiers autour du point de pickup.</p>'
+            ),
+        }),
+        ('⚖️ Poids du scoring (DOIVENT sommer à 1.0)', {
+            'fields': (
+                ('weight_distance', 'weight_rating'),
+                ('weight_history', 'weight_availability'),
+                ('weight_financial', 'weight_response'),
+                ('weight_level', 'weight_acceptance'),
+            ),
+            'description': (
+                '<p><strong>Ces 8 facteurs déterminent quel coursier reçoit la course en premier.</strong></p>'
+                '<ul>'
+                '<li><strong>Distance</strong> : Plus le coursier est proche du pickup, meilleur est le score</li>'
+                '<li><strong>Note moyenne</strong> : Note /5 donnée par les clients</li>'
+                '<li><strong>Historique</strong> : Taux de réussite sur les 30 derniers jours</li>'
+                '<li><strong>Disponibilité</strong> : Temps depuis la dernière course (éviter la surcharge)</li>'
+                '<li><strong>Santé financière</strong> : Ratio dette/plafond du wallet</li>'
+                '<li><strong>Temps de réponse</strong> : Vitesse moyenne d\'acceptation des courses</li>'
+                '<li><strong>Niveau coursier</strong> : Bronze/Silver/Gold/Platinum</li>'
+                '<li><strong>Taux d\'acceptation</strong> : % de courses acceptées vs refusées</li>'
+                '</ul>'
+            ),
+        }),
+        ('🎯 Seuils de décision', {
+            'fields': (
+                ('min_score_threshold', 'auto_assign_threshold'),
+            ),
+            'description': (
+                '<p><strong>Score minimum</strong> : En dessous, le coursier est ignoré.<br/>'
+                '<strong>Auto-assignation</strong> : Au-dessus, le meilleur coursier est assigné automatiquement.</p>'
+            ),
+        }),
+        ('📏 Courbe de distance', {
+            'fields': (
+                ('distance_perfect_km', 'distance_zero_km'),
+            ),
+            'classes': ('collapse',),
+            'description': (
+                '<p>Score = 100 en dessous de "Distance parfaite", '
+                'Score = 0 au-dessus de "Distance nulle", interpolé entre les deux.</p>'
+            ),
+        }),
+        ('⭐ Scoring par note', {
+            'fields': ('min_ratings_for_full_score',),
+            'classes': ('collapse',),
+            'description': (
+                '<p>Si le coursier a moins de notes que ce seuil, '
+                'son score "Note" est blendé entre sa note réelle et un score neutre (60).</p>'
+            ),
+        }),
+        ('🏆 Score par niveau', {
+            'fields': (
+                ('level_score_bronze', 'level_score_silver'),
+                ('level_score_gold', 'level_score_platinum'),
+            ),
+            'classes': ('collapse',),
+        }),
+        ('🔥 Bonus & Pénalités', {
+            'fields': (
+                'streak_bonus_enabled',
+                ('streak_bonus_per_delivery', 'streak_bonus_max'),
+                'probation_penalty',
+            ),
+            'description': (
+                '<p><strong>Streak</strong> : Bonus ajouté au score total pour les séries de succès.<br/>'
+                '<strong>Probation</strong> : Pénalité soustraite du score des coursiers en période d\'essai.</p>'
+            ),
+        }),
+        ('🗄️ Cache & Performance', {
+            'fields': ('courier_stats_cache_ttl',),
+            'classes': ('collapse',),
+        }),
+        ('📝 Métadonnées', {
+            'fields': ('notes', 'updated_at'),
+        }),
+    )
+    
+    def weights_status(self, obj):
+        from django.utils.html import format_html
+        total = obj.total_weight
+        if obj.weights_valid:
+            return format_html(
+                '<span style="color:green;font-weight:bold;">✅ {:.0f}%</span>',
+                total * 100
+            )
+        return format_html(
+            '<span style="color:red;font-weight:bold;">❌ {:.1f}% (≠ 100%)</span>',
+            total * 100
+        )
+    weights_status.short_description = "Poids"
+    
+    def radius_display(self, obj):
+        return f"{obj.initial_radius_km} → {obj.max_radius_km} km"
+    radius_display.short_description = "Rayon"
+    
+    def threshold_display(self, obj):
+        return f"Min: {obj.min_score_threshold} | Auto: {obj.auto_assign_threshold}"
+    threshold_display.short_description = "Seuils"
+    
+    def updated_by_display(self, obj):
+        if obj.updated_by:
+            return obj.updated_by.full_name or obj.updated_by.phone_number
+        return "—"
+    updated_by_display.short_description = "Modifié par"
+    
+    def weight_total_display(self, obj):
+        from django.utils.html import format_html
+        total = obj.total_weight
+        weights = [
+            ('Distance', obj.weight_distance),
+            ('Note moyenne', obj.weight_rating),
+            ('Historique', obj.weight_history),
+            ('Disponibilité', obj.weight_availability),
+            ('Santé financière', obj.weight_financial),
+            ('Temps réponse', obj.weight_response),
+            ('Niveau coursier', obj.weight_level),
+            ("Taux d'acceptation", obj.weight_acceptance),
+        ]
+        
+        bars = ""
+        colors = ['#4CAF50', '#2196F3', '#FF9800', '#9C27B0', '#F44336', '#00BCD4', '#FFC107', '#795548']
+        for i, (name, value) in enumerate(weights):
+            pct = value * 100
+            bars += (
+                f'<div style="display:flex;align-items:center;margin:4px 0;">'
+                f'<span style="width:150px;font-size:12px;">{name}</span>'
+                f'<div style="background:#eee;width:300px;height:20px;border-radius:4px;overflow:hidden;">'
+                f'<div style="background:{colors[i]};width:{pct}%;height:100%;"></div>'
+                f'</div>'
+                f'<span style="margin-left:8px;font-weight:bold;font-size:12px;">{pct:.0f}%</span>'
+                f'</div>'
+            )
+        
+        status_color = 'green' if obj.weights_valid else 'red'
+        status_icon = '✅' if obj.weights_valid else '❌'
+        
+        return format_html(
+            '<div style="padding:10px;background:#f8f9fa;border-radius:8px;max-width:500px;">'
+            '{}'
+            '<hr style="margin:8px 0;">'
+            '<div style="font-size:14px;font-weight:bold;color:{};">'
+            '{} Total : {:.0f}%'
+            '</div>'
+            '</div>',
+            bars, status_color, status_icon, total * 100
+        )
+    weight_total_display.short_description = "Répartition des poids"
+    
+    def save_model(self, request, obj, form, change):
+        """Track who made the change."""
+        obj.updated_by = request.user
+        super().save_model(request, obj, form, change)
+    
+    def has_add_permission(self, request):
+        """Only one config instance is allowed (singleton)."""
+        return not DispatchConfiguration.objects.exists()
+    
+    def has_delete_permission(self, request, obj=None):
+        """Cannot delete the configuration."""
+        return False
+    
+    def changelist_view(self, request, extra_context=None):
+        """Redirect to the single config instance or create it."""
+        obj, _ = DispatchConfiguration.objects.get_or_create(pk=1)
+        from django.shortcuts import redirect
+        return redirect(
+            f'/admin/logistics/dispatchconfiguration/{obj.pk}/change/'
+        )
+
+

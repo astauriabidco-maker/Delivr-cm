@@ -593,9 +593,18 @@
                 <span>Rapports</span>
             </a>
 
+            {% if request.user.is_superuser %}
+            <div class="nav-section">Configuration</div>
+            <a href="{% url 'fleet:settings' %}"
+                class="nav-link {% if request.resolver_match.url_name == 'settings' %}active{% endif %}">
+                <span class="nav-icon">⚙️</span>
+                <span>Paramètres</span>
+            </a>
+            {% endif %}
+
             <div class="nav-section">Retour</div>
             <a href="/admin/" class="nav-link">
-                <span class="nav-icon">⚙️</span>
+                <span class="nav-icon">🔧</span>
                 <span>Admin Django</span>
             </a>
         </nav>

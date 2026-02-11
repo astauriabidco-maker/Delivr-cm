@@ -596,18 +596,18 @@ class PartnerTrackingView(BusinessRequiredMixin, View):
         
         # Get active deliveries (in progress)
         active_statuses = [
-            DeliveryStatus.ASSIGNED,
-            DeliveryStatus.EN_ROUTE_PICKUP,
-            DeliveryStatus.ARRIVED_PICKUP,
-            DeliveryStatus.PICKED_UP,
-            DeliveryStatus.IN_TRANSIT,
-            DeliveryStatus.ARRIVED_DROPOFF,
+            'ASSIGNED',
+            'EN_ROUTE_PICKUP',
+            'ARRIVED_PICKUP',
+            'PICKED_UP',
+            'IN_TRANSIT',
+            'ARRIVED_DROPOFF',
         ]
         
         active_deliveries = Delivery.objects.filter(
             models.Q(sender=request.user) | models.Q(shop=request.user),
             status__in=active_statuses
-        ).select_related('courier', 'pickup_neighborhood', 'dropoff_neighborhood').order_by('-created_at')
+        ).select_related('courier', 'dropoff_neighborhood').order_by('-created_at')
         
         # Build deliveries data for map
         deliveries_data = []
@@ -619,16 +619,16 @@ class PartnerTrackingView(BusinessRequiredMixin, View):
                 'status_display': d.get_status_display(),
                 'recipient_name': d.recipient_name,
                 'recipient_phone': d.recipient_phone,
-                'pickup_address': d.pickup_address or (d.pickup_neighborhood.name if d.pickup_neighborhood else 'GPS'),
-                'dropoff_address': d.dropoff_address or (d.dropoff_neighborhood.name if d.dropoff_neighborhood else 'GPS'),
-                'pickup_lat': float(d.pickup_lat) if d.pickup_lat else None,
-                'pickup_lng': float(d.pickup_lng) if d.pickup_lng else None,
-                'dropoff_lat': float(d.dropoff_lat) if d.dropoff_lat else None,
-                'dropoff_lng': float(d.dropoff_lng) if d.dropoff_lng else None,
+                'pickup_address': d.pickup_address or 'Position GPS',
+                'dropoff_address': d.dropoff_address or (d.dropoff_neighborhood.name if d.dropoff_neighborhood else 'Position GPS'),
+                'pickup_lat': d.pickup_geo.y if d.pickup_geo else None,
+                'pickup_lng': d.pickup_geo.x if d.pickup_geo else None,
+                'dropoff_lat': d.dropoff_geo.y if d.dropoff_geo else None,
+                'dropoff_lng': d.dropoff_geo.x if d.dropoff_geo else None,
                 'courier_name': d.courier.full_name if d.courier else None,
                 'courier_phone': d.courier.phone_number if d.courier else None,
-                'courier_lat': float(d.courier.last_lat) if d.courier and d.courier.last_lat else None,
-                'courier_lng': float(d.courier.last_lng) if d.courier and d.courier.last_lng else None,
+                'courier_lat': d.courier.last_location.y if d.courier and d.courier.last_location else None,
+                'courier_lng': d.courier.last_location.x if d.courier and d.courier.last_location else None,
                 'created_at': d.created_at.isoformat(),
             })
         
@@ -766,7 +766,18 @@ class PartnerAnalyticsView(BusinessRequiredMixin, View):
             }
             for s in status_orders
         ]
-        
+
+        # ========================================
+        # Dispute Stats
+        # ========================================
+        from support.models import Dispute
+        disputes = Dispute.objects.filter(
+            delivery__in=deliveries
+        )
+        stats['total_disputes'] = disputes.count()
+        stats['resolved_disputes'] = disputes.filter(status='RESOLVED').count()
+        stats['dispute_rate'] = round((stats['total_disputes'] / stats['total_orders'] * 100) if stats['total_orders'] > 0 else 0, 1)
+
         context = {
             'stats': stats,
             'period': period,
@@ -779,6 +790,90 @@ class PartnerAnalyticsView(BusinessRequiredMixin, View):
         
         return render(request, self.template_name, context)
 
+
+class PartnerDisputeListView(BusinessRequiredMixin, View):
+    """
+    List of disputes for the partner.
+    """
+    template_name = 'partners/dispute_list.html'
+    
+    def get(self, request):
+        from support.models import Dispute
+        disputes = Dispute.objects.filter(
+            models.Q(delivery__sender=request.user) | models.Q(delivery__shop=request.user)
+        ).select_related('delivery').order_by('-created_at')
+        
+        return render(request, self.template_name, {
+            'disputes': disputes,
+        })
+
+
+class PartnerDisputeCreateView(BusinessRequiredMixin, View):
+    """
+    Create a new dispute for a delivery.
+    """
+    template_name = 'partners/dispute_create.html'
+    
+    def get(self, request, order_id):
+        from logistics.models import Delivery
+        try:
+            delivery = Delivery.objects.get(pk=order_id, sender=request.user)
+        except Delivery.DoesNotExist:
+            messages.error(request, "Commande non trouvée.")
+            return redirect('partners:orders')
+            
+        from support.models import DisputeReason
+        return render(request, self.template_name, {
+            'delivery': delivery,
+            'reasons': DisputeReason.choices,
+        })
+        
+    def post(self, request, order_id):
+        from logistics.models import Delivery
+        from support.services import SupportService
+        
+        try:
+            delivery = Delivery.objects.get(pk=order_id, sender=request.user)
+        except Delivery.DoesNotExist:
+            messages.error(request, "Commande non trouvée.")
+            return redirect('partners:orders')
+            
+        reason = request.POST.get('reason', 'OTHER')
+        description = request.POST.get('description', '')
+        photo = request.FILES.get('photo')
+        
+        SupportService.create_dispute(
+            delivery=delivery,
+            creator=request.user,
+            reason=reason,
+            description=description,
+            photo_evidence=photo
+        )
+        
+        messages.success(request, "✅ Votre litige a été enregistré. Notre équipe l'examinera sous peu.")
+        return redirect('partners:orders') # Redirect back to orders after creation
+
+
+class PartnerDisputeDetailView(BusinessRequiredMixin, View):
+    """
+    Detail of a dispute.
+    """
+    template_name = 'partners/dispute_detail.html'
+    
+    def get(self, request, dispute_id):
+        from support.models import Dispute
+        try:
+            dispute = Dispute.objects.get(
+                pk=dispute_id,
+                creator=request.user
+            )
+        except Dispute.DoesNotExist:
+            messages.error(request, "Litige non trouvé.")
+            return redirect('partners:dashboard')
+            
+        return render(request, self.template_name, {
+            'dispute': dispute,
+        })
 
 # ============================================
 # NOTIFICATIONS VIEW - Event history
@@ -870,7 +965,7 @@ class PartnerOrderDetailView(BusinessRequiredMixin, View):
         try:
             delivery = Delivery.objects.select_related(
                 'courier', 'sender', 'shop',
-                'pickup_neighborhood', 'dropoff_neighborhood'
+                'dropoff_neighborhood'
             ).get(
                 models.Q(sender=request.user) | models.Q(shop=request.user),
                 pk=order_id

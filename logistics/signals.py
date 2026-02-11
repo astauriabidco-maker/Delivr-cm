@@ -170,30 +170,12 @@ def _handle_delivery_update(delivery: Delivery):
     # WhatsApp notifications on status change
     # =============================================
     try:
-        from bot.whatsapp_service import (
-            send_pickup_confirmed_notification,
-            send_otp_to_recipient,
-            send_delivery_completed_notification,
-            send_delivery_status_notification,
-        )
+        from bot.whatsapp_service import notify_delivery_status_change
         
-        if delivery.status == DeliveryStatus.PICKED_UP:
-            # Notify sender that the courier has picked up the package
-            send_pickup_confirmed_notification(delivery)
-            
-        elif delivery.status == DeliveryStatus.IN_TRANSIT:
-            # Re-send OTP to recipient (reminder: courier is on the way)
-            if delivery.recipient_phone:
-                send_otp_to_recipient(delivery)
-            
-        elif delivery.status == DeliveryStatus.COMPLETED:
-            # Notify sender that delivery is done
-            send_delivery_completed_notification(delivery)
+        # Unified dispatcher: handles ALL statuses for sender + recipient
+        # Each notification checks NotificationConfiguration before sending
+        notify_delivery_status_change(delivery, delivery.status)
         
-        elif delivery.status in (DeliveryStatus.ASSIGNED,):
-            # Generic status notification to sender
-            send_delivery_status_notification(delivery, delivery.status)
-            
     except Exception as e:
         logger.warning(f"[SIGNAL] WhatsApp status notification failed: {e}")
     

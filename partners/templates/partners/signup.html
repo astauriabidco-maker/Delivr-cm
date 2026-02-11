@@ -1,194 +1,208 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Devenir Partenaire - DELIVR-CM</title>
+    <title>S'inscrire | DELIVR-CM — Expédiez vos colis en 5 min</title>
+    <link rel="icon" type="image/png" href="{% static 'img/favicon.png' %}">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'brand-blue': '#1e3a5f',
+                        'brand-blue-dark': '#152a45',
+                        'brand-orange': '#ff6b35',
+                        'brand-orange-dark': '#e55a2b',
+                        'brand-green': '#25d366',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-        .container {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(20px);
-            border-radius: 24px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 48px;
-            width: 100%;
-            max-width: 480px;
-        }
-        .logo {
-            text-align: center;
-            margin-bottom: 32px;
-        }
-        .logo h1 {
-            font-size: 2rem;
-            color: #fff;
-            font-weight: 800;
-        }
-        .logo span {
-            color: #00d084;
-        }
-        .logo p {
-            color: rgba(255, 255, 255, 0.6);
-            margin-top: 8px;
-        }
-        h2 {
-            color: #fff;
-            font-size: 1.5rem;
-            margin-bottom: 24px;
-            text-align: center;
-        }
-        .form-group {
-            margin-bottom: 20px;
-        }
-        label {
-            display: block;
-            color: rgba(255, 255, 255, 0.8);
-            margin-bottom: 8px;
-            font-size: 0.9rem;
-        }
-        .form-control {
-            width: 100%;
-            padding: 14px 16px;
-            border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            background: rgba(255, 255, 255, 0.05);
-            color: #fff;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-        }
-        .form-control:focus {
-            outline: none;
-            border-color: #00d084;
-            background: rgba(0, 208, 132, 0.05);
-        }
-        .form-control::placeholder {
-            color: rgba(255, 255, 255, 0.4);
-        }
-        .btn {
-            width: 100%;
-            padding: 16px;
-            border-radius: 12px;
-            border: none;
-            background: linear-gradient(135deg, #00d084 0%, #00a86b 100%);
-            color: #fff;
-            font-size: 1.1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-top: 12px;
-        }
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(0, 208, 132, 0.3);
-        }
-        .alert {
-            padding: 16px;
-            border-radius: 12px;
-            margin-bottom: 24px;
-            font-size: 0.9rem;
-        }
-        .alert-error {
-            background: rgba(255, 82, 82, 0.15);
-            border: 1px solid rgba(255, 82, 82, 0.3);
-            color: #ff5252;
-        }
-        .alert-success {
-            background: rgba(0, 208, 132, 0.15);
-            border: 1px solid rgba(0, 208, 132, 0.3);
-            color: #00d084;
-        }
-        .login-link {
-            text-align: center;
-            margin-top: 24px;
-            color: rgba(255, 255, 255, 0.6);
-        }
-        .login-link a {
-            color: #00d084;
-            text-decoration: none;
-        }
-        ul.errorlist {
-            list-style: none;
-            padding: 0;
-            margin: 0 0 16px 0;
-        }
-        ul.errorlist li {
-            color: #ff5252;
-            font-size: 0.85rem;
-            margin-bottom: 4px;
+        .glass {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
     </style>
 </head>
-<body>
-    <div class="container">
-        <div class="logo">
-            <h1>🚀 DELIVR<span>-CM</span></h1>
-            <p>Portail Partenaires E-commerce</p>
+
+<body
+    class="font-sans antialiased bg-gradient-to-br from-brand-blue-dark via-brand-blue to-blue-900 min-h-screen flex items-center justify-center p-4 py-12">
+
+    <div class="w-full max-w-lg">
+        <!-- Logo -->
+        <div class="text-center mb-8">
+            <a href="{% url 'home:home' %}" class="inline-flex items-center gap-2">
+                <img src="{% static 'img/logo.png' %}" alt="DELIVR-CM Logo" class="h-10 w-auto">
+                <span class="text-3xl font-extrabold text-white">DELIVR<span class="text-brand-orange">-CM</span></span>
+            </a>
+            <p class="text-white/70 mt-2">Rejoignez les vendeurs qui réussissent</p>
         </div>
-        
-        <h2>Devenir Partenaire</h2>
-        
-        {% if messages %}
+
+        <!-- Signup Card -->
+        <div class="glass rounded-3xl p-8 lg:p-10 shadow-2xl">
+            <h1 class="text-3xl font-black text-white text-center mb-2">Créer mon compte</h1>
+            <p class="text-white/60 text-center mb-8">Expédiez vos colis en quelques minutes</p>
+
+            {% if messages %}
             {% for message in messages %}
-                <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+            <div
+                class="mb-6 p-4 rounded-xl {% if message.tags == 'error' %}bg-red-500/20 text-red-200{% else %}bg-green-500/20 text-green-200{% endif %}">
+                <i
+                    class="fas {% if message.tags == 'error' %}fa-exclamation-circle{% else %}fa-check-circle{% endif %} mr-2"></i>
+                {{ message }}
+            </div>
             {% endfor %}
-        {% endif %}
-        
-        {% if form.errors %}
-            <div class="alert alert-error">
-                {% for field in form %}
-                    {{ field.errors }}
-                {% endfor %}
-                {{ form.non_field_errors }}
+            {% endif %}
+
+            {% if form.errors %}
+            <div class="mb-6 p-4 rounded-xl bg-red-500/20 text-red-200 text-sm">
+                <p class="font-bold mb-2"><i class="fas fa-exclamation-triangle mr-2"></i>Erreurs détectées :</p>
+                <ul class="list-disc list-inside">
+                    {% for field in form %}
+                    {% for error in field.errors %}
+                    <li>{{ error }}</li>
+                    {% endfor %}
+                    {% endfor %}
+                    {% for error in form.non_field_errors %}
+                    <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
             </div>
-        {% endif %}
-        
-        <form method="post">
-            {% csrf_token %}
-            
-            <div class="form-group">
-                <label for="id_phone_number">{{ form.phone_number.label }}</label>
-                {{ form.phone_number }}
+            {% endif %}
+
+            <form method="post" class="space-y-5">
+                {% csrf_token %}
+
+                <!-- WhatsApp Number -->
+                <div>
+                    <label for="id_phone_number" class="block text-white/80 text-sm font-medium mb-2">
+                        <i class="fas fa-phone mr-2"></i>Numéro WhatsApp
+                    </label>
+                    <div class="flex">
+                        <span
+                            class="inline-flex items-center px-4 bg-white/10 border border-r-0 border-white/20 rounded-l-xl text-white/70">
+                            +237
+                        </span>
+                        <input type="text" name="phone_number" id="id_phone_number" placeholder="6XXXXXXXX"
+                            class="flex-1 px-4 py-3 bg-white/5 border border-white/20 rounded-r-xl text-white placeholder-white/40 focus:outline-none focus:border-brand-orange focus:ring-1 focus:ring-brand-orange transition-all"
+                            required>
+                    </div>
+                </div>
+
+                <!-- Full Name -->
+                <div>
+                    <label for="id_full_name" class="block text-white/80 text-sm font-medium mb-2">
+                        <i class="fas fa-user mr-2"></i>Nom Complet
+                    </label>
+                    <input type="text" name="full_name" id="id_full_name" placeholder="Ex: Jean Kamga"
+                        class="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder-white/40 focus:outline-none focus:border-brand-orange focus:ring-1 focus:ring-brand-orange transition-all"
+                        required>
+                </div>
+
+                <!-- Boutique/Compagnie -->
+                <div>
+                    <label for="id_company_name" class="block text-white/80 text-sm font-medium mb-2">
+                        <i class="fas fa-store mr-2"></i>Nom de votre Boutique
+                    </label>
+                    <input type="text" name="company_name" id="id_company_name" placeholder="Ex: Fashion Store"
+                        class="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder-white/40 focus:outline-none focus:border-brand-orange focus:ring-1 focus:ring-brand-orange transition-all"
+                        required>
+                </div>
+
+                <!-- Business Type -->
+                <div>
+                    <label for="id_business_type" class="block text-white/80 text-sm font-medium mb-2">
+                        <i class="fas fa-bullseye mr-2"></i>Comment vendez-vous ?
+                    </label>
+                    <select name="business_type" id="id_business_type"
+                        class="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white focus:outline-none focus:border-brand-orange focus:ring-1 focus:ring-brand-orange transition-all appearance-none cursor-pointer">
+                        <option value="SOCIAL" class="bg-brand-blue">Réseaux Sociaux (Instagram, FB, WA)</option>
+                        <option value="WEB" class="bg-brand-blue">Site Web (E-commerce)</option>
+                        <option value="BOTH" class="bg-brand-blue">Les deux (Social et Boutique en ligne)</option>
+                    </select>
+                </div>
+
+                <!-- Password -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                        <label for="id_password" class="block text-white/80 text-sm font-medium mb-2">
+                            <i class="fas fa-lock mr-2"></i>Mot de passe
+                        </label>
+                        <input type="password" name="password" id="id_password" placeholder="••••••••"
+                            class="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder-white/40 focus:outline-none focus:border-brand-orange focus:ring-1 focus:ring-brand-orange transition-all"
+                            required>
+                    </div>
+                    <div>
+                        <label for="id_password_confirm" class="block text-white/80 text-sm font-medium mb-2">
+                            <i class="fas fa-check-double mr-2"></i>Confirmer
+                        </label>
+                        <input type="password" name="password_confirm" id="id_password_confirm" placeholder="••••••••"
+                            class="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder-white/40 focus:outline-none focus:border-brand-orange focus:ring-1 focus:ring-brand-orange transition-all"
+                            required>
+                    </div>
+                </div>
+
+                <div class="pt-4">
+                    <button type="submit"
+                        class="w-full py-4 bg-brand-orange text-white font-bold rounded-xl hover:bg-brand-orange-dark transition-all shadow-lg shadow-brand-orange/25 text-lg">
+                        <i class="fas fa-rocket mr-2"></i>
+                        Expédier mes colis
+                    </button>
+                </div>
+            </form>
+
+            <!-- Divider -->
+            <div class="my-8 flex items-center">
+                <div class="flex-1 border-t border-white/10"></div>
+                <span class="px-4 text-white/40 text-sm">déjà inscrit?</span>
+                <div class="flex-1 border-t border-white/10"></div>
             </div>
-            
-            <div class="form-group">
-                <label for="id_full_name">{{ form.full_name.label }}</label>
-                {{ form.full_name }}
-            </div>
-            
-            <div class="form-group">
-                <label for="id_company_name">{{ form.company_name.label }}</label>
-                {{ form.company_name }}
-            </div>
-            
-            <div class="form-group">
-                <label for="id_password">{{ form.password.label }}</label>
-                {{ form.password }}
-            </div>
-            
-            <div class="form-group">
-                <label for="id_password_confirm">{{ form.password_confirm.label }}</label>
-                {{ form.password_confirm }}
-            </div>
-            
-            <button type="submit" class="btn">🚀 Créer mon compte partenaire</button>
-        </form>
-        
-        <p class="login-link">
-            Déjà inscrit ? <a href="/admin/">Connexion</a>
+
+            <!-- Login Link -->
+            <p class="text-center text-white/70">
+                <a href="{% url 'partners:login' %}" class="text-brand-orange font-bold hover:underline">
+                    Se connecter à mon espace
+                </a>
+            </p>
+        </div>
+
+        <!-- Legal -->
+        <p class="text-center mt-8 text-white/40 text-xs px-4">
+            En vous inscrivant, vous acceptez nos <a href="#" class="underline">Conditions d'Utilisaton</a> et notre <a
+                href="#" class="underline">Politique de Confidentialité</a>.
+        </p>
+
+        <!-- Back to Home -->
+        <p class="text-center mt-6">
+            <a href="{% url 'home:home' %}" class="text-white/60 hover:text-white transition-colors text-sm">
+                <i class="fas fa-arrow-left mr-2"></i>
+                Retour à l'accueil
+            </a>
         </p>
     </div>
+
 </body>
+
 </html>
