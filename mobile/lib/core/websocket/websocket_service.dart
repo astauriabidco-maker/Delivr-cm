@@ -8,6 +8,7 @@ import 'package:web_socket_channel/status.dart' as status;
 import 'package:connectivity_plus/connectivity_plus.dart';
 
 import '../auth/auth_provider.dart';
+import '../config/app_config.dart';
 import '../../features/notifications/notification_service.dart';
 
 /// WebSocket connection states
@@ -108,11 +109,9 @@ class WebSocketService {
     _setupConnectivityListener();
   }
 
-  /// WebSocket URL
+  /// WebSocket URL — reads from centralized config
   String get wsUrl {
-    const baseUrl = 'wss://api.delivr.cm';  // Production
-    // const baseUrl = 'ws://10.0.2.2:8000';  // Android Emulator
-    return '$baseUrl/ws/courier/';
+    return AppConfig.current.courierWsUrl;
   }
 
   /// Connect to WebSocket server

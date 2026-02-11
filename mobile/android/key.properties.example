@@ -1,0 +1,15 @@
+# =============================================
+# DELIVR-CM Release Signing Configuration
+# =============================================
+# Copy this file to key.properties and fill in your values
+# cp key.properties.example key.properties
+#
+# To generate a keystore:
+# keytool -genkey -v -keystore delivr-release.jks -keyalg RSA -keysize 2048 -validity 10000 -alias delivr
+#
+# IMPORTANT: Never commit key.properties or .jks files to git!
+
+storePassword=your_keystore_password
+keyPassword=your_key_password
+keyAlias=delivr
+storeFile=../delivr-release.jks

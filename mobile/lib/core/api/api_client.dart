@@ -3,11 +3,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+import '../config/app_config.dart';
 import 'interceptors.dart';
-
-/// Base API URL
-// const String baseUrl = 'https://api.delivr.cm';  // Production
-const String baseUrl = 'http://localhost:8000';  // Web development
 
 /// Secure storage for tokens
 final secureStorageProvider = Provider<FlutterSecureStorage>((ref) {
@@ -18,14 +15,16 @@ final secureStorageProvider = Provider<FlutterSecureStorage>((ref) {
   );
 });
 
-/// Dio HTTP client provider
+/// Dio HTTP client provider — reads URL from centralized AppConfig
 final dioProvider = Provider<Dio>((ref) {
+  final config = AppConfig.current;
+  
   final dio = Dio(
     BaseOptions(
-      baseUrl: baseUrl,
-      connectTimeout: const Duration(seconds: 30),
-      receiveTimeout: const Duration(seconds: 30),
-      sendTimeout: const Duration(seconds: 30),
+      baseUrl: config.apiBaseUrl,
+      connectTimeout: config.connectTimeout,
+      receiveTimeout: config.receiveTimeout,
+      sendTimeout: config.connectTimeout,
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
@@ -36,7 +35,7 @@ final dioProvider = Provider<Dio>((ref) {
   // Add interceptors
   dio.interceptors.addAll([
     AuthInterceptor(ref),
-    LoggingInterceptor(),
+    if (config.enableLogging) LoggingInterceptor(),
     RetryInterceptor(dio),
   ]);
   

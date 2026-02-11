@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 import '../auth/auth_provider.dart';
+import '../config/app_config.dart';
 
 /// WebSocket connection state
 enum WebSocketState {
@@ -219,7 +220,7 @@ class TrackingWebSocketService {
 
 /// Provider for WebSocket service
 final trackingWebSocketProvider = Provider<TrackingWebSocketService>((ref) {
-  final service = TrackingWebSocketService(baseUrl: 'http://localhost:8000');
+  final service = TrackingWebSocketService(baseUrl: AppConfig.current.apiBaseUrl);
   ref.onDispose(() => service.dispose());
   return service;
 });
