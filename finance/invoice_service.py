@@ -15,6 +15,7 @@ from django.core.files.base import ContentFile
 from django.db import transaction
 from django.db.models import Sum, Count
 from django.utils import timezone
+from .models import Invoice, InvoiceType
 
 logger = logging.getLogger(__name__)
 

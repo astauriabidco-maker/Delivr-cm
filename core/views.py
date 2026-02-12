@@ -8,6 +8,7 @@ from rest_framework.response import Response
 from django.contrib.auth import get_user_model
 from django.contrib.gis.geos import Point
 from django.utils import timezone
+from django.db import models
 
 from .serializers import (
     UserSerializer, UserCreateSerializer, 

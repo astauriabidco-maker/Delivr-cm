@@ -15,6 +15,7 @@ from django.shortcuts import get_object_or_404
 
 from core.models import User, UserRole
 from .services import ReportGenerator
+from django.conf import settings
 
 logger = logging.getLogger(__name__)
 

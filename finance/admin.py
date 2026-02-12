@@ -3,6 +3,7 @@ Django Admin configuration for FINANCE app.
 """
 
 from django.contrib import admin
+from django.core.files.base import ContentFile
 from .models import Transaction, TransactionType, TransactionStatus
 
 
