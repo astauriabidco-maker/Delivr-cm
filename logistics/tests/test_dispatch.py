@@ -11,7 +11,7 @@ Tests cover:
 from unittest.mock import patch, MagicMock, PropertyMock
 from django.test import TestCase
 
-from .models import DispatchConfiguration
+from logistics.models import DispatchConfiguration
 
 
 class DispatchConfigurationModelTest(TestCase):
