@@ -1,0 +1,104 @@
+name: DELIVR-CM CI/CD
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  # ==========================================
+  # Job 1: Backend (Django + PostGIS)
+  # ==========================================
+  backend-tests:
+    runs-on: ubuntu-latest
+    
+    services:
+      db:
+        image: postgis/postgis:15-3.3
+        env:
+          POSTGRES_DB: delivr_db
+          POSTGRES_USER: delivr_user
+          POSTGRES_PASSWORD: delivr_secret
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install System Dependencies (PostGIS/GDAL)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y binutils libproj-dev gdal-bin libgdal-dev libgeos-dev
+
+      - name: Install Python Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Lint with Flake8
+        run: |
+          # stop the build if there are Python syntax errors or undefined names
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          # exit-zero treats all errors as warnings
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+      - name: Run Tests
+        env:
+          DB_NAME: delivr_db
+          DB_USER: delivr_user
+          DB_PASSWORD: delivr_secret
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DEBUG: "True"
+          SECRET_KEY: "ci-secret-key-123"
+        run: |
+          pytest
+
+  # ==========================================
+  # Job 2: Mobile (Flutter)
+  # ==========================================
+  mobile-tests:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.27.0' # Matches pubspec.yaml sdk constraint ^3.7.0 is broad, let's use a recent stable
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Verify formatting
+        run: flutter format --set-exit-if-changed .
+
+      - name: Analyze project
+        run: flutter analyze
+
+      - name: Run tests
+        run: flutter test
+
+      - name: Build Web
+        run: flutter build web --release
+
+      - name: Build Android APK
+        run: flutter build apk --debug # Debug for now to avoid signing issues in CI
