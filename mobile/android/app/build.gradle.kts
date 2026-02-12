@@ -21,6 +21,7 @@ android {
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
@@ -31,7 +32,7 @@ android {
 
     defaultConfig {
         applicationId = "cm.delivr.courier"
-        minSdk = 23  // Android 6.0+ (for background location)
+        minSdk = flutter.minSdkVersion  // Android 6.0+ (for background location)
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
@@ -75,6 +76,10 @@ android {
             isMinifyEnabled = false
         }
     }
+}
+
+dependencies {
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }
 
 flutter {

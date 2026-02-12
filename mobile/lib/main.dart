@@ -20,7 +20,7 @@ Future<void> main() async {
   // AppConfig.init(AppConfig.staging());            // Staging server
   // AppConfig.init(AppConfig.production());         // Production
   //
-  AppConfig.init(AppConfig.staging());
+  AppConfig.init(AppConfig.development());
   
   debugPrint('🚀 DELIVR starting with ${AppConfig.current}');
   
