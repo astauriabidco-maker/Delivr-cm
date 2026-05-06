@@ -748,7 +748,7 @@ class DispatchConfiguration(models.Model):
     )
     
     def __str__(self):
-        return "⚙️ Configuration du dispatch"
+        return "Configuration Dispatch"
     
     @property
     def total_weight(self):

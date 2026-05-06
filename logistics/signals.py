@@ -5,6 +5,7 @@ Auto-dispatch orders and broadcast real-time events.
 """
 
 import logging
+from django.db import transaction
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 
@@ -42,9 +43,10 @@ def on_delivery_saved(sender, instance, created, **kwargs):
     - Trigger financial transactions on completion
     """
     if created:
-        _handle_new_delivery(instance)
+        transaction.on_commit(lambda: _handle_new_delivery(instance))
     else:
-        _handle_delivery_update(instance)
+        previous = _previous_status.pop(instance.pk, None)
+        transaction.on_commit(lambda: _handle_delivery_update(instance, previous))
 
 
 def _handle_new_delivery(delivery: Delivery):
@@ -131,9 +133,11 @@ def _handle_new_delivery(delivery: Delivery):
         logger.error(f"[SIGNAL] Smart dispatch failed for {delivery.id}: {e}")
 
 
-def _handle_delivery_update(delivery: Delivery):
+def _handle_delivery_update(delivery: Delivery, previous_status=None):
     """Handle delivery status changes."""
-    previous = _previous_status.pop(delivery.pk, None)
+    previous = previous_status
+    if previous is None:
+        previous = _previous_status.pop(delivery.pk, None)
     
     if previous is None or previous == delivery.status:
         return  # No status change
@@ -286,4 +290,3 @@ def _handle_delivery_assigned(delivery: Delivery):
         )
     except Exception as e:
         logger.warning(f"[SIGNAL] Assignment notification failed: {e}")
-

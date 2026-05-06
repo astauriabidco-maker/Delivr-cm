@@ -21,7 +21,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from core.models import User, UserRole
 from core.gamification import GamificationService, LEVEL_THRESHOLDS
 from logistics.models import Delivery, DeliveryStatus
-from finance.models import Transaction, WalletService, TransactionType
+from finance.models import Transaction
 
 logger = logging.getLogger(__name__)
 
@@ -619,18 +619,10 @@ class ConfirmDropoffView(APIView):
         delivery.completed_at = timezone.now()
         delivery.save(update_fields=['status', 'completed_at', 'proof_photo'])
         
-        # Credit courier wallet (balance is on User model)
         courier = request.user
-        WalletService.credit(
-            user=courier,
-            amount=delivery.courier_earning,
-            transaction_type=TransactionType.DELIVERY_CREDIT,
-            delivery=delivery,
-            description=f'Course #{str(delivery.id)[:8]}'
-        )
-        
-        # Award XP
-        GamificationService.award_delivery_xp(courier, delivery)
+
+        # Update courier progression and badges.
+        GamificationService.process_delivery_completion(courier, delivery)
         
         # Broadcast update
         from logistics.events import broadcast_delivery_update
@@ -676,9 +668,9 @@ class UpdateLocationView(APIView):
         courier = request.user
         
         # Update location
-        courier.current_location = Point(float(lng), float(lat), srid=4326)
-        courier.last_location_at = timezone.now()
-        courier.save(update_fields=['current_location', 'last_location_at'])
+        courier.last_location = Point(float(lng), float(lat), srid=4326)
+        courier.last_location_updated = timezone.now()
+        courier.save(update_fields=['last_location', 'last_location_updated'])
         
         # Feed into traffic service
         speed = None

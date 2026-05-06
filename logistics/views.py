@@ -11,6 +11,7 @@ from django.contrib.gis.geos import Point
 from django.contrib.gis.db.models.functions import Distance
 from django.contrib.gis.measure import D
 from django.utils import timezone
+from django.db import transaction
 from django.db.models import Q
 from decimal import Decimal
 
@@ -29,7 +30,7 @@ from finance.models import WalletService
 
 class IsBusinessOrAdmin(permissions.BasePermission):
     """Permission for business or admin users."""
-    
+
     def has_permission(self, request, view):
         if not request.user.is_authenticated:
             return False
@@ -39,19 +40,19 @@ class IsBusinessOrAdmin(permissions.BasePermission):
 class HasAPIKeyOrIsBusinessOrAdmin(permissions.BasePermission):
     """
     Combined permission: Partner API Key OR authenticated business/admin user.
-    
+
     When authenticated via API Key:
     - Looks up the PartnerAPIKey to identify the partner
     - Injects `request.partner` with the partner User instance
     - The view MUST verify that shop_id == request.partner.id
-    
+
     When authenticated via session:
     - request.partner = request.user (for BUSINESS role)
     """
-    
+
     def has_permission(self, request, view):
         from partners.models import PartnerAPIKey
-        
+
         # Try API Key authentication first
         raw_key = self._extract_key(request)
         if raw_key:
@@ -63,17 +64,17 @@ class HasAPIKeyOrIsBusinessOrAdmin(permissions.BasePermission):
                     return True
             except Exception:
                 pass
-        
+
         # Fall back to session-based business/admin check
         if not request.user.is_authenticated:
             return False
-        
+
         if request.user.role in [UserRole.BUSINESS, UserRole.ADMIN]:
             request.partner = request.user
             return True
-        
+
         return False
-    
+
     def _extract_key(self, request):
         """Extract API key from Authorization header."""
         auth_header = request.META.get('HTTP_AUTHORIZATION', '')
@@ -86,15 +87,15 @@ class NeighborhoodViewSet(viewsets.ReadOnlyModelViewSet):
     """
     ViewSet for Neighborhood (read-only for API consumers).
     """
-    
+
     queryset = Neighborhood.objects.filter(is_active=True)
     permission_classes = [permissions.AllowAny]
-    
+
     def get_serializer_class(self):
         if self.action == 'list':
             return NeighborhoodListSerializer
         return NeighborhoodSerializer
-    
+
     def get_queryset(self):
         qs = super().get_queryset()
         city = self.request.query_params.get('city')
@@ -107,14 +108,14 @@ class DeliveryViewSet(viewsets.ModelViewSet):
     """
     ViewSet for Delivery management.
     """
-    
+
     queryset = Delivery.objects.all()
     serializer_class = DeliverySerializer
     permission_classes = [permissions.IsAuthenticated]
-    
+
     def get_queryset(self):
         user = self.request.user
-        
+
         if user.role == UserRole.ADMIN:
             return Delivery.objects.all()
         elif user.role == UserRole.COURIER:
@@ -132,14 +133,14 @@ class DeliveryViewSet(viewsets.ModelViewSet):
         serializer = DeliveryCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
-        
+
         # Build pickup point
         pickup_point = Point(
             data['pickup_longitude'],
             data['pickup_latitude'],
             srid=4326
         )
-        
+
         # Build dropoff point (GPS or neighborhood center)
         if data.get('dropoff_latitude') and data.get('dropoff_longitude'):
             dropoff_point = Point(
@@ -155,7 +156,7 @@ class DeliveryViewSet(viewsets.ModelViewSet):
             )
             dropoff_point = neighborhood.center_geo
             estimation_type = 'neighborhood'
-        
+
         # Calculate price
         safety_margin = 0.2 if estimation_type == 'neighborhood' else 0.0
         distance_km, total_price, platform_fee, courier_earning = pricing_engine().calculate_price(
@@ -163,7 +164,7 @@ class DeliveryViewSet(viewsets.ModelViewSet):
             destination=dropoff_point,
             safety_margin=safety_margin
         )
-        
+
         # Create delivery
         delivery = Delivery.objects.create(
             sender=request.user,
@@ -179,7 +180,7 @@ class DeliveryViewSet(viewsets.ModelViewSet):
             platform_fee=platform_fee,
             courier_earning=courier_earning
         )
-        
+
         return Response(
             DeliverySerializer(delivery).data,
             status=status.HTTP_201_CREATED
@@ -191,10 +192,10 @@ class DeliveryViewSet(viewsets.ModelViewSet):
         delivery = self.get_object()
         serializer = CourierAssignSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        
+
         from django.contrib.auth import get_user_model
         User = get_user_model()
-        
+
         try:
             courier = User.objects.get(
                 pk=serializer.validated_data['courier_id'],
@@ -205,18 +206,18 @@ class DeliveryViewSet(viewsets.ModelViewSet):
                 {'error': 'Coursier non trouvé.'},
                 status=status.HTTP_404_NOT_FOUND
             )
-        
+
         if courier.is_courier_blocked:
             return Response(
                 {'error': 'Ce coursier est bloqué pour dette excessive.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         delivery.courier = courier
         delivery.status = DeliveryStatus.ASSIGNED
         delivery.assigned_at = timezone.now()
         delivery.save(update_fields=['courier', 'status', 'assigned_at'])
-        
+
         return Response(DeliverySerializer(delivery).data)
 
     @action(detail=True, methods=['post'])
@@ -225,11 +226,11 @@ class DeliveryViewSet(viewsets.ModelViewSet):
         delivery = self.get_object()
         serializer = DeliveryStatusUpdateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        
+
         new_status = serializer.validated_data['status']
         otp_code = serializer.validated_data.get('otp_code')
         pickup_otp = serializer.validated_data.get('pickup_otp')
-        
+
         # PICKUP validation - requires OTP from sender + optional photo
         if new_status == DeliveryStatus.PICKED_UP:
             if pickup_otp != delivery.pickup_otp:
@@ -237,13 +238,13 @@ class DeliveryViewSet(viewsets.ModelViewSet):
                     {'error': 'Code OTP retrait invalide.'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-            
+
             # Save pickup photo if provided
             if 'pickup_photo' in request.FILES:
                 delivery.pickup_photo = request.FILES['pickup_photo']
-            
+
             delivery.picked_up_at = timezone.now()
-        
+
         # DELIVERY validation - requires OTP from recipient
         elif new_status == DeliveryStatus.COMPLETED:
             if otp_code != delivery.otp_code:
@@ -251,22 +252,16 @@ class DeliveryViewSet(viewsets.ModelViewSet):
                     {'error': 'Code OTP livraison invalide.'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-            
+
             # Save proof photo if provided
             if 'proof_photo' in request.FILES:
                 delivery.proof_photo = request.FILES['proof_photo']
-            
+
             delivery.completed_at = timezone.now()
-            
-            # Process financial transaction
-            if delivery.payment_method == PaymentMethod.CASH_P2P:
-                WalletService.process_cash_delivery(delivery)
-            else:
-                WalletService.process_prepaid_delivery(delivery)
-        
+
         delivery.status = new_status
         delivery.save()
-        
+
         return Response(DeliverySerializer(delivery).data)
 
     @action(detail=False, methods=['get'])
@@ -277,14 +272,14 @@ class DeliveryViewSet(viewsets.ModelViewSet):
                 {'error': 'Réservé aux coursiers.'},
                 status=status.HTTP_403_FORBIDDEN
             )
-        
+
         # Get courier location
         if not request.user.last_location:
             return Response(
                 {'error': 'Partagez votre position GPS.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         # Find deliveries within 3km radius
         radius_km = 3
         nearby = Delivery.objects.filter(
@@ -294,33 +289,33 @@ class DeliveryViewSet(viewsets.ModelViewSet):
         ).filter(
             distance__lte=D(km=radius_km)
         ).order_by('distance')[:20]
-        
+
         return Response(DeliverySerializer(nearby, many=True).data)
 
 
 class PublicQuoteAPIView(APIView):
     """
     Public API endpoint for price estimation (E-commerce partners).
-    
+
     This endpoint is designed for WooCommerce and the public checkout page.
     It accepts shop coordinates directly and doesn't require authentication.
-    
+
     POST /api/public/quote/
-    
+
     Request body (WooCommerce - legacy):
     {
         "shop_lat": 4.0511,       # Shop latitude
-        "shop_lng": 9.7679,       # Shop longitude  
+        "shop_lng": 9.7679,       # Shop longitude
         "city": "Douala",         # Destination city
         "neighborhood": "Akwa"    # Destination neighborhood name
     }
-    
+
     Request body (Public Checkout - new):
     {
         "shop_id": "uuid",        # Shop user ID (will lookup GPS from user)
         "neighborhood_id": 123    # Neighborhood ID
     }
-    
+
     Response:
     {
         "estimated_price": 1500,
@@ -328,17 +323,17 @@ class PublicQuoteAPIView(APIView):
         "currency": "XAF"
     }
     """
-    
+
     permission_classes = [permissions.AllowAny]
-    
+
     def post(self, request):
         from django.contrib.auth import get_user_model
         User = get_user_model()
-        
+
         # Support shop_id lookup (for public checkout)
         shop_id = request.data.get('shop_id')
         neighborhood_id = request.data.get('neighborhood_id')
-        
+
         # If shop_id provided, lookup GPS from user
         if shop_id:
             try:
@@ -359,11 +354,11 @@ class PublicQuoteAPIView(APIView):
             # Legacy: Get shop coordinates directly (from WooCommerce plugin settings)
             shop_lat = request.data.get('shop_lat') or request.data.get('pickup_latitude')
             shop_lng = request.data.get('shop_lng') or request.data.get('pickup_longitude')
-        
+
         # Get destination
         city = request.data.get('city', 'Douala')
         neighborhood_name = request.data.get('neighborhood') or request.data.get('dropoff_neighborhood')
-        
+
         # Support neighborhood_id (for public checkout)
         neighborhood = None
         if neighborhood_id:
@@ -379,19 +374,19 @@ class PublicQuoteAPIView(APIView):
                     {'error': 'Quartier non trouvé.'},
                     status=status.HTTP_404_NOT_FOUND
                 )
-        
+
         # Validate required fields
         if not neighborhood_name and not neighborhood_id:
             return Response(
                 {'error': 'Le champ neighborhood est requis.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         # Default shop location (Akwa center) if not provided
         if not shop_lat or not shop_lng:
             shop_lat = 4.0511
             shop_lng = 9.7679
-        
+
         try:
             shop_lat = float(shop_lat)
             shop_lng = float(shop_lng)
@@ -400,10 +395,10 @@ class PublicQuoteAPIView(APIView):
                 {'error': 'Coordonnées GPS invalides.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         # Build shop location
         shop_location = Point(shop_lng, shop_lat, srid=4326)
-        
+
         # Find neighborhood (if not already found by ID above)
         if not neighborhood:
             try:
@@ -420,7 +415,7 @@ class PublicQuoteAPIView(APIView):
                     'yaoundé': 1500,
                 }
                 fallback_price = fallback_prices.get(city.lower(), 2000)
-                
+
                 return Response({
                     'estimated_price': fallback_price,
                     'total_price': fallback_price,
@@ -429,10 +424,10 @@ class PublicQuoteAPIView(APIView):
                     'estimation_type': 'fallback',
                     'message': f'Quartier "{neighborhood_name}" non référencé, prix estimé.'
                 })
-        
+
         destination = neighborhood.center_geo
         safety_margin = 0.2  # 20% margin for uncertainty
-        
+
         # Calculate price
         try:
             distance_km, total_price, platform_fee, courier_earning = pricing_engine().calculate_price(
@@ -450,7 +445,7 @@ class PublicQuoteAPIView(APIView):
                 'estimation_type': 'fallback',
                 'error': str(e)
             })
-        
+
         return Response({
             'estimated_price': total_price,
             'total_price': total_price,
@@ -465,23 +460,23 @@ class PublicQuoteAPIView(APIView):
 class QuoteAPIView(APIView):
     """
     API endpoint for price estimation (E-commerce).
-    
+
     POST /api/quote
-    
+
     Authentication: API Key (via partner portal) OR Session auth.
     """
-    
+
     permission_classes = [HasAPIKeyOrIsBusinessOrAdmin]
-    
+
     def post(self, request):
         serializer = QuoteRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
-        
+
         # Get shop location
         from django.contrib.auth import get_user_model
         User = get_user_model()
-        
+
         try:
             shop = User.objects.get(pk=data['shop_id'], role=UserRole.BUSINESS)
         except User.DoesNotExist:
@@ -489,7 +484,7 @@ class QuoteAPIView(APIView):
                 {'error': 'Boutique non trouvée.'},
                 status=status.HTTP_404_NOT_FOUND
             )
-        
+
         # SECURITY: Verify shop_id matches the authenticated partner
         partner = getattr(request, 'partner', None)
         if partner and partner.role != UserRole.ADMIN and str(shop.pk) != str(partner.pk):
@@ -497,13 +492,13 @@ class QuoteAPIView(APIView):
                 {'error': 'Vous ne pouvez pas effectuer de devis pour une autre boutique.'},
                 status=status.HTTP_403_FORBIDDEN
             )
-        
+
         if not shop.last_location:
             return Response(
                 {'error': 'La boutique n\'a pas de position GPS enregistrée.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         # Determine destination
         if data.get('dropoff_latitude') and data.get('dropoff_longitude'):
             destination = Point(
@@ -532,11 +527,11 @@ class QuoteAPIView(APIView):
                     {'error': 'Quartier non trouvé.'},
                     status=status.HTTP_404_NOT_FOUND
                 )
-            
+
             destination = neighborhood.center_geo
             estimation_type = 'neighborhood'
             safety_margin = 0.2  # 20% margin for uncertainty
-        
+
         # Calculate price
         try:
             distance_km, total_price, platform_fee, courier_earning = pricing_engine().calculate_price(
@@ -549,7 +544,7 @@ class QuoteAPIView(APIView):
                 {'error': f'Erreur calcul prix: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-        
+
         response_data = {
             'distance_km': distance_km,
             'total_price': total_price,
@@ -558,29 +553,29 @@ class QuoteAPIView(APIView):
             'currency': 'XAF',
             'estimation_type': estimation_type
         }
-        
+
         return Response(QuoteResponseSerializer(response_data).data)
 
 
 class OrderAPIView(APIView):
     """
     API endpoint for creating orders (E-commerce).
-    
+
     POST /api/orders
-    
+
     Authentication: API Key (via partner portal) OR Session auth.
     """
-    
+
     permission_classes = [HasAPIKeyOrIsBusinessOrAdmin]
-    
+
     def post(self, request):
         serializer = OrderCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
-        
+
         from django.contrib.auth import get_user_model
         User = get_user_model()
-        
+
         # Get shop
         try:
             shop = User.objects.get(pk=data['shop_id'], role=UserRole.BUSINESS)
@@ -589,7 +584,7 @@ class OrderAPIView(APIView):
                 {'error': 'Boutique non trouvée.'},
                 status=status.HTTP_404_NOT_FOUND
             )
-        
+
         # SECURITY: Verify shop_id matches the authenticated partner
         # Prevents partner A from creating orders and debiting partner B's wallet
         partner = getattr(request, 'partner', None)
@@ -598,7 +593,7 @@ class OrderAPIView(APIView):
                 {'error': 'Accès refusé. Vous ne pouvez créer des commandes que pour votre propre boutique.'},
                 status=status.HTTP_403_FORBIDDEN
             )
-        
+
         # Get neighborhood
         try:
             neighborhood = Neighborhood.objects.get(
@@ -610,63 +605,78 @@ class OrderAPIView(APIView):
                 {'error': 'Quartier non trouvé.'},
                 status=status.HTTP_404_NOT_FOUND
             )
-        
+
         if not shop.last_location:
             return Response(
                 {'error': 'La boutique n\'a pas de position GPS.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         # Calculate price
         distance_km, total_price, platform_fee, courier_earning = pricing_engine().estimate_from_neighborhood(
             shop_location=shop.last_location,
             neighborhood_center=neighborhood.center_geo
         )
-        
-        # Check shop wallet for prepaid - CRITICAL B2B PROTECTION
-        if shop.wallet_balance < total_price:
+
+        try:
+            with transaction.atomic():
+                # Lock the shop wallet before creating the order, so a concurrent
+                # debit cannot invalidate the balance after validation.
+                shop = User.objects.select_for_update().get(pk=shop.pk)
+
+                # Check shop wallet for prepaid - CRITICAL B2B PROTECTION
+                if shop.wallet_balance < total_price:
+                    return Response(
+                        {
+                            'error': 'Solde insuffisant',
+                            'required': float(total_price),
+                            'available': float(shop.wallet_balance),
+                            'shortfall': float(total_price - shop.wallet_balance),
+                            'currency': 'XAF',
+                            'message': f'Veuillez recharger votre wallet. Requis: {total_price} XAF, Disponible: {shop.wallet_balance} XAF'
+                        },
+                        status=status.HTTP_402_PAYMENT_REQUIRED
+                    )
+
+                # Create or get client user (for tracking / future orders)
+                client, created = User.objects.get_or_create(
+                    phone_number=data['customer_phone'],
+                    defaults={
+                        'role': UserRole.CLIENT,
+                        'full_name': data.get('customer_name', ''),
+                    }
+                )
+
+                # Create delivery
+                # B2B: sender = SHOP (expéditeur), recipient = CUSTOMER (destinataire)
+                delivery = Delivery.objects.create(
+                    sender=shop,
+                    recipient_phone=data['customer_phone'],
+                    recipient_name=data.get('customer_name', ''),
+                    pickup_geo=shop.last_location,
+                    dropoff_neighborhood=neighborhood,
+                    package_description=data['items_description'],
+                    payment_method=PaymentMethod.PREPAID_WALLET,
+                    distance_km=distance_km,
+                    total_price=total_price,
+                    platform_fee=platform_fee,
+                    courier_earning=courier_earning,
+                    external_order_id=data.get('external_order_id', ''),
+                    shop=shop
+                )
+
+                # Debit shop wallet before post-commit side effects can dispatch.
+                WalletService.debit_business_for_order(shop, delivery)
+        except ValueError as e:
             return Response(
                 {
                     'error': 'Solde insuffisant',
-                    'required': float(total_price),
-                    'available': float(shop.wallet_balance),
-                    'shortfall': float(total_price - shop.wallet_balance),
+                    'message': str(e),
                     'currency': 'XAF',
-                    'message': f'Veuillez recharger votre wallet. Requis: {total_price} XAF, Disponible: {shop.wallet_balance} XAF'
                 },
                 status=status.HTTP_402_PAYMENT_REQUIRED
             )
-        
-        # Create or get client user (for tracking / future orders)
-        client, created = User.objects.get_or_create(
-            phone_number=data['customer_phone'],
-            defaults={
-                'role': UserRole.CLIENT,
-                'full_name': data.get('customer_name', ''),
-            }
-        )
-        
-        # Create delivery
-        # B2B: sender = SHOP (expéditeur), recipient = CUSTOMER (destinataire)
-        delivery = Delivery.objects.create(
-            sender=shop,
-            recipient_phone=data['customer_phone'],
-            recipient_name=data.get('customer_name', ''),
-            pickup_geo=shop.last_location,
-            dropoff_neighborhood=neighborhood,
-            package_description=data['items_description'],
-            payment_method=PaymentMethod.PREPAID_WALLET,
-            distance_km=distance_km,
-            total_price=total_price,
-            platform_fee=platform_fee,
-            courier_earning=courier_earning,
-            external_order_id=data.get('external_order_id', ''),
-            shop=shop
-        )
-        
-        # Debit shop wallet
-        WalletService.debit_business_for_order(shop, delivery)
-        
+
         return Response({
             'delivery_id': str(delivery.id),
             'status': delivery.status,
@@ -678,12 +688,12 @@ class OrderAPIView(APIView):
 class PublicOrderCreateAPIView(APIView):
     """
     Public API endpoint for creating orders (Hosted Checkout / Magic Link).
-    
+
     POST /api/public/orders/
-    
+
     This endpoint is PUBLIC (no authentication required).
     Used by the public checkout page for partners.
-    
+
     Request body:
     {
         "shop_id": "uuid",
@@ -693,7 +703,7 @@ class PublicOrderCreateAPIView(APIView):
         "package_description": "Description du colis",
         "payment_method": "CASH"
     }
-    
+
     Response:
     {
         "delivery_id": "uuid",
@@ -702,17 +712,17 @@ class PublicOrderCreateAPIView(APIView):
         "message": "Commande créée!"
     }
     """
-    
+
     permission_classes = [permissions.AllowAny]
-    
+
     def post(self, request):
         serializer = PublicOrderCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
-        
+
         from django.contrib.auth import get_user_model
         User = get_user_model()
-        
+
         # Get shop
         try:
             shop = User.objects.get(pk=data['shop_id'], role=UserRole.BUSINESS)
@@ -721,21 +731,21 @@ class PublicOrderCreateAPIView(APIView):
                 {'error': 'Boutique non trouvée.'},
                 status=status.HTTP_404_NOT_FOUND
             )
-        
+
         # Check if shop is approved
         if not shop.is_business_approved:
             return Response(
                 {'error': 'Cette boutique n\'est pas encore active.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         # Check shop wallet balance (must be >= 0)
         if shop.wallet_balance < Decimal('0'):
             return Response(
                 {'error': 'Cette boutique ne peut pas accepter de commandes pour le moment.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         # Get neighborhood
         try:
             neighborhood = Neighborhood.objects.get(
@@ -747,19 +757,19 @@ class PublicOrderCreateAPIView(APIView):
                 {'error': 'Quartier non trouvé.'},
                 status=status.HTTP_404_NOT_FOUND
             )
-        
+
         # Shop location (default to Akwa if not set)
         if shop.last_location:
             shop_location = shop.last_location
         else:
             shop_location = Point(9.7679, 4.0511, srid=4326)  # Default Akwa
-        
+
         # Calculate price
         distance_km, total_price, platform_fee, courier_earning = pricing_engine().estimate_from_neighborhood(
             shop_location=shop_location,
             neighborhood_center=neighborhood.center_geo
         )
-        
+
         # Create or get client user
         client, created = User.objects.get_or_create(
             phone_number=data['client_phone'],
@@ -768,12 +778,12 @@ class PublicOrderCreateAPIView(APIView):
                 'full_name': data['client_name']
             }
         )
-        
+
         # Update client name if provided and user exists
         if not created and data['client_name'] and not client.full_name:
             client.full_name = data['client_name']
             client.save(update_fields=['full_name'])
-        
+
         # Create delivery with CASH payment (COD - Cash on Delivery)
         # Public checkout: sender = SHOP (expéditeur), recipient = CLIENT (destinataire)
         delivery = Delivery.objects.create(
@@ -790,10 +800,10 @@ class PublicOrderCreateAPIView(APIView):
             courier_earning=courier_earning,
             shop=shop
         )
-        
+
         # TODO: Send WhatsApp notification to client and shop
         # This will be handled by the WhatsApp bot integration
-        
+
         return Response({
             'delivery_id': str(delivery.id),
             'status': delivery.status,
@@ -806,39 +816,39 @@ class PublicOrderCreateAPIView(APIView):
 class CourierLocationView(APIView):
     """
     API endpoint for courier location updates.
-    
+
     POST /api/courier/location
-    
+
     Request body:
     {
         "lat": 4.0511,
         "lng": 9.6942
     }
     """
-    
+
     permission_classes = [permissions.IsAuthenticated]
-    
+
     def post(self, request):
         """Update courier's current location."""
         user = request.user
-        
+
         # Validate role
         if user.role != UserRole.COURIER:
             return Response(
                 {'error': 'Seuls les coursiers peuvent mettre à jour leur position.'},
                 status=status.HTTP_403_FORBIDDEN
             )
-        
+
         # Get coordinates
         lat = request.data.get('lat')
         lng = request.data.get('lng')
-        
+
         if lat is None or lng is None:
             return Response(
                 {'error': 'Les champs lat et lng sont requis.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         try:
             lat = float(lat)
             lng = float(lng)
@@ -847,19 +857,19 @@ class CourierLocationView(APIView):
                 {'error': 'Coordonnées GPS invalides.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         # Validate coordinates range
         if not (-90 <= lat <= 90) or not (-180 <= lng <= 180):
             return Response(
                 {'error': 'Coordonnées hors limites.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         # Update location
         user.last_location = Point(lng, lat, srid=4326)
         user.last_location_updated = timezone.now()
         user.save(update_fields=['last_location', 'last_location_updated'])
-        
+
         return Response({
             'status': 'ok',
             'message': 'Position mise à jour.',
@@ -869,23 +879,23 @@ class CourierLocationView(APIView):
                 'updated_at': user.last_location_updated.isoformat()
             }
         })
-    
+
     def get(self, request):
         """Get courier's current location."""
         user = request.user
-        
+
         if user.role != UserRole.COURIER:
             return Response(
                 {'error': 'Seuls les coursiers peuvent accéder à cette ressource.'},
                 status=status.HTTP_403_FORBIDDEN
             )
-        
+
         if not user.last_location:
             return Response({
                 'status': 'no_location',
                 'message': 'Aucune position enregistrée.'
             })
-        
+
         return Response({
             'status': 'ok',
             'location': {
@@ -899,38 +909,38 @@ class CourierLocationView(APIView):
 class OrderAcceptView(APIView):
     """
     API endpoint for courier to accept an order.
-    
+
     POST /api/orders/{order_id}/accept
-    
+
     Race-condition safe: uses SELECT FOR UPDATE to prevent
     multiple couriers from accepting the same order.
     """
-    
+
     permission_classes = [permissions.IsAuthenticated]
-    
+
     def post(self, request, order_id):
         """Accept an order as a courier."""
         from logistics.services.dispatch import accept_order
-        
+
         user = request.user
-        
+
         # Validate role
         if user.role != UserRole.COURIER:
             return Response(
                 {'error': 'Seuls les coursiers peuvent accepter des commandes.'},
                 status=status.HTTP_403_FORBIDDEN
             )
-        
+
         # Check if courier is blocked
         if user.is_courier_blocked:
             return Response(
                 {'error': 'Votre compte est bloqué pour dette excessive.'},
                 status=status.HTTP_403_FORBIDDEN
             )
-        
+
         try:
             delivery = accept_order(order_id, user)
-            
+
             return Response({
                 'status': 'ok',
                 'message': 'Commande acceptée avec succès !',
@@ -945,7 +955,7 @@ class OrderAcceptView(APIView):
                     'recipient_phone': delivery.recipient_phone
                 }
             })
-            
+
         except ValueError as e:
             # Order already taken or other validation error
             return Response(
@@ -965,17 +975,17 @@ from django.shortcuts import get_object_or_404
 class DeliveryTrackingView(TemplateView):
     """
     Public tracking page for a delivery.
-    
+
     Uses WebSocket for real-time updates.
     No authentication required - tracking is public.
     """
     template_name = 'logistics/tracking.html'
-    
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        
+
         delivery_id = self.kwargs.get('delivery_id')
-        
+
         # Verify delivery exists (but still show page)
         try:
             delivery = Delivery.objects.get(pk=delivery_id)
@@ -984,5 +994,5 @@ class DeliveryTrackingView(TemplateView):
         except Delivery.DoesNotExist:
             context['delivery'] = None
             context['delivery_id'] = str(delivery_id)
-        
+
         return context
