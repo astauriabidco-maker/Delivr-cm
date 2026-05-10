@@ -9,172 +9,8 @@
     <link rel="icon" type="image/png" href="{% static 'img/favicon.png' %}">
     <meta name="description"
         content="Service de livraison e-commerce à Douala et Yaoundé. GPS via WhatsApp, suivi temps réel, paiement Mobile Money, smart routing et app coursier gamifiée.">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        'brand-blue': '#1e3a5f',
-                        'brand-blue-dark': '#152a45',
-                        'brand-orange': '#ff6b35',
-                        'brand-orange-dark': '#e55a2b',
-                        'brand-green': '#25d366',
-                    },
-                    fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] }
-                }
-            }
-        }
-    </script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
-        rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <style>
-        html {
-            scroll-behavior: smooth;
-        }
-
-        .gradient-text {
-            background: linear-gradient(135deg, #ff6b35 0%, #e55a2b 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .gradient-blue {
-            background: linear-gradient(135deg, #1e3a5f 0%, #2d5a8e 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .code-block {
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-        }
-
-        .glass {
-            background: rgba(255, 255, 255, 0.08);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-        }
-
-        .glass-light {
-            background: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-        }
-
-        @keyframes float {
-
-            0%,
-            100% {
-                transform: translateY(0);
-            }
-
-            50% {
-                transform: translateY(-10px);
-            }
-        }
-
-        .float-anim {
-            animation: float 3s ease-in-out infinite;
-        }
-
-        @keyframes pulse-dot {
-
-            0%,
-            100% {
-                opacity: 1;
-            }
-
-            50% {
-                opacity: 0.4;
-            }
-        }
-
-        .pulse-dot {
-            animation: pulse-dot 2s infinite;
-        }
-
-        @keyframes slide-up {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .slide-up {
-            animation: slide-up 0.8s ease forwards;
-        }
-
-        .slide-up-delay-1 {
-            animation-delay: 0.15s;
-            opacity: 0;
-        }
-
-        .slide-up-delay-2 {
-            animation-delay: 0.3s;
-            opacity: 0;
-        }
-
-        .slide-up-delay-3 {
-            animation-delay: 0.45s;
-            opacity: 0;
-        }
-
-        .bento-card {
-            transition: transform 0.3s, box-shadow 0.3s;
-        }
-
-        .bento-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-        }
-
-        @keyframes count-up {
-            from {
-                opacity: 0;
-                transform: scale(0.5);
-            }
-
-            to {
-                opacity: 1;
-                transform: scale(1);
-            }
-        }
-
-        .step-line::after {
-            content: '';
-            position: absolute;
-            left: 50%;
-            top: 100%;
-            width: 2px;
-            height: 40px;
-            background: linear-gradient(to bottom, #ff6b35, transparent);
-        }
-
-        .hero-blob {
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(80px);
-            opacity: 0.15;
-        }
-
-        .whatsapp-bubble {
-            background: #dcf8c6;
-        }
-
-        .whatsapp-bubble-received {
-            background: #fff;
-        }
-    </style>
+    <link rel="stylesheet" href="{% static 'css/home.css' %}">
+    <link rel="stylesheet" href="{% static 'vendor/fontawesome/css/all.min.css' %}">
 </head>
 
 <body class="font-sans antialiased text-gray-900 bg-white">
@@ -337,7 +173,7 @@
                 </div>
                 <div class="hidden sm:block w-px h-10 bg-white/20"></div>
                 <div class="text-center">
-                    <p class="text-3xl lg:text-4xl font-extrabold text-brand-orange">{{ stats.couriers }}+</p>
+                    <p class="text-3xl lg:text-4xl font-extrabold text-brand-orange">{{ stats.couriers }}</p>
                     <p class="text-white/70 text-sm">Coursiers actifs</p>
                 </div>
             </div>
@@ -1175,133 +1011,24 @@
                 <a href="{% url 'courier:onboarding' %}"
                     class="inline-flex items-center justify-center gap-2 px-8 py-4 bg-brand-blue text-white font-bold rounded-xl hover:bg-brand-blue-dark transition-all shadow-lg text-lg"><i
                         class="fas fa-motorcycle"></i> Devenir Coursier</a>
-                <a href="https://wa.me/237690000000" target="_blank"
+                {% if contact.whatsapp_url %}
+                <a href="{{ contact.whatsapp_url }}" target="_blank" rel="noopener"
                     class="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white text-brand-blue font-bold rounded-xl border-2 border-gray-200 hover:border-brand-green hover:text-brand-green transition-all text-lg"><i
                         class="fab fa-whatsapp text-green-500"></i> Nous Contacter</a>
+                {% else %}
+                <a href="mailto:{{ contact.email }}"
+                    class="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white text-brand-blue font-bold rounded-xl border-2 border-gray-200 hover:border-brand-blue transition-all text-lg"><i
+                        class="fas fa-envelope text-brand-orange"></i> Nous Contacter</a>
+                {% endif %}
             </div>
         </div>
     </section>
 
     <!-- ==================== FOOTER ==================== -->
-    <footer class="bg-brand-blue-dark py-12 lg:py-16">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid md:grid-cols-4 gap-8 mb-12">
-                <div class="md:col-span-2">
-                    <a href="{% url 'home:home' %}" class="flex items-center gap-2 mb-4">
-                        <img src="{% static 'img/logo.png' %}" alt="Logo" class="h-8 w-auto brightness-0 invert">
-                        <span class="text-xl font-extrabold text-white">DELIVR<span
-                                class="text-brand-orange">-CM</span></span>
-                    </a>
-                    <p class="text-gray-400 max-w-sm mb-4">La plateforme logistique intelligente pour le e-commerce
-                        camerounais. GPS WhatsApp, smart routing, trafic temps réel, app coursier gamifiée.</p>
-                    <div class="flex gap-4">
-                        <a href="#"
-                            class="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/20 transition-all"><i
-                                class="fab fa-facebook-f"></i></a>
-                        <a href="#"
-                            class="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/20 transition-all"><i
-                                class="fab fa-instagram"></i></a>
-                        <a href="#"
-                            class="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/20 transition-all"><i
-                                class="fab fa-linkedin-in"></i></a>
-                        <a href="#"
-                            class="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/20 transition-all"><i
-                                class="fab fa-twitter"></i></a>
-                    </div>
-                </div>
-                <div>
-                    <h4 class="text-white font-semibold mb-4">Plateforme</h4>
-                    <ul class="space-y-3">
-                        <li><a href="#comment-ca-marche"
-                                class="text-gray-400 hover:text-white transition-colors">Comment ça marche</a></li>
-                        <li><a href="#technologie"
-                                class="text-gray-400 hover:text-white transition-colors">Technologie</a></li>
-                        <li><a href="#tracking" class="text-gray-400 hover:text-white transition-colors">Tracking temps
-                                réel</a></li>
-                        <li><a href="#api" class="text-gray-400 hover:text-white transition-colors">Documentation
-                                API</a></li>
-                        <li><a href="#tarifs" class="text-gray-400 hover:text-white transition-colors">Tarifs</a></li>
-                        <li><a href="{% url 'partners:login' %}"
-                                class="text-gray-400 hover:text-white transition-colors">Mon Espace</a></li>
-                        <li><a href="{% url 'courier:onboarding' %}"
-                                class="text-gray-400 hover:text-white transition-colors">Devenir Coursier</a></li>
-                    </ul>
-                </div>
-                <div>
-                    <h4 class="text-white font-semibold mb-4">Contact</h4>
-                    <ul class="space-y-3">
-                        <li class="flex items-center gap-2 text-gray-400"><i
-                                class="fas fa-map-marker-alt text-brand-orange"></i>Douala & Yaoundé, Cameroun</li>
-                        <li><a href="mailto:contact@delivr.cm"
-                                class="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"><i
-                                    class="fas fa-envelope text-brand-orange"></i>contact@delivr.cm</a></li>
-                        <li><a href="https://wa.me/237690000000"
-                                class="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"><i
-                                    class="fab fa-whatsapp text-green-500"></i>+237 690 000 000</a></li>
-                    </ul>
-                </div>
-            </div>
-            <div class="border-t border-white/10 pt-8 text-center">
-                <p class="text-gray-500 text-sm">© 2026 DELIVR-CM. Tous droits réservés. Made with ❤️ in Cameroon.</p>
-            </div>
-        </div>
-    </footer>
+    {% include 'home/partials/footer.html' %}
 
     <!-- ==================== SCRIPTS ==================== -->
-    <script>
-        // Mobile Menu
-        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-        const mobileMenu = document.getElementById('mobileMenu');
-        mobileMenuBtn.addEventListener('click', () => {
-            mobileMenu.classList.toggle('hidden');
-            const icon = mobileMenuBtn.querySelector('i');
-            icon.classList.toggle('fa-bars');
-            icon.classList.toggle('fa-times');
-        });
-        mobileMenu.querySelectorAll('a').forEach(link => {
-            link.addEventListener('click', () => {
-                mobileMenu.classList.add('hidden');
-                const icon = mobileMenuBtn.querySelector('i');
-                icon.classList.add('fa-bars');
-                icon.classList.remove('fa-times');
-            });
-        });
-
-        // FAQ Toggle
-        function toggleFaq(btn) {
-            const content = btn.nextElementSibling;
-            const icon = btn.querySelector('i');
-            content.classList.toggle('hidden');
-            icon.style.transform = content.classList.contains('hidden') ? '' : 'rotate(180deg)';
-        }
-
-        // Scroll animations
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.style.opacity = '1';
-                    entry.target.style.transform = 'translateY(0)';
-                }
-            });
-        }, { threshold: 0.1 });
-
-        document.querySelectorAll('.bento-card').forEach(card => {
-            card.style.opacity = '0';
-            card.style.transform = 'translateY(20px)';
-            card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
-            observer.observe(card);
-        });
-
-        // Header scroll effect
-        const header = document.querySelector('header');
-        window.addEventListener('scroll', () => {
-            if (window.scrollY > 50) {
-                header.classList.add('shadow-md');
-            } else {
-                header.classList.remove('shadow-md');
-            }
-        });
-    </script>
+    <script src="{% static 'js/home.js' %}"></script>
 </body>
 
 </html>

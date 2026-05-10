@@ -1,0 +1,16 @@
+{
+  "scripts": {
+    "build:css": "postcss src/styles/home.css -o static/css/home.css",
+    "copy:fontawesome": "mkdir -p static/vendor/fontawesome/css static/vendor/fontawesome/webfonts && cp node_modules/@fortawesome/fontawesome-free/css/all.min.css static/vendor/fontawesome/css/all.min.css && cp -R node_modules/@fortawesome/fontawesome-free/webfonts/* static/vendor/fontawesome/webfonts/",
+    "copy:fonts": "mkdir -p static/fonts/inter && cp node_modules/@fontsource/inter/files/inter-latin-400-normal.woff2 static/fonts/inter/ && cp node_modules/@fontsource/inter/files/inter-latin-500-normal.woff2 static/fonts/inter/ && cp node_modules/@fontsource/inter/files/inter-latin-600-normal.woff2 static/fonts/inter/ && cp node_modules/@fontsource/inter/files/inter-latin-700-normal.woff2 static/fonts/inter/ && cp node_modules/@fontsource/inter/files/inter-latin-800-normal.woff2 static/fonts/inter/ && cp node_modules/@fontsource/inter/files/inter-latin-900-normal.woff2 static/fonts/inter/",
+    "build:assets": "npm run copy:fontawesome && npm run copy:fonts && npm run build:css"
+  },
+  "devDependencies": {
+    "@fontsource/inter": "^5.2.8",
+    "@fortawesome/fontawesome-free": "^6.7.2",
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.6",
+    "postcss-cli": "^11.0.1",
+    "tailwindcss": "^3.4.17"
+  }
+}

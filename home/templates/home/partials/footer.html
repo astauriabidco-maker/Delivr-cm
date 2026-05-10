@@ -1,0 +1,63 @@
+{% load static %}
+<footer class="bg-brand-blue-dark py-12 lg:py-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid md:grid-cols-4 gap-8 mb-12">
+            <div class="md:col-span-2">
+                <a href="{% url 'home:home' %}" class="flex items-center gap-2 mb-4">
+                    <img src="{% static 'img/logo.png' %}" alt="Logo" class="h-8 w-auto brightness-0 invert">
+                    <span class="text-xl font-extrabold text-white">DELIVR<span
+                            class="text-brand-orange">-CM</span></span>
+                </a>
+                <p class="text-gray-400 max-w-sm mb-4">La plateforme logistique intelligente pour le e-commerce
+                    camerounais. GPS WhatsApp, smart routing, trafic temps réel, app coursier gamifiée.</p>
+                {% with visible_social_links=social_links %}
+                <div class="flex gap-4">
+                    {% for link in visible_social_links %}
+                    {% if link.url %}
+                    <a href="{{ link.url }}" target="_blank" rel="noopener" aria-label="{{ link.name }}"
+                        class="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/20 transition-all"><i
+                            class="{{ link.icon }}"></i></a>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+                {% endwith %}
+            </div>
+            <div>
+                <h4 class="text-white font-semibold mb-4">Plateforme</h4>
+                <ul class="space-y-3">
+                    <li><a href="#comment-ca-marche" class="text-gray-400 hover:text-white transition-colors">Comment
+                            ça marche</a></li>
+                    <li><a href="#technologie" class="text-gray-400 hover:text-white transition-colors">Technologie</a>
+                    </li>
+                    <li><a href="#tracking" class="text-gray-400 hover:text-white transition-colors">Tracking temps
+                            réel</a></li>
+                    <li><a href="#api" class="text-gray-400 hover:text-white transition-colors">Documentation API</a>
+                    </li>
+                    <li><a href="#tarifs" class="text-gray-400 hover:text-white transition-colors">Tarifs</a></li>
+                    <li><a href="{% url 'partners:login' %}"
+                            class="text-gray-400 hover:text-white transition-colors">Mon Espace</a></li>
+                    <li><a href="{% url 'courier:onboarding' %}"
+                            class="text-gray-400 hover:text-white transition-colors">Devenir Coursier</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="text-white font-semibold mb-4">Contact</h4>
+                <ul class="space-y-3">
+                    <li class="flex items-center gap-2 text-gray-400"><i
+                            class="fas fa-map-marker-alt text-brand-orange"></i>Douala & Yaoundé, Cameroun</li>
+                    <li><a href="mailto:{{ contact.email }}"
+                            class="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"><i
+                                class="fas fa-envelope text-brand-orange"></i>{{ contact.email }}</a></li>
+                    {% if contact.whatsapp_url %}
+                    <li><a href="{{ contact.whatsapp_url }}" target="_blank" rel="noopener"
+                            class="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"><i
+                                class="fab fa-whatsapp text-green-500"></i>{{ contact.whatsapp }}</a></li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+        <div class="border-t border-white/10 pt-8 text-center">
+            <p class="text-gray-500 text-sm">© 2026 DELIVR-CM. Tous droits réservés. Made in Cameroon.</p>
+        </div>
+    </div>
+</footer>

@@ -24,6 +24,14 @@ DEBUG = config('DEBUG', default=True, cast=bool)
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1,0.0.0.0', cast=Csv())
 DB_PASSWORD = config('DB_PASSWORD', default='delivr_secret_2024')
 
+# Public landing page configuration
+LANDING_CONTACT_EMAIL = config('LANDING_CONTACT_EMAIL', default='contact@delivr.cm')
+LANDING_CONTACT_WHATSAPP = config('LANDING_CONTACT_WHATSAPP', default='')
+LANDING_FACEBOOK_URL = config('LANDING_FACEBOOK_URL', default='')
+LANDING_INSTAGRAM_URL = config('LANDING_INSTAGRAM_URL', default='')
+LANDING_LINKEDIN_URL = config('LANDING_LINKEDIN_URL', default='')
+LANDING_X_URL = config('LANDING_X_URL', default='')
+
 if DJANGO_ENV == 'production':
     weak_secret_keys = {
         '',

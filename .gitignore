@@ -22,6 +22,9 @@ venv/
 ENV/
 .venv/
 
+# Node / frontend build tooling
+node_modules/
+
 # Django
 *.log
 local_settings.py
