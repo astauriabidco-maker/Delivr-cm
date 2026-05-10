@@ -9,8 +9,11 @@ Tests cover:
 - All 10 delivery statuses
 """
 
+import hashlib
+import hmac
+import json
 from unittest.mock import patch, MagicMock
-from django.test import TestCase
+from django.test import Client, TestCase, override_settings
 
 from .models import NotificationConfiguration
 
@@ -271,3 +274,76 @@ class WhatsAppServiceTest(TestCase):
         
         args = mock_send.call_args
         self.assertIn('Stock épuisé', args[0][1])
+
+
+class WebhookSignatureTest(TestCase):
+    """Test WhatsApp webhook signature verification."""
+
+    def setUp(self):
+        self.client = Client()
+
+    @override_settings(TWILIO_AUTH_TOKEN='twilio-secret')
+    @patch('bot.views.TwilioService.parse_incoming_data')
+    @patch('bot.views.RequestValidator')
+    def test_twilio_webhook_rejects_invalid_signature(
+        self,
+        mock_validator_cls,
+        mock_parse,
+    ):
+        """Twilio webhook should reject requests with invalid signatures."""
+        mock_validator = mock_validator_cls.return_value
+        mock_validator.validate.return_value = False
+
+        response = self.client.post(
+            '/webhooks/twilio/',
+            data={
+                'From': 'whatsapp:+237690000001',
+                'Body': 'START',
+            },
+            HTTP_X_TWILIO_SIGNATURE='bad-signature'
+        )
+
+        self.assertEqual(response.status_code, 401)
+        mock_parse.assert_not_called()
+
+    @override_settings(META_APP_SECRET='meta-secret')
+    @patch('bot.views.MetaWhatsAppService.parse_incoming_data')
+    def test_meta_webhook_rejects_invalid_signature(self, mock_parse):
+        """Meta webhook should reject requests with invalid signatures."""
+        response = self.client.post(
+            '/webhooks/meta/',
+            data=json.dumps({'entry': []}),
+            content_type='application/json',
+            HTTP_X_HUB_SIGNATURE_256='sha256=bad-signature'
+        )
+
+        self.assertEqual(response.status_code, 401)
+        mock_parse.assert_not_called()
+
+    @override_settings(META_APP_SECRET='meta-secret')
+    @patch('bot.views.MetaWhatsAppService.parse_incoming_data')
+    def test_meta_webhook_accepts_valid_signature(self, mock_parse):
+        """Meta webhook should process requests with valid signatures."""
+        body = json.dumps({'entry': []}).encode()
+        signature = hmac.new(
+            b'meta-secret',
+            body,
+            hashlib.sha256
+        ).hexdigest()
+        mock_parse.return_value = {
+            'phone_normalized': '',
+            'body': '',
+            'has_location': False,
+            'latitude': None,
+            'longitude': None,
+        }
+
+        response = self.client.post(
+            '/webhooks/meta/',
+            data=body,
+            content_type='application/json',
+            HTTP_X_HUB_SIGNATURE_256=f'sha256={signature}'
+        )
+
+        self.assertEqual(response.status_code, 200)
+        mock_parse.assert_called_once()

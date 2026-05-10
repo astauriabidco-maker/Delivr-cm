@@ -484,14 +484,23 @@ class DeliveryStatusUpdateView(APIView):
             )
         
         new_status = request.data.get('status')
+
+        if new_status in [DeliveryStatus.PICKED_UP, DeliveryStatus.COMPLETED]:
+            return Response(
+                {
+                    'error': (
+                        'Ce statut nécessite une validation OTP. '
+                        'Utilisez confirm-pickup ou confirm-dropoff.'
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
         
         valid_transitions = {
             DeliveryStatus.ASSIGNED: [DeliveryStatus.EN_ROUTE_PICKUP],
             DeliveryStatus.EN_ROUTE_PICKUP: [DeliveryStatus.ARRIVED_PICKUP],
-            DeliveryStatus.ARRIVED_PICKUP: [DeliveryStatus.PICKED_UP],
             DeliveryStatus.PICKED_UP: [DeliveryStatus.IN_TRANSIT],
             DeliveryStatus.IN_TRANSIT: [DeliveryStatus.ARRIVED_DROPOFF],
-            DeliveryStatus.ARRIVED_DROPOFF: [DeliveryStatus.COMPLETED],
         }
         
         allowed = valid_transitions.get(delivery.status, [])

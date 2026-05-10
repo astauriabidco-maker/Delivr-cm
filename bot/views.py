@@ -6,9 +6,12 @@ Includes:
 - TwilioWebhookView: Real WhatsApp integration via Twilio
 """
 
+import hashlib
+import hmac
 import re
 import logging
 from decimal import Decimal
+from django.conf import settings
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -26,6 +29,48 @@ from logistics.utils import get_routing_data, calculate_delivery_price
 from core.models import User, UserRole
 
 logger = logging.getLogger(__name__)
+
+try:
+    from twilio.request_validator import RequestValidator
+except ImportError:  # pragma: no cover - dependency is installed in production
+    RequestValidator = None
+
+
+def _verify_twilio_signature(request) -> bool:
+    """Validate Twilio webhook signature when TWILIO_AUTH_TOKEN is configured."""
+    auth_token = getattr(settings, 'TWILIO_AUTH_TOKEN', '')
+    if not auth_token:
+        return True
+
+    signature = request.headers.get('X-Twilio-Signature', '')
+    if not signature or RequestValidator is None:
+        return False
+
+    validator = RequestValidator(auth_token)
+    return validator.validate(
+        request.build_absolute_uri(),
+        request.POST,
+        signature
+    )
+
+
+def _verify_meta_signature(request) -> bool:
+    """Validate Meta webhook signature when META_APP_SECRET is configured."""
+    app_secret = getattr(settings, 'META_APP_SECRET', '')
+    if not app_secret:
+        return True
+
+    signature = request.headers.get('X-Hub-Signature-256', '')
+    if not signature.startswith('sha256='):
+        return False
+
+    expected = hmac.new(
+        app_secret.encode(),
+        request.body,
+        hashlib.sha256
+    ).hexdigest()
+    supplied = signature.split('=', 1)[1]
+    return hmac.compare_digest(supplied, expected)
 
 
 class MockWhatsAppWebhook(APIView):
@@ -267,9 +312,13 @@ class TwilioWebhookView(APIView):
     """
     
     permission_classes = [AllowAny]
-    
+
     def post(self, request):
         """Process incoming Twilio WhatsApp webhook."""
+        if not _verify_twilio_signature(request):
+            logger.warning("[TWILIO] Invalid webhook signature")
+            return HttpResponse("Invalid signature", status=401)
+
         # Parse Twilio data
         parsed = TwilioService.parse_incoming_data(request.data)
         
@@ -516,6 +565,10 @@ class MetaWebhookView(APIView):
     
     def post(self, request):
         """Process incoming Meta WhatsApp webhook."""
+        if not _verify_meta_signature(request):
+            logger.warning("[META] Invalid webhook signature")
+            return HttpResponse("Invalid signature", status=401)
+
         # Parse Meta data
         parsed = MetaWhatsAppService.parse_incoming_data(request.data)
         

@@ -299,6 +299,7 @@ META_API_URL = config('META_API_URL', default='https://graph.facebook.com/v17.0'
 META_API_TOKEN = config('META_API_TOKEN', default='')
 META_PHONE_NUMBER_ID = config('META_PHONE_NUMBER_ID', default='')
 META_VERIFY_TOKEN = config('META_VERIFY_TOKEN', default='delivr-cm-webhook-verify-token')
+META_APP_SECRET = config('META_APP_SECRET', default='')
 
 # Legacy aliases (for backward compatibility)
 WHATSAPP_API_URL = META_API_URL

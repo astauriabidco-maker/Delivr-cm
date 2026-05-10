@@ -108,6 +108,16 @@ class Transaction(models.Model):
             models.Index(fields=['user', 'created_at']),
             models.Index(fields=['transaction_type', 'status']),
         ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=['delivery', 'user', 'transaction_type'],
+                condition=models.Q(
+                    delivery__isnull=False,
+                    status=TransactionStatus.COMPLETED
+                ),
+                name='unique_completed_delivery_wallet_tx'
+            ),
+        ]
 
     def __str__(self):
         sign = '+' if self.amount >= 0 else ''
@@ -120,6 +130,21 @@ class WalletService:
     
     All operations use transaction.atomic() for data integrity.
     """
+
+    @staticmethod
+    def _lock_delivery(delivery):
+        """Lock and refresh a delivery before delivery-scoped wallet processing."""
+        return delivery.__class__.objects.select_for_update().get(pk=delivery.pk)
+
+    @staticmethod
+    def _get_completed_delivery_transaction(delivery, user, transaction_type):
+        """Return an existing completed delivery transaction when already processed."""
+        return Transaction.objects.filter(
+            delivery=delivery,
+            user=user,
+            transaction_type=transaction_type,
+            status=TransactionStatus.COMPLETED
+        ).first()
 
     @staticmethod
     @transaction.atomic
@@ -222,11 +247,20 @@ class WalletService:
             Tuple of (courier_transaction,)
         """
         from core.models import UserRole
-        
+
+        delivery = WalletService._lock_delivery(delivery)
         courier = delivery.courier
         if not courier or courier.role != UserRole.COURIER:
             raise ValueError("Invalid courier for delivery")
-        
+
+        existing_tx = WalletService._get_completed_delivery_transaction(
+            delivery=delivery,
+            user=courier,
+            transaction_type=TransactionType.COMMISSION
+        )
+        if existing_tx:
+            return (existing_tx,)
+
         # Debit platform fee from courier (allow negative = debt)
         courier_tx = WalletService.debit(
             user=courier,
@@ -256,11 +290,20 @@ class WalletService:
             Tuple of (courier_transaction,)
         """
         from core.models import UserRole
-        
+
+        delivery = WalletService._lock_delivery(delivery)
         courier = delivery.courier
         if not courier or courier.role != UserRole.COURIER:
             raise ValueError("Invalid courier for delivery")
-        
+
+        existing_tx = WalletService._get_completed_delivery_transaction(
+            delivery=delivery,
+            user=courier,
+            transaction_type=TransactionType.DELIVERY_CREDIT
+        )
+        if existing_tx:
+            return (existing_tx,)
+
         # Credit courier earning
         courier_tx = WalletService.credit(
             user=courier,
@@ -285,6 +328,15 @@ class WalletService:
         Returns:
             Transaction instance
         """
+        delivery = WalletService._lock_delivery(delivery)
+        existing_tx = WalletService._get_completed_delivery_transaction(
+            delivery=delivery,
+            user=business,
+            transaction_type=TransactionType.PREPAID_DEBIT
+        )
+        if existing_tx:
+            return existing_tx
+
         return WalletService.debit(
             user=business,
             amount=delivery.total_price,

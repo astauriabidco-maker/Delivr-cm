@@ -300,6 +300,70 @@ class E2EDeliveryFlowTest(TransactionTestCase):
             1
         )
 
+    @patch('logistics.events.broadcast_delivery_update')
+    def test_mobile_status_update_cannot_complete_without_otp(self, mock_broadcast):
+        """The generic mobile status endpoint must not bypass dropoff OTP."""
+        delivery = Delivery.objects.create(
+            sender=self.sender,
+            courier=self.courier,
+            recipient_phone='+237699999994',
+            recipient_name='Mobile Status Recipient',
+            pickup_geo=self.pickup_point,
+            dropoff_geo=self.dropoff_point,
+            payment_method=PaymentMethod.CASH_P2P,
+            status=DeliveryStatus.ARRIVED_DROPOFF,
+            distance_km=3.5,
+            total_price=Decimal('1500.00'),
+            platform_fee=Decimal('300.00'),
+            courier_earning=Decimal('1200.00')
+        )
+        courier_initial_balance = self.courier.wallet_balance
+
+        self.api_client.force_authenticate(user=self.courier)
+        response = self.api_client.patch(
+            f'/api/mobile/deliveries/{delivery.id}/status/',
+            {'status': DeliveryStatus.COMPLETED},
+            format='json'
+        )
+
+        self.assertEqual(response.status_code, 400)
+        delivery.refresh_from_db()
+        self.courier.refresh_from_db()
+        self.assertEqual(delivery.status, DeliveryStatus.ARRIVED_DROPOFF)
+        self.assertEqual(self.courier.wallet_balance, courier_initial_balance)
+        self.assertEqual(Transaction.objects.filter(delivery=delivery).count(), 0)
+        mock_broadcast.assert_not_called()
+
+    @patch('logistics.events.broadcast_delivery_update')
+    def test_mobile_status_update_cannot_pickup_without_otp(self, mock_broadcast):
+        """The generic mobile status endpoint must not bypass pickup OTP."""
+        delivery = Delivery.objects.create(
+            sender=self.sender,
+            courier=self.courier,
+            recipient_phone='+237699999993',
+            recipient_name='Mobile Pickup Recipient',
+            pickup_geo=self.pickup_point,
+            dropoff_geo=self.dropoff_point,
+            payment_method=PaymentMethod.CASH_P2P,
+            status=DeliveryStatus.ARRIVED_PICKUP,
+            distance_km=3.5,
+            total_price=Decimal('1500.00'),
+            platform_fee=Decimal('300.00'),
+            courier_earning=Decimal('1200.00')
+        )
+
+        self.api_client.force_authenticate(user=self.courier)
+        response = self.api_client.patch(
+            f'/api/mobile/deliveries/{delivery.id}/status/',
+            {'status': DeliveryStatus.PICKED_UP},
+            format='json'
+        )
+
+        self.assertEqual(response.status_code, 400)
+        delivery.refresh_from_db()
+        self.assertEqual(delivery.status, DeliveryStatus.ARRIVED_PICKUP)
+        mock_broadcast.assert_not_called()
+
     def test_b2b_order_rolls_back_when_wallet_debit_fails(self):
         """A prepaid B2B order must not dispatch if the wallet debit fails."""
         self.business.last_location = self.pickup_point

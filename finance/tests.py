@@ -222,6 +222,30 @@ class TestWalletService(TestCase):
         self.courier.refresh_from_db()
         self.assertEqual(self.courier.wallet_balance, Decimal('-300.00'))
 
+    def test_cash_delivery_processing_is_idempotent(self):
+        """Processing the same cash delivery twice should not double-debit."""
+        delivery = self._create_delivery(
+            payment_method=PaymentMethod.CASH_P2P,
+            total_price=Decimal('1500.00'),
+            platform_fee=Decimal('300.00'),
+            courier_earning=Decimal('1200.00'),
+        )
+
+        first_tx, = WalletService.process_cash_delivery(delivery)
+        second_tx, = WalletService.process_cash_delivery(delivery)
+
+        self.courier.refresh_from_db()
+        self.assertEqual(self.courier.wallet_balance, Decimal('-300.00'))
+        self.assertEqual(first_tx.id, second_tx.id)
+        self.assertEqual(
+            Transaction.objects.filter(
+                delivery=delivery,
+                user=self.courier,
+                transaction_type=TransactionType.COMMISSION,
+            ).count(),
+            1
+        )
+
     # ==========================================
     # Prepaid Delivery Processing (PREPAID_WALLET)
     # ==========================================
@@ -246,6 +270,30 @@ class TestWalletService(TestCase):
         # -300 + 1200 = 900
         self.assertEqual(self.courier.wallet_balance, Decimal('900.00'))
 
+    def test_prepaid_delivery_processing_is_idempotent(self):
+        """Processing the same prepaid delivery twice should not double-credit."""
+        delivery = self._create_delivery(
+            payment_method=PaymentMethod.PREPAID_WALLET,
+            total_price=Decimal('1500.00'),
+            platform_fee=Decimal('300.00'),
+            courier_earning=Decimal('1200.00'),
+        )
+
+        first_tx, = WalletService.process_prepaid_delivery(delivery)
+        second_tx, = WalletService.process_prepaid_delivery(delivery)
+
+        self.courier.refresh_from_db()
+        self.assertEqual(self.courier.wallet_balance, Decimal('1200.00'))
+        self.assertEqual(first_tx.id, second_tx.id)
+        self.assertEqual(
+            Transaction.objects.filter(
+                delivery=delivery,
+                user=self.courier,
+                transaction_type=TransactionType.DELIVERY_CREDIT,
+            ).count(),
+            1
+        )
+
     def test_prepaid_debit_business(self):
         """
         PREPAID: Business is debited total_price at order creation.
@@ -265,6 +313,33 @@ class TestWalletService(TestCase):
         self.assertEqual(
             self.business.wallet_balance,
             Decimal('48500.00')  # 50000 - 1500
+        )
+
+    def test_prepaid_business_debit_is_idempotent(self):
+        """Debiting the business for the same order twice should be a no-op."""
+        self.business.wallet_balance = Decimal('50000.00')
+        self.business.save()
+
+        delivery = self._create_delivery(
+            payment_method=PaymentMethod.PREPAID_WALLET,
+            total_price=Decimal('1500.00'),
+            platform_fee=Decimal('300.00'),
+            courier_earning=Decimal('1200.00'),
+        )
+
+        first_tx = WalletService.debit_business_for_order(self.business, delivery)
+        second_tx = WalletService.debit_business_for_order(self.business, delivery)
+
+        self.business.refresh_from_db()
+        self.assertEqual(self.business.wallet_balance, Decimal('48500.00'))
+        self.assertEqual(first_tx.id, second_tx.id)
+        self.assertEqual(
+            Transaction.objects.filter(
+                delivery=delivery,
+                user=self.business,
+                transaction_type=TransactionType.PREPAID_DEBIT,
+            ).count(),
+            1
         )
 
     # ==========================================
