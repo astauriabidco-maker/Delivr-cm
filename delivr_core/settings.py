@@ -18,9 +18,24 @@ from datetime import timedelta
 # ===========================================
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+DJANGO_ENV = config('DJANGO_ENV', default='development')
 SECRET_KEY = config('SECRET_KEY', default='dev-secret-key-change-in-production')
 DEBUG = config('DEBUG', default=True, cast=bool)
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1,0.0.0.0', cast=Csv())
+DB_PASSWORD = config('DB_PASSWORD', default='delivr_secret_2024')
+
+if DJANGO_ENV == 'production':
+    weak_secret_keys = {
+        '',
+        'dev-secret-key-change-in-production',
+        'your-super-secret-key-change-in-production',
+    }
+    if DEBUG:
+        raise RuntimeError('DEBUG must be False when DJANGO_ENV=production')
+    if SECRET_KEY in weak_secret_keys:
+        raise RuntimeError('SECRET_KEY must be configured for production')
+    if DB_PASSWORD in {'', 'delivr_secret_2024'}:
+        raise RuntimeError('DB_PASSWORD must be configured for production')
 
 # ===========================================
 # APPLICATION DEFINITION
@@ -111,7 +126,7 @@ DATABASES = {
         'ENGINE': 'django.contrib.gis.db.backends.postgis',
         'NAME': config('DB_NAME', default='delivr_db'),
         'USER': config('DB_USER', default='delivr_user'),
-        'PASSWORD': config('DB_PASSWORD', default='delivr_secret_2024'),
+        'PASSWORD': DB_PASSWORD,
         'HOST': config('DB_HOST', default='db'),
         'PORT': config('DB_PORT', default='5432'),
     }
