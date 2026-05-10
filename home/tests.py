@@ -20,8 +20,13 @@ class HomeLandingPageTest(TestCase):
         content = response.content.decode()
         self.assertIn('https://wa.me/237699111222', content)
         self.assertIn('mailto:hello@delivr.cm', content)
+        self.assertIn('Boutique Instagram', content)
+        self.assertIn('Vendeur WhatsApp', content)
         self.assertNotIn('https://wa.me/237690000000', content)
         self.assertNotIn('href="#"', content)
+        self.assertNotIn('cdn.tailwindcss.com', content)
+        self.assertNotIn('fonts.googleapis.com', content)
+        self.assertNotIn('cdnjs.cloudflare.com', content)
 
     def test_landing_stats_are_not_artificially_inflated(self):
         response = self.client.get(reverse('home:home'))

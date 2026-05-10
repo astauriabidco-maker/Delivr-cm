@@ -68,14 +68,10 @@ html {
     background-clip: text;
 }
 
-.code-block {
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-}
-
 .glass {
-    background: rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.14);
 }
 
 .glass-light {
@@ -146,12 +142,13 @@ html {
 }
 
 .bento-card {
-    transition: transform 0.3s, box-shadow 0.3s;
+    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
 }
 
 .bento-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+    box-shadow: 0 14px 28px rgba(15, 23, 42, 0.08);
+    border-color: rgba(30, 58, 95, 0.22);
 }
 
 .step-line::after {
@@ -168,7 +165,7 @@ html {
     position: absolute;
     border-radius: 50%;
     filter: blur(80px);
-    opacity: 0.15;
+    opacity: 0.08;
 }
 
 .whatsapp-bubble {
