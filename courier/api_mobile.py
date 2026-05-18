@@ -91,8 +91,20 @@ class IsCourier(permissions.BasePermission):
         return (
             request.user and 
             request.user.is_authenticated and 
-            request.user.role == UserRole.COURIER
+            request.user.role == UserRole.COURIER and
+            request.user.is_active and
+            request.user.is_verified
         )
+
+
+def _courier_can_receive_jobs(courier):
+    if courier.is_courier_blocked:
+        return False, 'Votre compte est bloqué pour dette excessive.'
+    if not courier.is_online:
+        return False, 'Passez en ligne pour recevoir des missions.'
+    if not courier.last_location:
+        return False, 'Partagez votre position GPS pour voir les missions.'
+    return True, ''
 
 
 # ============================================
@@ -394,7 +406,13 @@ class ToggleOnlineView(APIView):
     
     def post(self, request):
         courier = request.user
-        
+
+        if not courier.is_online and courier.is_courier_blocked:
+            return Response(
+                {'error': 'Votre compte est bloqué pour dette excessive.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
         # Toggle status
         courier.is_online = not courier.is_online
         if courier.is_online:
@@ -422,7 +440,24 @@ class DeliveryListView(APIView):
     def get(self, request):
         courier = request.user
         status_filter = request.query_params.get('status', 'active')
-        
+
+        if status_filter == 'available':
+            allowed, reason = _courier_can_receive_jobs(courier)
+            if not allowed:
+                return Response(
+                    {'error': reason},
+                    status=status.HTTP_403_FORBIDDEN if courier.is_courier_blocked else status.HTTP_400_BAD_REQUEST
+                )
+
+            qs = Delivery.objects.filter(
+                courier__isnull=True,
+                status=DeliveryStatus.PENDING,
+                pickup_geo__isnull=False,
+            ).order_by('-created_at')[:50]
+            return Response({
+                'deliveries': [self._serialize_delivery(d) for d in qs]
+            })
+
         qs = Delivery.objects.filter(courier=courier)
         
         if status_filter == 'active':
@@ -743,8 +778,23 @@ class UpdateLocationView(APIView):
         
         courier = request.user
         
+        try:
+            lat_f = float(lat)
+            lng_f = float(lng)
+        except (TypeError, ValueError):
+            return Response(
+                {'error': 'Coordonnées GPS invalides'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if not (-90 <= lat_f <= 90) or not (-180 <= lng_f <= 180):
+            return Response(
+                {'error': 'Coordonnées GPS hors limites'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         # Update location
-        courier.last_location = Point(float(lng), float(lat), srid=4326)
+        courier.last_location = Point(lng_f, lat_f, srid=4326)
         courier.last_location_updated = timezone.now()
         courier.save(update_fields=['last_location', 'last_location_updated'])
         
@@ -755,8 +805,8 @@ class UpdateLocationView(APIView):
             from logistics.services.traffic_service import TrafficService
             speed = TrafficService.ingest_location(
                 courier_id=str(courier.id),
-                latitude=float(lat),
-                longitude=float(lng)
+                latitude=lat_f,
+                longitude=lng_f
             )
             if speed is not None:
                 traffic_level = TrafficService.speed_to_level(speed)
@@ -817,9 +867,9 @@ class UploadDeliveryPhotoView(APIView):
             delivery.save(update_fields=['pickup_photo'])
             url = delivery.pickup_photo.url
         else:
-            delivery.dropoff_photo = photo
-            delivery.save(update_fields=['dropoff_photo'])
-            url = delivery.dropoff_photo.url
+            delivery.proof_photo = photo
+            delivery.save(update_fields=['proof_photo'])
+            url = delivery.proof_photo.url
         
         return Response({
             'success': True,

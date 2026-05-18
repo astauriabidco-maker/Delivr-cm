@@ -204,9 +204,28 @@ def accept_order(order_id: str, courier: User) -> Delivery:
     
     if not courier.is_active:
         raise ValueError("Votre compte est désactivé")
+
+    if not courier.is_verified:
+        raise ValueError("Votre compte coursier n'est pas encore validé")
+
+    if not courier.is_online:
+        raise ValueError("Passez en ligne pour accepter des commandes")
     
     if courier.wallet_balance < -courier.debt_ceiling:
         raise ValueError("Votre compte est bloqué pour dette excessive")
+
+    if courier.onboarding_status == User.OnboardingStatus.REJECTED:
+        raise ValueError("Compte rejeté")
+
+    if courier.onboarding_status == User.OnboardingStatus.PROBATION:
+        today_count = Delivery.objects.filter(
+            courier=courier,
+            created_at__date=timezone.now().date()
+        ).count()
+        if today_count >= courier.probation_delivery_limit:
+            raise ValueError(
+                f"Limite journalière atteinte ({courier.probation_delivery_limit}/jour pendant la période d'essai)"
+            )
     
     # Lock the order row
     try:
