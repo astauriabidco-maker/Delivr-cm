@@ -59,6 +59,11 @@ class HasAPIKeyOrIsBusinessOrAdmin(permissions.BasePermission):
             try:
                 api_key = PartnerAPIKey.objects.get_from_key(raw_key)
                 if api_key and not api_key.revoked:
+                    if (
+                        api_key.partner.role == UserRole.BUSINESS
+                        and not api_key.partner.is_business_approved
+                    ):
+                        return False
                     # Inject the partner into the request for downstream use
                     request.partner = api_key.partner
                     return True
@@ -69,7 +74,11 @@ class HasAPIKeyOrIsBusinessOrAdmin(permissions.BasePermission):
         if not request.user.is_authenticated:
             return False
 
-        if request.user.role in [UserRole.BUSINESS, UserRole.ADMIN]:
+        if request.user.role == UserRole.ADMIN:
+            request.partner = request.user
+            return True
+
+        if request.user.role == UserRole.BUSINESS and request.user.is_business_approved:
             request.partner = request.user
             return True
 

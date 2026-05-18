@@ -24,6 +24,8 @@ from .api.events_api import (
     traffic_events_list, traffic_event_detail, traffic_event_vote
 )
 
+app_name = 'logistics'
+
 router = DefaultRouter()
 router.register(r'deliveries', DeliveryViewSet, basename='delivery')
 router.register(r'neighborhoods', NeighborhoodViewSet, basename='neighborhood')
@@ -70,4 +72,3 @@ urlpatterns = [
     # Router URLs
     path('', include(router.urls)),
 ]
-

@@ -559,7 +559,11 @@ class PartnerInvoicesView(BusinessRequiredMixin, View):
             invoices = invoices.filter(invoice_type=type_filter)
         
         if year_filter:
-            invoices = invoices.filter(created_at__year=int(year_filter))
+            try:
+                invoices = invoices.filter(created_at__year=int(year_filter))
+            except (TypeError, ValueError):
+                messages.error(request, "Filtre année invalide.")
+                year_filter = ''
         
         # Get available years for filter
         years = Invoice.objects.filter(user=request.user).dates('created_at', 'year')
@@ -1082,6 +1086,8 @@ class PartnerProfileView(BusinessRequiredMixin, View):
                 try:
                     lat_f = float(lat)
                     lng_f = float(lng)
+                    if not (-90 <= lat_f <= 90) or not (-180 <= lng_f <= 180):
+                        raise ValueError
                     user.last_location = Point(lng_f, lat_f, srid=4326)
                     from django.utils import timezone
                     user.last_location_updated = timezone.now()
