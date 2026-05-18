@@ -277,6 +277,11 @@ class WC_Delivr_Shipping_Method extends WC_Shipping_Method
 
         $this->load_settings_from_order($order);
 
+        if (!$this->order_uses_method($order)) {
+            $this->log("Commande {$order_id}: méthode RELAY237 absente, création livraison ignorée.", 'info');
+            return;
+        }
+
         // Check if already sent
         if ($order->get_meta('_delivr_cm_order_sent') === 'yes') {
             $this->log("Commande {$order_id} déjà envoyée à RELAY237.", 'info');
@@ -355,8 +360,13 @@ class WC_Delivr_Shipping_Method extends WC_Shipping_Method
         $data = json_decode($body, true);
 
         if ($status_code === 201 || $status_code === 200) {
-            // Success
-            $delivery_id = isset($data['delivery_id']) ? $data['delivery_id'] : 'N/A';
+            $delivery_id = isset($data['delivery_id']) ? sanitize_text_field($data['delivery_id']) : '';
+
+            if (empty($delivery_id)) {
+                $this->log("Commande {$order_id}: réponse API sans delivery_id - {$body}", 'error');
+                $order->add_order_note('❌ RELAY237: réponse API invalide, identifiant de livraison manquant.');
+                return;
+            }
 
             $order->update_meta_data('_delivr_cm_order_sent', 'yes');
             $order->update_meta_data('_delivr_cm_delivery_id', $delivery_id);
@@ -411,6 +421,23 @@ class WC_Delivr_Shipping_Method extends WC_Shipping_Method
             $this->fallback_price = isset($settings['fallback_price']) ? floatval($settings['fallback_price']) : $this->fallback_price;
             return;
         }
+    }
+
+    /**
+     * Check whether this shipping method was selected on the order.
+     *
+     * @param WC_Order $order WooCommerce order.
+     * @return bool
+     */
+    private function order_uses_method($order)
+    {
+        foreach ($order->get_shipping_methods() as $method) {
+            if ($method->get_method_id() === $this->id) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -507,6 +534,10 @@ class WC_Delivr_Shipping_Method extends WC_Shipping_Method
         // Remove spaces, dashes, etc.
         $phone = preg_replace('/[^0-9+]/', '', $phone);
 
+        if (preg_match('/^0[0-9]{8,9}$/', $phone)) {
+            $phone = substr($phone, 1);
+        }
+
         // Add country code if missing
         if (!preg_match('/^\+/', $phone)) {
             if (preg_match('/^237/', $phone)) {
@@ -515,6 +546,8 @@ class WC_Delivr_Shipping_Method extends WC_Shipping_Method
                 $phone = '+237' . $phone;
             }
         }
+
+        $phone = preg_replace('/^\+2370/', '+237', $phone);
 
         return $phone;
     }

@@ -67,13 +67,23 @@ class WC_Delivr_Webhook_Receiver
         $status = isset($order_data['status']) ? sanitize_text_field($order_data['status']) : '';
         $event = isset($payload['event']) ? sanitize_text_field($payload['event']) : 'delivery.updated';
         $delivery_id = isset($order_data['id']) ? sanitize_text_field($order_data['id']) : '';
+        $previous_status = $order->get_meta('_delivr_cm_delivery_status');
+        $previous_event = $order->get_meta('_delivr_cm_last_webhook_event');
+        $is_duplicate = $previous_status === $status && $previous_event === $event;
 
         $order->update_meta_data('_delivr_cm_delivery_status', $status);
         $order->update_meta_data('_delivr_cm_last_webhook_event', $event);
         $order->update_meta_data('_delivr_cm_last_webhook_at', current_time('mysql', true));
 
-        self::sync_order_status($order, $status);
-        self::add_status_note($order, $status, $delivery_id);
+        if (!empty($delivery_id)) {
+            $order->update_meta_data('_delivr_cm_delivery_id', $delivery_id);
+        }
+
+        if (!$is_duplicate) {
+            self::sync_order_status($order, $status);
+            self::add_status_note($order, $status, $delivery_id);
+        }
+
         $order->save();
 
         return new WP_REST_Response(

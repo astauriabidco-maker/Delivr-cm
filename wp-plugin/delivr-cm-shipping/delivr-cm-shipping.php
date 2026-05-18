@@ -124,10 +124,37 @@ add_action('before_woocommerce_init', function () {
 });
 
 /**
+ * Check whether a WooCommerce order uses the RELAY237 shipping method.
+ *
+ * @param WC_Order|false $order WooCommerce order.
+ * @return bool
+ */
+function delivr_cm_order_uses_shipping($order)
+{
+    if (!$order) {
+        return false;
+    }
+
+    foreach ($order->get_shipping_methods() as $method) {
+        if ($method->get_method_id() === 'delivr_cm') {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+/**
  * Trigger delivery order on payment complete
  */
 function delivr_cm_on_payment_complete($order_id)
 {
+    $order = wc_get_order($order_id);
+
+    if (!delivr_cm_order_uses_shipping($order)) {
+        return;
+    }
+
     if (!class_exists('WC_Delivr_Shipping_Method')) {
         require_once DELIVR_CM_PLUGIN_DIR . 'includes/class-wc-shipping-delivr.php';
     }
@@ -144,23 +171,16 @@ function delivr_cm_on_order_processing($order_id)
 {
     $order = wc_get_order($order_id);
 
+    if (!$order) {
+        return;
+    }
+
     // Check if we already processed this order
     if ($order->get_meta('_delivr_cm_order_sent') === 'yes') {
         return;
     }
 
-    // Check if RELAY237 shipping was used
-    $shipping_methods = $order->get_shipping_methods();
-    $uses_delivr = false;
-
-    foreach ($shipping_methods as $method) {
-        if (strpos($method->get_method_id(), 'delivr_cm') !== false) {
-            $uses_delivr = true;
-            break;
-        }
-    }
-
-    if (!$uses_delivr) {
+    if (!delivr_cm_order_uses_shipping($order)) {
         return;
     }
 
