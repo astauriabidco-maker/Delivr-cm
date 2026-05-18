@@ -14,12 +14,13 @@ import requests
 from datetime import datetime, timedelta
 from django.http import JsonResponse
 from django.views import View
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
 from django.core.cache import cache
 from django.conf import settings
 from django.utils import timezone
 
 from logistics.models import Delivery
+from core.models import UserRole
 
 
 class ShareLinkView(View):
@@ -183,6 +184,15 @@ class ProofUploadView(View):
     
     def post(self, request, delivery_id):
         delivery = get_object_or_404(Delivery, id=delivery_id)
+
+        user = request.user
+        if not user.is_authenticated or (
+            user.role != UserRole.ADMIN and delivery.courier_id != user.id
+        ):
+            return JsonResponse({
+                'success': False,
+                'message': 'Accès refusé'
+            }, status=403)
         
         if 'photo' not in request.FILES:
             return JsonResponse({
@@ -214,8 +224,4 @@ class SharedTrackingView(View):
                 'message': 'Lien expiré ou invalide'
             }, status=404)
         
-        # Return delivery ID for redirect
-        return JsonResponse({
-            'success': True,
-            'delivery_id': delivery_id
-        })
+        return redirect('public-delivery-tracking', delivery_id=delivery_id)

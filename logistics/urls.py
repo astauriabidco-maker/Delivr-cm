@@ -31,17 +31,17 @@ router.register(r'deliveries', DeliveryViewSet, basename='delivery')
 router.register(r'neighborhoods', NeighborhoodViewSet, basename='neighborhood')
 
 urlpatterns = [
-    # Public tracking page (WebSocket real-time)
-    path('track/<uuid:delivery_id>/', DeliveryTrackingView.as_view(), name='delivery-tracking'),
-    
     # Shared tracking link (short URL)
     path('track/s/<str:share_token>/', SharedTrackingView.as_view(), name='shared-tracking'),
     
     # Tracking API endpoints
-    path('api/track/<uuid:delivery_id>/share/', ShareLinkView.as_view(), name='track-share'),
-    path('api/track/<uuid:delivery_id>/eta/', ETACalculationView.as_view(), name='track-eta'),
-    path('api/track/<uuid:delivery_id>/history/', DeliveryHistoryView.as_view(), name='track-history'),
-    path('api/track/<uuid:delivery_id>/proof/', ProofUploadView.as_view(), name='track-proof'),
+    path('track/<uuid:delivery_id>/share/', ShareLinkView.as_view(), name='track-share'),
+    path('track/<uuid:delivery_id>/eta/', ETACalculationView.as_view(), name='track-eta'),
+    path('track/<uuid:delivery_id>/history/', DeliveryHistoryView.as_view(), name='track-history'),
+    path('track/<uuid:delivery_id>/proof/', ProofUploadView.as_view(), name='track-proof'),
+
+    # Public tracking page (WebSocket real-time)
+    path('track/<uuid:delivery_id>/', DeliveryTrackingView.as_view(), name='delivery-tracking'),
     
     # Traffic API endpoints (crowdsourced real-time traffic)
     path('traffic/heatmap/', traffic_heatmap, name='traffic-heatmap'),

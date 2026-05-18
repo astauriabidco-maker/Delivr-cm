@@ -8,6 +8,8 @@ from django.conf import settings
 from django.conf.urls.static import static
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from logistics.api.tracking_api import SharedTrackingView
+from logistics.views import DeliveryTrackingView
 
 
 # ===========================================
@@ -82,6 +84,10 @@ urlpatterns = [
          # Import here to avoid circular imports
          __import__('partners.views', fromlist=['PublicShopView']).PublicShopView.as_view(), 
          name='public_shop'),
+
+    # Public Tracking (customer-facing links sent by WhatsApp/SMS)
+    path('track/<uuid:delivery_id>/', DeliveryTrackingView.as_view(), name='public-delivery-tracking'),
+    path('track/s/<str:share_token>/', SharedTrackingView.as_view(), name='public-shared-tracking'),
     
     # Courier Dashboard (Mobile-first for couriers)
     path('courier/', include('courier.urls')),

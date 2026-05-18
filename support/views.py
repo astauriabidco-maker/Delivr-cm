@@ -146,4 +146,4 @@ class ClientDisputeCreateView(View):
         cache.set(abuse_key, report_count + 1, timeout=3600)
         
         messages.success(request, "✅ Votre signalement a été enregistré. Notre équipe support va l'analyser.")
-        return redirect('delivery-tracking', delivery_id=delivery_id)
+        return redirect('public-delivery-tracking', delivery_id=delivery_id)

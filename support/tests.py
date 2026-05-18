@@ -2,6 +2,7 @@ from decimal import Decimal
 from unittest.mock import patch
 
 from django.contrib.gis.geos import Point
+from django.core.cache import cache
 from django.test import Client, TestCase
 from django.utils import timezone
 
@@ -12,6 +13,7 @@ from support.models import Dispute
 
 class ClientDisputeCreateViewTest(TestCase):
     def setUp(self):
+        cache.clear()
         self.client = Client()
         self.sender = User.objects.create_user(
             phone_number='+237690300001',
