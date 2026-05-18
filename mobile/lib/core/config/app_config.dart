@@ -1,4 +1,4 @@
-// DELIVR-CM Environment Configuration
+// RELAY237 Environment Configuration
 // =====================================
 // Centralizes all environment-specific configuration.
 // Switch between environments by changing the active config in main.dart.
@@ -8,7 +8,7 @@
 //   - Staging:     AppConfig.staging()
 //   - Production:  AppConfig.production()
 
-/// Centralized environment configuration for the DELIVR courier app.
+/// Centralized environment configuration for the RELAY237 courier app.
 class AppConfig {
   /// API base URL (HTTP)
   final String apiBaseUrl;
@@ -73,8 +73,8 @@ class AppConfig {
   /// Staging server
   factory AppConfig.staging() {
     return const AppConfig._(
-      apiBaseUrl: 'https://staging.delivr.cm',
-      wsBaseUrl: 'wss://staging.delivr.cm',
+      apiBaseUrl: 'https://staging.relay237.com',
+      wsBaseUrl: 'wss://staging.relay237.com',
       environment: 'staging',
       enableLogging: true,
     );
@@ -83,8 +83,8 @@ class AppConfig {
   /// Production
   factory AppConfig.production() {
     return const AppConfig._(
-      apiBaseUrl: 'https://api.delivr.cm',
-      wsBaseUrl: 'wss://api.delivr.cm',
+      apiBaseUrl: 'https://api.relay237.com',
+      wsBaseUrl: 'wss://api.relay237.com',
       environment: 'production',
       enableLogging: false,
       connectTimeout: Duration(seconds: 15),

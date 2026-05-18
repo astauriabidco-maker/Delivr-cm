@@ -1,5 +1,5 @@
 """
-FLEET App - Fleet Management Dashboard for DELIVR-CM
+FLEET App - Fleet Management Dashboard for RELAY237
 
 Admin dashboard for fleet management:
 - Real-time courier overview

@@ -1,5 +1,5 @@
 """
-DELIVR-CM Security Middleware
+RELAY237 Security Middleware
 =============================
 
 Provides:

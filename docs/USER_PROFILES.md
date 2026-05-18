@@ -1,4 +1,4 @@
-# 👤 Profils Utilisateur — DELIVR-CM
+# 👤 Profils Utilisateur — RELAY237
 
 > Chaque utilisateur a un **rôle unique** qui détermine son accès, ses fonctionnalités et son interface.
 > L'authentification se fait exclusivement par **numéro WhatsApp** (+237XXXXXXXXX).
@@ -69,7 +69,7 @@ Le destinataire final. Il reçoit un **lien de commande** via WhatsApp/Instagram
 
 ## 🛍️ BUSINESS / VENDEUR (`UserRole.BUSINESS`)
 
-> *"Je vends sur Instagram et j'utilise DELIVR-CM pour livrer à mes clients."*
+> *"Je vends sur Instagram et j'utilise RELAY237 pour livrer à mes clients."*
 
 ### 🎯 C'est qui ?
 L'e-commerçant. Vendeur sur les réseaux sociaux (Instagram, Facebook, WhatsApp) ou sur un site e-commerce. Il crée des commandes de livraison et suit ses performances.
@@ -253,7 +253,7 @@ graph TD
 > *"Je gère toute la plateforme : coursiers, vendeurs, finances, litiges."*
 
 ### 🎯 C'est qui ?
-L'équipe DELIVR-CM. Administrateurs et gestionnaires de flotte qui supervisent l'ensemble de la plateforme.
+L'équipe RELAY237. Administrateurs et gestionnaires de flotte qui supervisent l'ensemble de la plateforme.
 
 ### 🔓 Accès
 | Interface | URL | Accès |

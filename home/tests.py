@@ -6,7 +6,7 @@ class HomeLandingPageTest(TestCase):
     """Tests for production-facing landing page content."""
 
     @override_settings(
-        LANDING_CONTACT_EMAIL='hello@delivr.cm',
+        LANDING_CONTACT_EMAIL='hello@relay237.com',
         LANDING_CONTACT_WHATSAPP='+237699111222',
         LANDING_FACEBOOK_URL='',
         LANDING_INSTAGRAM_URL='',
@@ -18,10 +18,13 @@ class HomeLandingPageTest(TestCase):
 
         self.assertEqual(response.status_code, 200)
         content = response.content.decode()
+        self.assertIn('RELAY237', content)
         self.assertIn('https://wa.me/237699111222', content)
-        self.assertIn('mailto:hello@delivr.cm', content)
+        self.assertIn('mailto:hello@relay237.com', content)
         self.assertIn('Boutique Instagram', content)
         self.assertIn('Vendeur WhatsApp', content)
+        self.assertNotIn('DELIVR-CM', content)
+        self.assertNotIn('delivr.cm', content)
         self.assertNotIn('https://wa.me/237690000000', content)
         self.assertNotIn('href="#"', content)
         self.assertNotIn('cdn.tailwindcss.com', content)

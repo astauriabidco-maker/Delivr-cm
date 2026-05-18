@@ -1,14 +1,14 @@
 # 🛍️ Parcours Vendeur — "La journée type d'un vendeur Instagram"
 
-> *Suivez Marie, vendeuse de bijoux artisanaux sur Instagram à Douala, dans sa journée avec DELIVR-CM.*
+> *Suivez Marie, vendeuse de bijoux artisanaux sur Instagram à Douala, dans sa journée avec RELAY237.*
 
 ---
 
 ## 📖 L'histoire de Marie
 
-Marie a 26 ans. Elle fabrique et vend des bijoux sur Instagram depuis 2 ans. Avant DELIVR-CM, elle passait 2h par jour à organiser les livraisons : appeler des coursiers au hasard, négocier les prix, perdre des colis... Un cauchemar.
+Marie a 26 ans. Elle fabrique et vend des bijoux sur Instagram depuis 2 ans. Avant RELAY237, elle passait 2h par jour à organiser les livraisons : appeler des coursiers au hasard, négocier les prix, perdre des colis... Un cauchemar.
 
-Depuis qu'elle utilise DELIVR-CM, tout a changé ✨
+Depuis qu'elle utilise RELAY237, tout a changé ✨
 
 ---
 
@@ -16,7 +16,7 @@ Depuis qu'elle utilise DELIVR-CM, tout a changé ✨
 
 ### Étape 1 : Créer son compte
 
-Marie va sur `delivr-cm.com` et clique **"Commencer à livrer"**.
+Marie va sur `relay237.com` et clique **"Commencer à livrer"**.
 
 ```
 📱 Numéro WhatsApp : +237 677 123 456
@@ -37,7 +37,7 @@ Marie va sur `delivr-cm.com` et clique **"Commencer à livrer"**.
 └─────────────────────────────────────────┘
 ```
 
-> **En coulisses** : Un admin DELIVR-CM voit la demande dans le Fleet Manager, vérifie le profil Instagram de Marie, et clique "Approuver". Marie reçoit un WhatsApp : *"🎉 Votre compte DELIVR-CM est activé !"*
+> **En coulisses** : Un admin RELAY237 voit la demande dans le Fleet Manager, vérifie le profil Instagram de Marie, et clique "Approuver". Marie reçoit un WhatsApp : *"🎉 Votre compte RELAY237 est activé !"*
 
 ### Étape 3 : Personnaliser sa boutique
 
@@ -51,7 +51,7 @@ Marie accède à **🎨 Personnalisation** et configure :
 
 Son **lien magique** est généré automatiquement :
 ```
-🔗 delivr-cm.com/book/marie-fashion-bijoux/
+🔗 relay237.com/book/marie-fashion-bijoux/
 ```
 
 ---
@@ -63,8 +63,8 @@ Son **lien magique** est généré automatiquement :
 ```
 1️⃣  Un client DM Marie sur Instagram : "Je veux le collier doré !"
     
-2️⃣  Marie lui envoie son lien DELIVR-CM via WhatsApp :
-    "Passez votre commande ici 👉 delivr-cm.com/book/marie-fashion-bijoux/"
+2️⃣  Marie lui envoie son lien RELAY237 via WhatsApp :
+    "Passez votre commande ici 👉 relay237.com/book/marie-fashion-bijoux/"
     
 3️⃣  Le client ouvre le lien et voit la page PERSONNALISÉE de Marie
     (logo rose, message d'accueil...)
@@ -119,7 +119,7 @@ graph LR
 
 Marie reçoit un WhatsApp :
 ```
-🏍️ DELIVR-CM — Coursier Assigné
+🏍️ RELAY237 — Coursier Assigné
 
 Commande #a7f3 pour Paul Nkwi
 Coursier : Jean Mbarga ⭐ 4.8
@@ -204,7 +204,7 @@ Paul donne `8356` → Jean confirme → ✅ **LIVRÉ !**
 ### Ce que Marie reçoit
 
 ```
-✅ DELIVR-CM — Livraison Confirmée
+✅ RELAY237 — Livraison Confirmée
 
 Commande #a7f3 livrée avec succès !
 Destinataire : Paul Nkwi (Akwa)
@@ -270,7 +270,7 @@ Si Marie a aussi un site WooCommerce, elle peut automatiser les commandes :
 
 ```bash
 # Créer une livraison via l'API
-curl -X POST https://delivr-cm.com/api/v1/deliveries/ \
+curl -X POST https://relay237.com/api/v1/deliveries/ \
   -H "Authorization: Api-Key dlv_xxxxxxxxxxxx" \
   -d '{
     "recipient_name": "Paul Nkwi",
@@ -299,13 +299,13 @@ Marie peut configurer des callbacks HTTP pour son site :
 Si un client signale un problème, Marie peut créer un litige avec :
 - 📝 Description détaillée
 - 📸 Preuves photos
-- L'équipe DELIVR-CM enquête et résout
+- L'équipe RELAY237 enquête et résout
 
 ---
 
-## 💡 Résumé — Ce que DELIVR-CM apporte à Marie
+## 💡 Résumé — Ce que RELAY237 apporte à Marie
 
-| Avant DELIVR-CM | Avec DELIVR-CM |
+| Avant RELAY237 | Avec RELAY237 |
 |---|---|
 | 2h/jour à organiser les livraisons | 2 minutes par commande |
 | Appeler des coursiers au hasard | Dispatch automatique |

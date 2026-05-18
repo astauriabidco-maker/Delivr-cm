@@ -145,7 +145,7 @@ class AppTranslations {
   
   static const Map<String, Map<String, String>> _translations = {
     'fr': {
-      'app_name': 'DELIVR Coursier',
+      'app_name': 'RELAY237 Coursier',
       'dashboard': 'Tableau de bord',
       'deliveries': 'Courses',
       'wallet': 'Portefeuille',
@@ -209,7 +209,7 @@ class AppTranslations {
       'invalid_credentials': 'Identifiants incorrects',
     },
     'en': {
-      'app_name': 'DELIVR Courier',
+      'app_name': 'RELAY237 Courier',
       'dashboard': 'Dashboard',
       'deliveries': 'Deliveries',
       'wallet': 'Wallet',

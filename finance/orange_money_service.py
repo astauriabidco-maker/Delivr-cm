@@ -1,5 +1,5 @@
 """
-Orange Money Service for DELIVR-CM
+Orange Money Service for RELAY237
 
 Handles WebPayment flow for Orange Money payments in Cameroon.
 API Reference: https://developer.orange.com/apis/om-webpay/overview
@@ -93,7 +93,7 @@ class OrangeMoneyService:
         phone: str,
         amount: Decimal,
         external_reference: str,
-        description: str = "Paiement livraison DELIVR-CM"
+        description: str = "Paiement livraison RELAY237"
     ) -> dict:
         """
         Initialize a WebPayment.

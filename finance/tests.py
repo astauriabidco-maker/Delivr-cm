@@ -1,5 +1,5 @@
 """
-DELIVR-CM Finance Tests
+RELAY237 Finance Tests
 ========================
 
 Tests for:

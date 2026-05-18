@@ -1,4 +1,4 @@
-# DELIVR-CM Backend - Python 3.11 Optimized Image
+# RELAY237 Backend - Python 3.11 Optimized Image
 FROM python:3.11-slim
 
 # Prevent Python from writing .pyc files and buffering stdout/stderr

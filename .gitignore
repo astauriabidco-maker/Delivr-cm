@@ -30,7 +30,8 @@ node_modules/
 local_settings.py
 db.sqlite3
 media/
-staticfiles/
+staticfiles/*
+!staticfiles/.gitkeep
 
 # IDE
 .idea/

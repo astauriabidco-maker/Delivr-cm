@@ -391,7 +391,7 @@ class DeliveryDetailScreen extends ConsumerWidget {
               GestureDetector(
                 onTap: () => NavigationService.openWhatsApp(
                   phoneNumber: contactPhone,
-                  message: 'Bonjour, je suis votre coursier DELIVR...',
+                  message: 'Bonjour, je suis votre coursier RELAY237...',
                 ),
                 child: Container(
                   padding: const EdgeInsets.all(6),

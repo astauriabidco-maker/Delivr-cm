@@ -1,5 +1,5 @@
 """
-CORE App - Gamification Service for DELIVR-CM
+CORE App - Gamification Service for RELAY237
 
 Handles:
 - Courier level progression (Bronze → Platinum)

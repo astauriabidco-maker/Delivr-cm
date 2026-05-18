@@ -1109,7 +1109,7 @@ class _TopUpDialogState extends ConsumerState<TopUpDialog> {
 
             const SizedBox(height: 8),
             Text(
-              'Ajoutez des fonds à votre compte DELIVR',
+              'Ajoutez des fonds à votre compte RELAY237',
               style: TextStyle(color: DelivrColors.textSecondary),
             ),
 

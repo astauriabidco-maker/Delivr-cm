@@ -1,5 +1,5 @@
 """
-Celery Configuration for DELIVR-CM
+Celery Configuration for RELAY237
 """
 
 import os

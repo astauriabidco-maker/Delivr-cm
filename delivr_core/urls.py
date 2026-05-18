@@ -1,5 +1,5 @@
 """
-DELIVR-CM Main URL Configuration
+RELAY237 Main URL Configuration
 """
 
 from django.contrib import admin
@@ -13,8 +13,8 @@ from rest_framework.response import Response
 # ===========================================
 # ADMIN SITE CUSTOMIZATION
 # ===========================================
-admin.site.site_header = "✅ DELIVR-CM Control Tower"
-admin.site.site_title = "DELIVR-CM Admin"
+admin.site.site_header = "✅ RELAY237 Control Tower"
+admin.site.site_title = "RELAY237 Admin"
 admin.site.index_title = "Supervision des Opérations"
 
 
@@ -22,7 +22,7 @@ admin.site.index_title = "Supervision des Opérations"
 def api_root(request):
     """API Root endpoint with available routes."""
     return Response({
-        'name': 'DELIVR-CM API',
+        'name': 'RELAY237 API',
         'version': '1.0.0',
         'endpoints': {
             'auth': {

@@ -6,7 +6,7 @@
 
 ## 🎯 Rôle en une phrase
 
-> Ce module permet aux vendeurs de **signaler un problème**, à l'équipe DELIVR-CM d'**enquêter**, et de **rembourser** si nécessaire.
+> Ce module permet aux vendeurs de **signaler un problème**, à l'équipe RELAY237 d'**enquêter**, et de **rembourser** si nécessaire.
 
 ---
 

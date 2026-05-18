@@ -1,5 +1,5 @@
 """
-LOGISTICS App - Deliveries & Routing for DELIVR-CM
+LOGISTICS App - Deliveries & Routing for RELAY237
 
 Handles: Deliveries, Neighborhoods, Dispatch, Routing
 """

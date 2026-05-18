@@ -59,7 +59,7 @@ class Migration(migrations.Migration):
                 (
                     "meta_verify_token",
                     models.CharField(
-                        default="delivr-cm-webhook-verify-token",
+                        default="relay237-webhook-verify-token",
                         help_text="Token utilisé pour vérifier les webhooks Meta",
                         max_length=100,
                         verbose_name="Token de vérification Meta",

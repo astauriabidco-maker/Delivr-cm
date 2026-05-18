@@ -1,4 +1,4 @@
-# 🚀 DELIVR-CM — Documentation Technique
+# 🚀 RELAY237 — Documentation Technique
 
 > **La plateforme de livraison last-mile pour e-commerçants au Cameroun.**
 > Connecte les vendeurs Instagram/Facebook de Douala & Yaoundé à un réseau de coursiers performants.
@@ -19,7 +19,7 @@
 
 ## 🌍 Vue d'ensemble
 
-DELIVR-CM est une plateforme SaaS de logistique last-mile conçue pour le marché camerounais. Elle permet :
+RELAY237 est une plateforme SaaS de logistique last-mile conçue pour le marché camerounais. Elle permet :
 
 | Pour qui ? | Quoi ? |
 |---|---|
@@ -31,7 +31,7 @@ DELIVR-CM est une plateforme SaaS de logistique last-mile conçue pour le march�
 ### Le pitch en 30 secondes
 
 ```
-Un vendeur Instagram partage son lien DELIVR-CM sur WhatsApp.
+Un vendeur Instagram partage son lien RELAY237 sur WhatsApp.
 Le client remplit l'adresse → Un coursier est assigné automatiquement.
 Le vendeur suit tout en temps réel sur son dashboard.
 Le coursier livre → Le wallet du vendeur est crédité.
@@ -193,7 +193,7 @@ sequenceDiagram
 ```bash
 # Cloner le projet
 git clone <repo-url>
-cd DELIVR-CM
+cd RELAY237
 
 # Configurer l'environnement
 cp .env.example .env
@@ -221,9 +221,9 @@ docker exec -it delivr_web python manage.py createsuperuser
 |---|---|
 | [👤 USER_PROFILES.md](./USER_PROFILES.md) | Les 4 profils expliqués en détail |
 | [🛍️ Parcours Vendeur](./journeys/vendeur_journey.md) | "La journée type d'un vendeur Instagram" |
-| [🏍️ Parcours Coursier](./journeys/coursier_journey.md) | "La journée type d'un coursier DELIVR" |
+| [🏍️ Parcours Coursier](./journeys/coursier_journey.md) | "La journée type d'un coursier RELAY237" |
 | [📦 Parcours Client](./journeys/client_journey.md) | "Commander en 30 secondes" |
-| [👨‍💼 Parcours Manager](./journeys/manager_journey.md) | "Piloter DELIVR-CM comme un chef d'orchestre" |
+| [👨‍💼 Parcours Manager](./journeys/manager_journey.md) | "Piloter RELAY237 comme un chef d'orchestre" |
 | [📦 Module Core](./modules/core.md) | Utilisateurs, Auth, Rôles |
 | [📦 Module Logistics](./modules/logistics.md) | Livraisons, GPS, Routing |
 | [📦 Module Finance](./modules/finance.md) | Wallet, Paiements, Factures |
@@ -236,4 +236,4 @@ docker exec -it delivr_web python manage.py createsuperuser
 ---
 
 *Dernière mise à jour : Février 2026*
-*Généré pour l'équipe DELIVR-CM 🇨🇲*
+*Généré pour l'équipe RELAY237 🇨🇲*

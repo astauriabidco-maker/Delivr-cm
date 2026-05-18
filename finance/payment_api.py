@@ -1,5 +1,5 @@
 """
-Mobile Payment API for DELIVR-CM
+Mobile Payment API for RELAY237
 
 REST endpoints for initiating and tracking mobile money payments.
 """

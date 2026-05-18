@@ -19,7 +19,7 @@ enum NavApp {
 ///
 /// The key innovation: instead of just sending the destination,
 /// we inject strategic waypoints that FORCE the navigation app
-/// to follow DELIVR-CM's traffic-optimized route.
+/// to follow RELAY237's traffic-optimized route.
 class NavigationLauncher {
   /// Launch navigation to a destination using smart route data.
   ///

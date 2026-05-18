@@ -104,7 +104,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                     
                     // App name
                     const Text(
-                      'DELIVR',
+                      'RELAY237',
                       style: TextStyle(
                         fontSize: 36,
                         fontWeight: FontWeight.bold,

@@ -63,7 +63,7 @@ class WebhookService:
             'Content-Type': 'application/json',
             'X-Webhook-Signature': f'sha256={signature}',
             'X-Webhook-Event': event_type,
-            'User-Agent': 'DELIVR-CM-Webhook/1.0'
+            'User-Agent': 'RELAY237-Webhook/1.0'
         }
         
         try:
@@ -111,7 +111,7 @@ class WebhookService:
             'event': 'test',
             'timestamp': timezone.now().isoformat(),
             'data': {
-                'message': 'Ceci est un test webhook DELIVR-CM',
+                'message': 'Ceci est un test webhook RELAY237',
                 'test': True
             }
         }
@@ -128,7 +128,7 @@ class WebhookService:
             'Content-Type': 'application/json',
             'X-Webhook-Signature': f'sha256={signature}',
             'X-Webhook-Event': 'test',
-            'User-Agent': 'DELIVR-CM-Webhook/1.0'
+            'User-Agent': 'RELAY237-Webhook/1.0'
         }
         
         try:

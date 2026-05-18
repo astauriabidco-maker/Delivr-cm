@@ -1,5 +1,5 @@
 """
-COURIER App - Dashboard for DELIVR-CM Couriers
+COURIER App - Dashboard for RELAY237 Couriers
 
 Mobile-first web dashboard for couriers to:
 - View daily/weekly stats

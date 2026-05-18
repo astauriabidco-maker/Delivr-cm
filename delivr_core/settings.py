@@ -1,5 +1,5 @@
 """
-Django settings for DELIVR-CM project.
+Django settings for RELAY237 project.
 Plateforme Logistique Décentralisée Cameroun
 
 Configuration optimisée pour:
@@ -25,7 +25,7 @@ ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1,0.0.0.0', c
 DB_PASSWORD = config('DB_PASSWORD', default='delivr_secret_2024')
 
 # Public landing page configuration
-LANDING_CONTACT_EMAIL = config('LANDING_CONTACT_EMAIL', default='contact@delivr.cm')
+LANDING_CONTACT_EMAIL = config('LANDING_CONTACT_EMAIL', default='contact@relay237.com')
 LANDING_CONTACT_WHATSAPP = config('LANDING_CONTACT_WHATSAPP', default='')
 LANDING_FACEBOOK_URL = config('LANDING_FACEBOOK_URL', default='')
 LANDING_INSTAGRAM_URL = config('LANDING_INSTAGRAM_URL', default='')
@@ -71,7 +71,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'django_filters',
     
-    # DELIVR-CM Apps
+    # RELAY237 Apps
     'core.apps.CoreConfig',
     'logistics.apps.LogisticsConfig',
     'finance.apps.FinanceConfig',
@@ -100,7 +100,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    # DELIVR-CM Security Middlewares
+    # RELAY237 Security Middlewares
     'core.middleware.RateLimitMiddleware',
     'core.middleware.SecurityHeadersMiddleware',
     'core.middleware.RequestAuditMiddleware',
@@ -219,7 +219,7 @@ REST_FRAMEWORK = {
 # API DOCUMENTATION (drf-spectacular)
 # ===========================================
 SPECTACULAR_SETTINGS = {
-    'TITLE': 'DELIVR-CM API',
+    'TITLE': 'RELAY237 API',
     'DESCRIPTION': 'API de logistique pour E-commerce au Cameroun',
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
@@ -321,7 +321,7 @@ ACTIVE_WHATSAPP_PROVIDER = config('ACTIVE_WHATSAPP_PROVIDER', default='twilio')
 META_API_URL = config('META_API_URL', default='https://graph.facebook.com/v17.0')
 META_API_TOKEN = config('META_API_TOKEN', default='')
 META_PHONE_NUMBER_ID = config('META_PHONE_NUMBER_ID', default='')
-META_VERIFY_TOKEN = config('META_VERIFY_TOKEN', default='delivr-cm-webhook-verify-token')
+META_VERIFY_TOKEN = config('META_VERIFY_TOKEN', default='relay237-webhook-verify-token')
 META_APP_SECRET = config('META_APP_SECRET', default='')
 
 # Legacy aliases (for backward compatibility)
@@ -342,7 +342,7 @@ TWILIO_WHATSAPP_NUMBER = config('TWILIO_WHATSAPP_NUMBER', default='whatsapp:+141
 # -------------------------------------------
 ORANGE_SMS_CLIENT_ID = config('ORANGE_SMS_CLIENT_ID', default='')
 ORANGE_SMS_CLIENT_SECRET = config('ORANGE_SMS_CLIENT_SECRET', default='')
-ORANGE_SMS_SENDER = config('ORANGE_SMS_SENDER', default='DELIVR-CM')
+ORANGE_SMS_SENDER = config('ORANGE_SMS_SENDER', default='RELAY237')
 SMS_FALLBACK_ENABLED = config('SMS_FALLBACK_ENABLED', default=False, cast=bool)
 
 # -------------------------------------------
@@ -476,5 +476,5 @@ if not DEBUG:
             traces_sample_rate=config('SENTRY_TRACES_RATE', default=0.1, cast=float),
             send_default_pii=False,
             environment=config('SENTRY_ENVIRONMENT', default='production'),
-            release=f"delivr-cm@{config('APP_VERSION', default='1.0.0')}",
+            release=f"relay237@{config('APP_VERSION', default='1.0.0')}",
         )

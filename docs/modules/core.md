@@ -1,6 +1,6 @@
 # ⚙️ Module `core/` — Utilisateurs, Auth & Gamification
 
-> Le cœur de DELIVR-CM. Gère l'identité de chaque utilisateur, l'authentification par téléphone, et la gamification des coursiers.
+> Le cœur de RELAY237. Gère l'identité de chaque utilisateur, l'authentification par téléphone, et la gamification des coursiers.
 
 ---
 

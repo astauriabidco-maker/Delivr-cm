@@ -1,5 +1,5 @@
 """
-Pricing Simulator for DELIVR-CM
+Pricing Simulator for RELAY237
 
 Allows testing and validating pricing configuration before deployment.
 """

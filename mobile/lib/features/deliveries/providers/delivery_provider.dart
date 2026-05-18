@@ -17,6 +17,10 @@ enum DeliveryStatus {
   cancelled,
 }
 
+const String _mobileDeliveriesPath = '/api/mobile/deliveries';
+const String _mobileDeliveryPhotoUploadPath =
+    '/api/mobile/uploads/delivery-photo/';
+
 /// Delivery model
 class Delivery {
   final String id;
@@ -89,30 +93,63 @@ class Delivery {
       pickupOtp: json['pickup_otp'],
       dropoffOtp: json['dropoff_otp'],
       pickupPhotoUrl: json['pickup_photo_url'],
-      dropoffPhotoUrl: json['dropoff_photo_url'],
+      dropoffPhotoUrl: json['proof_photo_url'] ?? json['dropoff_photo_url'],
       notes: json['notes'],
       createdAt: DateTime.tryParse(json['created_at'] ?? '') ?? DateTime.now(),
-      pickedUpAt: json['picked_up_at'] != null 
-          ? DateTime.tryParse(json['picked_up_at']) 
+      pickedUpAt: json['picked_up_at'] != null
+          ? DateTime.tryParse(json['picked_up_at'])
           : null,
-      completedAt: json['completed_at'] != null 
-          ? DateTime.tryParse(json['completed_at']) 
+      completedAt: json['completed_at'] != null
+          ? DateTime.tryParse(json['completed_at'])
           : null,
     );
   }
 
   static DeliveryStatus _parseStatus(String? status) {
     switch (status?.toUpperCase()) {
-      case 'PENDING': return DeliveryStatus.pending;
-      case 'ASSIGNED': return DeliveryStatus.assigned;
-      case 'EN_ROUTE_PICKUP': return DeliveryStatus.enRoutePickup;
-      case 'ARRIVED_PICKUP': return DeliveryStatus.arrivedPickup;
-      case 'PICKED_UP': return DeliveryStatus.pickedUp;
-      case 'IN_TRANSIT': return DeliveryStatus.inTransit;
-      case 'ARRIVED_DROPOFF': return DeliveryStatus.arrivedDropoff;
-      case 'COMPLETED': return DeliveryStatus.completed;
-      case 'CANCELLED': return DeliveryStatus.cancelled;
-      default: return DeliveryStatus.pending;
+      case 'PENDING':
+        return DeliveryStatus.pending;
+      case 'ASSIGNED':
+        return DeliveryStatus.assigned;
+      case 'EN_ROUTE_PICKUP':
+        return DeliveryStatus.enRoutePickup;
+      case 'ARRIVED_PICKUP':
+        return DeliveryStatus.arrivedPickup;
+      case 'PICKED_UP':
+        return DeliveryStatus.pickedUp;
+      case 'IN_TRANSIT':
+        return DeliveryStatus.inTransit;
+      case 'ARRIVED_DROPOFF':
+        return DeliveryStatus.arrivedDropoff;
+      case 'COMPLETED':
+        return DeliveryStatus.completed;
+      case 'CANCELLED':
+        return DeliveryStatus.cancelled;
+      default:
+        return DeliveryStatus.pending;
+    }
+  }
+
+  static String statusToApiValue(DeliveryStatus status) {
+    switch (status) {
+      case DeliveryStatus.pending:
+        return 'PENDING';
+      case DeliveryStatus.assigned:
+        return 'ASSIGNED';
+      case DeliveryStatus.enRoutePickup:
+        return 'EN_ROUTE_PICKUP';
+      case DeliveryStatus.arrivedPickup:
+        return 'ARRIVED_PICKUP';
+      case DeliveryStatus.pickedUp:
+        return 'PICKED_UP';
+      case DeliveryStatus.inTransit:
+        return 'IN_TRANSIT';
+      case DeliveryStatus.arrivedDropoff:
+        return 'ARRIVED_DROPOFF';
+      case DeliveryStatus.completed:
+        return 'COMPLETED';
+      case DeliveryStatus.cancelled:
+        return 'CANCELLED';
     }
   }
 
@@ -187,9 +224,10 @@ class ActiveDeliveryState {
 }
 
 /// Active delivery provider
-final activeDeliveryProvider = StateNotifierProvider<ActiveDeliveryNotifier, ActiveDeliveryState>((ref) {
-  return ActiveDeliveryNotifier(ref);
-});
+final activeDeliveryProvider =
+    StateNotifierProvider<ActiveDeliveryNotifier, ActiveDeliveryState>((ref) {
+      return ActiveDeliveryNotifier(ref);
+    });
 
 class ActiveDeliveryNotifier extends StateNotifier<ActiveDeliveryState> {
   final Ref _ref;
@@ -200,11 +238,11 @@ class ActiveDeliveryNotifier extends StateNotifier<ActiveDeliveryState> {
   /// Load active delivery details
   Future<void> loadDelivery(String deliveryId) async {
     state = state.copyWith(isLoading: true, clearError: true);
-    
+
     try {
       final api = _ref.read(apiClientProvider);
-      final response = await api.get('/api/deliveries/$deliveryId/');
-      
+      final response = await api.get('$_mobileDeliveriesPath/$deliveryId/');
+
       if (response.success && response.data != null) {
         state = state.copyWith(
           delivery: Delivery.fromJson(response.data!),
@@ -217,24 +255,21 @@ class ActiveDeliveryNotifier extends StateNotifier<ActiveDeliveryState> {
         );
       }
     } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        error: 'Erreur: $e',
-      );
+      state = state.copyWith(isLoading: false, error: 'Erreur: $e');
     }
   }
 
   /// Update delivery status
   Future<bool> updateStatus(DeliveryStatus newStatus) async {
     state = state.copyWith(isSubmitting: true, clearError: true);
-    
+
     try {
       final api = _ref.read(apiClientProvider);
       final response = await api.patch(
-        '/api/deliveries/${state.delivery!.id}/status/',
-        data: {'status': newStatus.name.toUpperCase()},
+        '$_mobileDeliveriesPath/${state.delivery!.id}/status/',
+        data: {'status': Delivery.statusToApiValue(newStatus)},
       );
-      
+
       if (response.success) {
         state = state.copyWith(
           delivery: state.delivery!.copyWith(status: newStatus),
@@ -249,10 +284,7 @@ class ActiveDeliveryNotifier extends StateNotifier<ActiveDeliveryState> {
         return false;
       }
     } catch (e) {
-      state = state.copyWith(
-        isSubmitting: false,
-        error: 'Erreur: $e',
-      );
+      state = state.copyWith(isSubmitting: false, error: 'Erreur: $e');
       return false;
     }
   }
@@ -266,7 +298,7 @@ class ActiveDeliveryNotifier extends StateNotifier<ActiveDeliveryState> {
         maxHeight: 1280,
         imageQuality: 80,
       );
-      
+
       if (image != null) {
         state = state.copyWith(pendingPhoto: File(image.path));
       }
@@ -283,27 +315,24 @@ class ActiveDeliveryNotifier extends StateNotifier<ActiveDeliveryState> {
   /// Confirm pickup with OTP and photo
   Future<bool> confirmPickup(String otp) async {
     if (state.delivery == null) return false;
-    
+
     state = state.copyWith(isSubmitting: true, clearError: true);
-    
+
     try {
       final api = _ref.read(apiClientProvider);
-      
+
       // Upload photo if available
       String? photoUrl;
       if (state.pendingPhoto != null) {
         photoUrl = await _uploadPhoto(state.pendingPhoto!, 'pickup');
       }
-      
+
       // Confirm pickup
       final response = await api.post(
-        '/api/deliveries/${state.delivery!.id}/confirm-pickup/',
-        data: {
-          'otp': otp,
-          if (photoUrl != null) 'photo_url': photoUrl,
-        },
+        '$_mobileDeliveriesPath/${state.delivery!.id}/confirm-pickup/',
+        data: {'otp': otp, if (photoUrl != null) 'photo_url': photoUrl},
       );
-      
+
       if (response.success) {
         state = state.copyWith(
           delivery: state.delivery!.copyWith(
@@ -323,10 +352,7 @@ class ActiveDeliveryNotifier extends StateNotifier<ActiveDeliveryState> {
         return false;
       }
     } catch (e) {
-      state = state.copyWith(
-        isSubmitting: false,
-        error: 'Erreur: $e',
-      );
+      state = state.copyWith(isSubmitting: false, error: 'Erreur: $e');
       return false;
     }
   }
@@ -334,27 +360,24 @@ class ActiveDeliveryNotifier extends StateNotifier<ActiveDeliveryState> {
   /// Confirm dropoff with OTP and proof of delivery
   Future<bool> confirmDropoff(String otp) async {
     if (state.delivery == null) return false;
-    
+
     state = state.copyWith(isSubmitting: true, clearError: true);
-    
+
     try {
       final api = _ref.read(apiClientProvider);
-      
+
       // Upload photo if available
       String? photoUrl;
       if (state.pendingPhoto != null) {
         photoUrl = await _uploadPhoto(state.pendingPhoto!, 'dropoff');
       }
-      
+
       // Confirm dropoff
       final response = await api.post(
-        '/api/deliveries/${state.delivery!.id}/confirm-dropoff/',
-        data: {
-          'otp': otp,
-          if (photoUrl != null) 'photo_url': photoUrl,
-        },
+        '$_mobileDeliveriesPath/${state.delivery!.id}/confirm-dropoff/',
+        data: {'otp': otp, if (photoUrl != null) 'photo_url': photoUrl},
       );
-      
+
       if (response.success) {
         state = state.copyWith(
           delivery: state.delivery!.copyWith(
@@ -374,10 +397,7 @@ class ActiveDeliveryNotifier extends StateNotifier<ActiveDeliveryState> {
         return false;
       }
     } catch (e) {
-      state = state.copyWith(
-        isSubmitting: false,
-        error: 'Erreur: $e',
-      );
+      state = state.copyWith(isSubmitting: false, error: 'Erreur: $e');
       return false;
     }
   }
@@ -387,15 +407,12 @@ class ActiveDeliveryNotifier extends StateNotifier<ActiveDeliveryState> {
     try {
       final api = _ref.read(apiClientProvider);
       final response = await api.uploadFile(
-        '/api/uploads/delivery-photo/',
+        _mobileDeliveryPhotoUploadPath,
         photo,
         fieldName: 'photo',
-        extraData: {
-          'delivery_id': state.delivery!.id,
-          'type': type,
-        },
+        extraData: {'delivery_id': state.delivery!.id, 'type': type},
       );
-      
+
       if (response.success && response.data != null) {
         return response.data!['url'];
       }

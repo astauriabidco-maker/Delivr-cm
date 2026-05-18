@@ -1,5 +1,5 @@
 """
-Traffic Simulation Script for DELIVR-CM
+Traffic Simulation Script for RELAY237
 
 Simulates 8 couriers moving through various neighborhoods in Douala
 at different speeds to populate the traffic heatmap.
@@ -16,7 +16,7 @@ import time
 import random
 from logistics.services.traffic_service import TrafficService
 
-print("🚦 DELIVR-CM - Simulation de trafic Douala")
+print("🚦 RELAY237 - Simulation de trafic Douala")
 print("=" * 50)
 
 # Define simulated routes through Douala neighborhoods

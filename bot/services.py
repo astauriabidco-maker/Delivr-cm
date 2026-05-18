@@ -1,5 +1,5 @@
 """
-BOT App - WhatsApp Chatbot State Management for DELIVR-CM
+BOT App - WhatsApp Chatbot State Management for RELAY237
 
 Uses Redis to manage conversation states for WhatsApp bot interactions.
 Includes Twilio integration for real WhatsApp messaging.
@@ -536,7 +536,7 @@ class BotMessageBuilder:
     @staticmethod
     def welcome() -> str:
         return (
-            "👋 Bienvenue sur *DELIVR-CM* !\n\n"
+            "👋 Bienvenue sur *RELAY237* !\n\n"
             "📍 Envoyez votre *position GPS* de retrait du colis.\n\n"
             "✅ _Livré avec confiance_"
         )
@@ -611,7 +611,7 @@ class BotMessageBuilder:
     @staticmethod
     def help_message() -> str:
         return (
-            "✅ *DELIVR-CM - Aide*\n\n"
+            "✅ *RELAY237 - Aide*\n\n"
             "📦 *NOUVEAU* - Passer une nouvelle commande\n"
             "❓ *AIDE* - Afficher ce message\n\n"
             "_Livré avec confiance à Douala et Yaoundé_"

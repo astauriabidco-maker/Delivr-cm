@@ -6,7 +6,7 @@
 
 ## 🎯 Rôle en une phrase
 
-> Ce module permet à l'équipe DELIVR-CM de **superviser** tous les coursiers, **approuver** les inscriptions, **gérer** les finances et **monitorer** les opérations en temps réel.
+> Ce module permet à l'équipe RELAY237 de **superviser** tous les coursiers, **approuver** les inscriptions, **gérer** les finances et **monitorer** les opérations en temps réel.
 
 ---
 

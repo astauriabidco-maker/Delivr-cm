@@ -6,7 +6,7 @@
 
 ## 🎯 Rôle en une phrase
 
-> Ce module gère la **vitrine publique** de DELIVR-CM : la page d'accueil qui convertit les visiteurs en utilisateurs, et le **formulaire de commande** accessible sans inscription.
+> Ce module gère la **vitrine publique** de RELAY237 : la page d'accueil qui convertit les visiteurs en utilisateurs, et le **formulaire de commande** accessible sans inscription.
 
 ---
 
@@ -24,7 +24,7 @@
 Chaque vendeur BUSINESS a un slug unique (ex: `marie-fashion-bijoux`) qui génère une URL publique :
 
 ```
-delivr-cm.com/book/marie-fashion-bijoux/
+relay237.com/book/marie-fashion-bijoux/
 ```
 
 Cette page affiche :

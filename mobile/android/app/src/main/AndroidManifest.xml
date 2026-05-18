@@ -36,7 +36,7 @@
     <uses-permission android:name="android.permission.CALL_PHONE"/>
 
     <application
-        android:label="DELIVR"
+        android:label="RELAY237"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:usesCleartextTraffic="true">

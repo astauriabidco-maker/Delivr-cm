@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
+import '../api/api_client.dart';
+
 /// Offline mode state
 class OfflineState {
   final bool isOnline;
@@ -241,10 +243,20 @@ class OfflineModeService extends StateNotifier<OfflineState> {
   }
   
   Future<bool> _executeAction(PendingAction action) async {
-    // Implement actual API call here using dio
-    // For now, just simulate success
-    await Future.delayed(const Duration(milliseconds: 500));
-    return true;
+    final api = _ref.read(apiClientProvider);
+    final method = action.method.toUpperCase();
+
+    switch (method) {
+      case 'POST':
+        return (await api.post(action.endpoint, data: action.data)).success;
+      case 'PATCH':
+        return (await api.patch(action.endpoint, data: action.data)).success;
+      case 'GET':
+        return (await api.get(action.endpoint, queryParameters: action.data)).success;
+      default:
+        debugPrint('❌ Unsupported offline action method: ${action.method}');
+        return false;
+    }
   }
   
   /// Force manual sync

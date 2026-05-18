@@ -232,7 +232,7 @@ class LocationStateNotifier extends StateNotifier<LocationState> {
           distanceFilter: 10, // Update every 10 meters
           intervalDuration: const Duration(seconds: 5),
           foregroundNotificationConfig: const ForegroundNotificationConfig(
-            notificationTitle: 'DELIVR-CM',
+            notificationTitle: 'RELAY237',
             notificationText: 'Suivi GPS actif pour votre course',
             enableWakeLock: true,
           ),
@@ -245,7 +245,7 @@ class LocationStateNotifier extends StateNotifier<LocationState> {
           distanceFilter: 50, // Update every 50 meters
           intervalDuration: const Duration(seconds: 15),
           foregroundNotificationConfig: const ForegroundNotificationConfig(
-            notificationTitle: 'DELIVR-CM',
+            notificationTitle: 'RELAY237',
             notificationText: 'En attente de courses',
             enableWakeLock: false,
           ),
@@ -258,7 +258,7 @@ class LocationStateNotifier extends StateNotifier<LocationState> {
           distanceFilter: 100, // Update every 100 meters
           intervalDuration: const Duration(seconds: 30),
           foregroundNotificationConfig: const ForegroundNotificationConfig(
-            notificationTitle: 'DELIVR-CM',
+            notificationTitle: 'RELAY237',
             notificationText: 'Mode économie batterie',
             enableWakeLock: false,
           ),

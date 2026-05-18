@@ -1,5 +1,5 @@
 """
-MTN Mobile Money Service for DELIVR-CM
+MTN Mobile Money Service for RELAY237
 
 Handles RequestToPay (STK Push) for MTN MoMo payments in Cameroon.
 API Reference: https://momodeveloper.mtn.com/docs
@@ -94,7 +94,7 @@ class MTNMoMoService:
         phone: str,
         amount: Decimal,
         external_reference: str,
-        payer_message: str = "Paiement DELIVR-CM",
+        payer_message: str = "Paiement RELAY237",
         payee_note: str = "Livraison"
     ) -> dict:
         """

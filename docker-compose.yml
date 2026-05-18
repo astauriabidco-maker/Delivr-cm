@@ -1,4 +1,4 @@
-# DELIVR-CM Docker Compose - Development Stack
+# RELAY237 Docker Compose - Development Stack
 # ==============================================
 
 services:
@@ -24,7 +24,7 @@ services:
       start_period: 30s
     depends_on:
       db:
-        condition: service_healthy
+        condition: service_started
       redis:
         condition: service_started
     networks:
@@ -45,10 +45,11 @@ services:
     ports:
       - "5433:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-delivr_user} -d ${DB_NAME:-delivr_db}"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -p 5432 -U ${DB_USER:-delivr_user} -d ${DB_NAME:-delivr_db} -t 10"]
+      interval: 10s
+      timeout: 15s
+      retries: 12
+      start_period: 90s
     networks:
       - delivr_network
 

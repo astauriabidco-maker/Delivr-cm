@@ -1,12 +1,12 @@
-# 👨‍💼 Parcours Manager — "Piloter DELIVR-CM comme un chef d'orchestre"
+# 👨‍💼 Parcours Manager — "Piloter RELAY237 comme un chef d'orchestre"
 
-> *Suivez Franck, responsable opérations chez DELIVR-CM à Douala, dans sa journée de supervision.*
+> *Suivez Franck, responsable opérations chez RELAY237 à Douala, dans sa journée de supervision.*
 
 ---
 
 ## 📖 L'histoire de Franck
 
-Franck a 31 ans. Il a rejoint DELIVR-CM il y a 6 mois comme responsable des opérations. Son job : s'assurer que **tout tourne**. Que les coursiers livrent, que les vendeurs soient contents, que l'argent circule, et que les problèmes soient réglés avant que qui que ce soit ne s'en aperçoive.
+Franck a 31 ans. Il a rejoint RELAY237 il y a 6 mois comme responsable des opérations. Son job : s'assurer que **tout tourne**. Que les coursiers livrent, que les vendeurs soient contents, que l'argent circule, et que les problèmes soient réglés avant que qui que ce soit ne s'en aperçoive.
 
 Son arme secrète ? Le **Fleet Manager** — un tableau de bord qui lui donne le pouvoir de tout voir et tout contrôler.
 
@@ -14,7 +14,7 @@ Son arme secrète ? Le **Fleet Manager** — un tableau de bord qui lui donne le
 
 ## ☀️ 7h30 — Le check-up matinal
 
-Franck ouvre son laptop, un café à la main. Direction : `delivr-cm.com/fleet/`
+Franck ouvre son laptop, un café à la main. Direction : `relay237.com/fleet/`
 
 ### Le Dashboard (sa page d'accueil)
 
@@ -188,7 +188,7 @@ Franck voit **3 candidats en attente** (`/fleet/onboarding/`)
 | Alice Ngo | 🔄 **En attente** | → WhatsApp : "Renvoyez une photo CNI plus nette" |
 | Yves Fotso | ✅ **Approuvé** | → Passe en PROBATION |
 
-> **En coulisses** : Quand Franck clique "Approuver", le `onboarding_status` passe de `PENDING` à `PROBATION`. Le `probation_start_date` est set à aujourd'hui, et `probation_end_date` dans 7 jours. Le coursier reçoit un WhatsApp : *"🎉 Bienvenue chez DELIVR-CM ! Vous êtes en période d'essai."*
+> **En coulisses** : Quand Franck clique "Approuver", le `onboarding_status` passe de `PENDING` à `PROBATION`. Le `probation_start_date` est set à aujourd'hui, et `probation_end_date` dans 7 jours. Le coursier reçoit un WhatsApp : *"🎉 Bienvenue chez RELAY237 ! Vous êtes en période d'essai."*
 
 ---
 
@@ -267,12 +267,12 @@ Franck reçoit une notif : une nouvelle vendeuse s'est inscrite.
 
 Sarah reçoit un WhatsApp :
 ```
-🎉 DELIVR-CM — Compte Activé !
+🎉 RELAY237 — Compte Activé !
 
 Bonjour Sarah ! Votre compte vendeur est maintenant actif.
 
-🔗 Votre lien magique : delivr-cm.com/book/sarah-beauty-cam/
-📊 Votre dashboard : delivr-cm.com/partners/dashboard/
+🔗 Votre lien magique : relay237.com/book/sarah-beauty-cam/
+📊 Votre dashboard : relay237.com/partners/dashboard/
 
 Partagez votre lien avec vos clients pour commencer à livrer ! 🚀
 ```
@@ -526,7 +526,7 @@ Franck génère un rapport depuis `/fleet/reports/` :
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│  📄 Rapport Hebdomadaire — DELIVR-CM                         │
+│  📄 Rapport Hebdomadaire — RELAY237                         │
 │  Semaine du 5 au 11 Février 2026                             │
 │                                                              │
 │  📦 OPÉRATIONS                                               │

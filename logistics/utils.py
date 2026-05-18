@@ -1,5 +1,5 @@
 """
-DELIVR-CM - Logistics Utilities
+RELAY237 - Logistics Utilities
 ================================
 Services utilitaires pour le calcul de distance et de prix.
 """
@@ -106,7 +106,7 @@ def round_up_to_hundred(value: int) -> int:
 
 def calculate_delivery_price(distance_km: float) -> dict:
     """
-    Calcule le prix de livraison selon les règles métier DELIVR-CM.
+    Calcule le prix de livraison selon les règles métier RELAY237.
     
     Règles (cf. CONTEXT.md):
         - Base = configurable (défaut: 500 XAF)
@@ -194,7 +194,7 @@ def quote_delivery(lat1: float, lng1: float, lat2: float, lng2: float) -> dict:
 
 if __name__ == "__main__":
     print("=" * 50)
-    print("DELIVR-CM - Test du Pricing Engine")
+    print("RELAY237 - Test du Pricing Engine")
     print("=" * 50)
     
     # Test avec une distance de 5.2 km

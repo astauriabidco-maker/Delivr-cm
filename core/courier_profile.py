@@ -1,5 +1,5 @@
 """
-CORE App - Courier Profile Models for DELIVR-CM
+CORE App - Courier Profile Models for RELAY237
 
 Extended models for Fleet Management:
 - CourierAvailability: Shift scheduling

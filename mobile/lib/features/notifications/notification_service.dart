@@ -121,7 +121,7 @@ class NotificationService {
       priority: Priority.high,
       ticker: title,
       icon: '@drawable/ic_notification',
-      color: const Color(0xFFFF6B35), // DELIVR primary color
+      color: const Color(0xFFFF6B35), // RELAY237 primary color
       styleInformation: BigTextStyleInformation(
         body,
         contentTitle: title,

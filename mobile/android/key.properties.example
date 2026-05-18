@@ -1,5 +1,5 @@
 # =============================================
-# DELIVR-CM Release Signing Configuration
+# RELAY237 Release Signing Configuration
 # =============================================
 # Copy this file to key.properties and fill in your values
 # cp key.properties.example key.properties

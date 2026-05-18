@@ -1,6 +1,6 @@
 <?php
 /**
- * DELIVR-CM Shipping Method for WooCommerce
+ * RELAY237 Shipping Method for WooCommerce
  *
  * @package DELIVR_CM_Shipping
  */
@@ -12,7 +12,7 @@ if (!defined('ABSPATH')) {
 /**
  * WC_Delivr_Shipping_Method class
  *
- * Handles shipping rate calculation and order dispatch to DELIVR-CM API
+ * Handles shipping rate calculation and order dispatch to RELAY237 API
  */
 class WC_Delivr_Shipping_Method extends WC_Shipping_Method
 {
@@ -30,6 +30,13 @@ class WC_Delivr_Shipping_Method extends WC_Shipping_Method
      * @var string
      */
     private $api_key;
+
+    /**
+     * RELAY237 shop/business UUID
+     *
+     * @var string
+     */
+    private $shop_id;
 
     /**
      * Fallback price when API fails
@@ -54,8 +61,8 @@ class WC_Delivr_Shipping_Method extends WC_Shipping_Method
     {
         $this->id = 'delivr_cm';
         $this->instance_id = absint($instance_id);
-        $this->method_title = __('DELIVR-CM Express', 'delivr-cm-shipping');
-        $this->method_description = __('Livraison express géolocalisée par moto. Tarifs calculés en temps réel selon le quartier du client.', 'delivr-cm-shipping');
+        $this->method_title = __('RELAY237 Express', 'relay237-shipping');
+        $this->method_description = __('Livraison express géolocalisée par moto. Tarifs calculés en temps réel selon le quartier du client.', 'relay237-shipping');
         $this->supports = array(
             'shipping-zones',
             'instance-settings',
@@ -67,8 +74,9 @@ class WC_Delivr_Shipping_Method extends WC_Shipping_Method
         // Load settings
         $this->api_url = $this->get_option('api_url', 'http://localhost:8000');
         $this->api_key = $this->get_option('api_key', '');
+        $this->shop_id = $this->get_option('shop_id', '');
         $this->fallback_price = floatval($this->get_option('fallback_price', 1500));
-        $this->title = $this->get_option('title', __('Livraison Express (DELIVR-CM)', 'delivr-cm-shipping'));
+        $this->title = $this->get_option('title', __('Livraison Express (RELAY237)', 'relay237-shipping'));
 
         // Initialize logger
         $this->logger = wc_get_logger();
@@ -93,30 +101,37 @@ class WC_Delivr_Shipping_Method extends WC_Shipping_Method
     {
         $this->instance_form_fields = array(
             'title' => array(
-                'title' => __('Titre', 'delivr-cm-shipping'),
+                'title' => __('Titre', 'relay237-shipping'),
                 'type' => 'text',
-                'description' => __('Titre affiché au client lors du checkout.', 'delivr-cm-shipping'),
-                'default' => __('Livraison Express (DELIVR-CM)', 'delivr-cm-shipping'),
+                'description' => __('Titre affiché au client lors du checkout.', 'relay237-shipping'),
+                'default' => __('Livraison Express (RELAY237)', 'relay237-shipping'),
                 'desc_tip' => true,
             ),
             'api_url' => array(
-                'title' => __('URL de l\'API', 'delivr-cm-shipping'),
+                'title' => __('URL de l\'API', 'relay237-shipping'),
                 'type' => 'url',
-                'description' => __('URL de base de l\'API DELIVR-CM (ex: https://api.delivr.cm)', 'delivr-cm-shipping'),
+                'description' => __('URL de base de l\'API RELAY237 (ex: https://api.relay237.com)', 'relay237-shipping'),
                 'default' => 'http://localhost:8000',
                 'desc_tip' => true,
             ),
             'api_key' => array(
-                'title' => __('Clé API', 'delivr-cm-shipping'),
+                'title' => __('Clé API', 'relay237-shipping'),
                 'type' => 'password',
-                'description' => __('Token JWT pour authentification API. Obtenez-le depuis votre dashboard DELIVR-CM.', 'delivr-cm-shipping'),
+                'description' => __('Clé API partenaire. Elle sera envoyée avec l\'en-tête Authorization: Api-Key.', 'relay237-shipping'),
+                'default' => '',
+                'desc_tip' => true,
+            ),
+            'shop_id' => array(
+                'title' => __('ID boutique RELAY237', 'relay237-shipping'),
+                'type' => 'text',
+                'description' => __('UUID de la boutique BUSINESS associée à cette clé API.', 'relay237-shipping'),
                 'default' => '',
                 'desc_tip' => true,
             ),
             'fallback_price' => array(
-                'title' => __('Prix de secours (XAF)', 'delivr-cm-shipping'),
+                'title' => __('Prix de secours (XAF)', 'relay237-shipping'),
                 'type' => 'number',
-                'description' => __('Prix utilisé si l\'API est indisponible.', 'delivr-cm-shipping'),
+                'description' => __('Prix utilisé si l\'API est indisponible.', 'relay237-shipping'),
                 'default' => 1500,
                 'desc_tip' => true,
                 'custom_attributes' => array(
@@ -125,16 +140,16 @@ class WC_Delivr_Shipping_Method extends WC_Shipping_Method
                 ),
             ),
             'shop_latitude' => array(
-                'title' => __('Latitude de la boutique', 'delivr-cm-shipping'),
+                'title' => __('Latitude de la boutique', 'relay237-shipping'),
                 'type' => 'text',
-                'description' => __('Coordonnée GPS latitude de votre boutique (ex: 4.0511)', 'delivr-cm-shipping'),
+                'description' => __('Coordonnée GPS latitude de votre boutique (ex: 4.0511)', 'relay237-shipping'),
                 'default' => '4.0511',
                 'desc_tip' => true,
             ),
             'shop_longitude' => array(
-                'title' => __('Longitude de la boutique', 'delivr-cm-shipping'),
+                'title' => __('Longitude de la boutique', 'relay237-shipping'),
                 'type' => 'text',
-                'description' => __('Coordonnée GPS longitude de votre boutique (ex: 9.7679)', 'delivr-cm-shipping'),
+                'description' => __('Coordonnée GPS longitude de votre boutique (ex: 9.7679)', 'relay237-shipping'),
                 'default' => '9.7679',
                 'desc_tip' => true,
             ),
@@ -177,7 +192,7 @@ class WC_Delivr_Shipping_Method extends WC_Shipping_Method
     }
 
     /**
-     * Get quote from DELIVR-CM API
+     * Get quote from RELAY237 API
      *
      * @param string $city City name.
      * @param string $neighborhood Neighborhood name.
@@ -253,9 +268,11 @@ class WC_Delivr_Shipping_Method extends WC_Shipping_Method
             return;
         }
 
+        $this->load_settings_from_order($order);
+
         // Check if already sent
         if ($order->get_meta('_delivr_cm_order_sent') === 'yes') {
-            $this->log("Commande {$order_id} déjà envoyée à DELIVR-CM.", 'info');
+            $this->log("Commande {$order_id} déjà envoyée à RELAY237.", 'info');
             return;
         }
 
@@ -265,8 +282,15 @@ class WC_Delivr_Shipping_Method extends WC_Shipping_Method
             return;
         }
 
+        if (empty($this->shop_id)) {
+            $this->log('ID boutique RELAY237 non configuré, commande non envoyée.', 'warning');
+            $order->add_order_note('❌ RELAY237: ID boutique manquant dans les paramètres de livraison.');
+            return;
+        }
+
         // Prepare order data
         $billing_phone = $order->get_billing_phone();
+        $billing = $order->get_address('billing');
         $shipping = $order->get_address('shipping');
 
         // Build items description
@@ -277,19 +301,25 @@ class WC_Delivr_Shipping_Method extends WC_Shipping_Method
         $items_description = implode(', ', $items);
 
         // Get neighborhood from shipping address
-        $neighborhood = !empty($shipping['address_2']) ? $shipping['address_2'] : $shipping['address_1'];
-        $city = $shipping['city'];
+        $destination = !empty($shipping['city']) ? $shipping : $billing;
+        $neighborhood = !empty($destination['address_2']) ? $destination['address_2'] : $destination['address_1'];
+        $city = $destination['city'];
+        $neighborhood_id = $this->get_order_neighborhood_id($order, $city, $neighborhood);
+
+        if (empty($neighborhood_id)) {
+            $this->log("Commande {$order_id}: neighborhood_id introuvable pour {$neighborhood}, {$city}", 'error');
+            $order->add_order_note('❌ RELAY237: quartier introuvable. Sélectionnez un quartier RELAY237 au checkout.');
+            return;
+        }
 
         // Prepare API payload
         $payload = array(
+            'shop_id' => $this->shop_id,
             'external_order_id' => (string) $order_id,
             'customer_phone' => $this->normalize_phone($billing_phone),
             'customer_name' => $order->get_formatted_billing_full_name(),
-            'neighborhood' => $neighborhood,
-            'city' => $city,
+            'neighborhood_id' => $neighborhood_id,
             'items_description' => $items_description,
-            'order_total' => $order->get_total(),
-            'shipping_total' => $order->get_shipping_total(),
         );
 
         // Make API request
@@ -300,7 +330,7 @@ class WC_Delivr_Shipping_Method extends WC_Shipping_Method
             'timeout' => 15,
             'headers' => array(
                 'Content-Type' => 'application/json',
-                'Authorization' => 'Bearer ' . $this->api_key,
+                'Authorization' => 'Api-Key ' . $this->api_key,
             ),
             'body' => wp_json_encode($payload),
         );
@@ -309,7 +339,7 @@ class WC_Delivr_Shipping_Method extends WC_Shipping_Method
 
         if (is_wp_error($response)) {
             $this->log("Erreur envoi commande {$order_id}: " . $response->get_error_message(), 'error');
-            $order->add_order_note('❌ DELIVR-CM: Erreur - ' . $response->get_error_message());
+            $order->add_order_note('❌ RELAY237: Erreur - ' . $response->get_error_message());
             return;
         }
 
@@ -327,7 +357,7 @@ class WC_Delivr_Shipping_Method extends WC_Shipping_Method
 
             $order->add_order_note(
                 sprintf(
-                    '✅ DELIVR-CM: Livraison créée #%s. Le client sera contacté sur WhatsApp.',
+                    '✅ RELAY237: Livraison créée #%s. Le client sera contacté sur WhatsApp.',
                     substr($delivery_id, 0, 8)
                 )
             );
@@ -336,14 +366,127 @@ class WC_Delivr_Shipping_Method extends WC_Shipping_Method
         } elseif ($status_code === 402) {
             // Insufficient funds
             $error_msg = isset($data['message']) ? $data['message'] : 'Solde insuffisant';
-            $order->add_order_note('⚠️ DELIVR-CM: ' . $error_msg);
+            $order->add_order_note('⚠️ RELAY237: ' . $error_msg);
             $this->log("Commande {$order_id}: Solde insuffisant - {$error_msg}", 'error');
         } else {
             // Other error
             $error_msg = isset($data['error']) ? $data['error'] : $body;
-            $order->add_order_note('❌ DELIVR-CM: Erreur ' . $status_code . ' - ' . $error_msg);
+            $order->add_order_note('❌ RELAY237: Erreur ' . $status_code . ' - ' . $error_msg);
             $this->log("Commande {$order_id}: Erreur {$status_code} - {$error_msg}", 'error');
         }
+    }
+
+    /**
+     * Load the settings from the shipping-zone instance used by the order.
+     *
+     * @param WC_Order $order WooCommerce order.
+     */
+    private function load_settings_from_order($order)
+    {
+        foreach ($order->get_shipping_methods() as $method) {
+            if ($method->get_method_id() !== $this->id) {
+                continue;
+            }
+
+            $instance_id = absint($method->get_instance_id());
+            if (!$instance_id) {
+                return;
+            }
+
+            $settings = get_option('woocommerce_' . $this->id . '_' . $instance_id . '_settings', array());
+            if (!is_array($settings)) {
+                return;
+            }
+
+            $this->api_url = isset($settings['api_url']) ? $settings['api_url'] : $this->api_url;
+            $this->api_key = isset($settings['api_key']) ? $settings['api_key'] : $this->api_key;
+            $this->shop_id = isset($settings['shop_id']) ? $settings['shop_id'] : $this->shop_id;
+            $this->fallback_price = isset($settings['fallback_price']) ? floatval($settings['fallback_price']) : $this->fallback_price;
+            return;
+        }
+    }
+
+    /**
+     * Get the RELAY237 neighborhood UUID saved at checkout, with API lookup fallback.
+     *
+     * @param WC_Order $order        WooCommerce order.
+     * @param string   $city         Destination city.
+     * @param string   $neighborhood Destination neighborhood name.
+     * @return string Neighborhood UUID or empty string.
+     */
+    private function get_order_neighborhood_id($order, $city, $neighborhood)
+    {
+        $candidates = array(
+            $order->get_meta('_shipping_delivr_cm_neighborhood_id'),
+            $order->get_meta('_billing_delivr_cm_neighborhood_id'),
+            $order->get_meta('shipping_delivr_cm_neighborhood_id'),
+            $order->get_meta('billing_delivr_cm_neighborhood_id'),
+        );
+
+        foreach ($candidates as $candidate) {
+            if (!empty($candidate)) {
+                return sanitize_text_field($candidate);
+            }
+        }
+
+        if (preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i', $neighborhood)) {
+            return $neighborhood;
+        }
+
+        return $this->lookup_neighborhood_id($city, $neighborhood);
+    }
+
+    /**
+     * Resolve a neighborhood name to its API UUID.
+     *
+     * @param string $city         Destination city.
+     * @param string $neighborhood Destination neighborhood name.
+     * @return string Neighborhood UUID or empty string.
+     */
+    private function lookup_neighborhood_id($city, $neighborhood)
+    {
+        if (empty($neighborhood)) {
+            return '';
+        }
+
+        $url = add_query_arg(
+            'city',
+            $city,
+            trailingslashit($this->api_url) . 'api/neighborhoods/'
+        );
+
+        $response = wp_remote_get(
+            $url,
+            array(
+                'timeout' => 10,
+                'headers' => array(
+                    'Content-Type' => 'application/json',
+                ),
+            )
+        );
+
+        if (is_wp_error($response) || wp_remote_retrieve_response_code($response) !== 200) {
+            return '';
+        }
+
+        $data = json_decode(wp_remote_retrieve_body($response), true);
+        $items = isset($data['results']) && is_array($data['results']) ? $data['results'] : $data;
+
+        if (!is_array($items)) {
+            return '';
+        }
+
+        foreach ($items as $item) {
+            if (!isset($item['id'], $item['name'])) {
+                continue;
+            }
+
+            if (strcasecmp($item['name'], $neighborhood) === 0) {
+                return sanitize_text_field($item['id']);
+            }
+        }
+
+        return '';
     }
 
     /**
@@ -378,7 +521,7 @@ class WC_Delivr_Shipping_Method extends WC_Shipping_Method
     private function log($message, $level = 'info')
     {
         if ($this->logger) {
-            $this->logger->log($level, '[DELIVR-CM] ' . $message, array('source' => 'delivr-cm-shipping'));
+            $this->logger->log($level, '[RELAY237] ' . $message, array('source' => 'relay237-shipping'));
         }
     }
 }

@@ -1,6 +1,6 @@
 # delivr_courier
 
-DELIVR-CM Courier Mobile App
+RELAY237 Courier Mobile App
 
 ## Getting Started
 

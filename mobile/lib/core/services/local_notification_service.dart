@@ -48,8 +48,8 @@ class LocalNotificationService {
     
     const androidDetails = AndroidNotificationDetails(
       'delivr_channel',
-      'DELIVR Notifications',
-      channelDescription: 'Notifications pour les livraisons DELIVR',
+      'RELAY237 Notifications',
+      channelDescription: 'Notifications pour les livraisons RELAY237',
       importance: Importance.high,
       priority: Priority.high,
       showWhen: true,

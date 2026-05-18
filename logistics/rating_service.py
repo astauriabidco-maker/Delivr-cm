@@ -1,5 +1,5 @@
 """
-Rating Service for DELIVR-CM
+Rating Service for RELAY237
 
 Handles rating submission and average calculation.
 """

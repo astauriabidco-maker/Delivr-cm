@@ -85,7 +85,7 @@ def send_order_confirmation_to_sender(delivery):
         )
     else:
         message = (
-            f"✅ *Commande Créée - DELIVR-CM*\n\n"
+            f"✅ *Commande Créée - RELAY237*\n\n"
             f"📦 Référence : *#{_ref(delivery)}*\n"
             f"💰 Prix : *{delivery.total_price:,.0f} XAF*\n"
             f"📏 Distance : *{delivery.distance_km or 0:.1f} km*\n\n"
@@ -96,7 +96,7 @@ def send_order_confirmation_to_sender(delivery):
             f"   _→ Transmettez ce code au destinataire_\n\n"
             f"📍 Suivi en direct :\n{tracking_url}\n\n"
             f"🔍 _Recherche d'un coursier en cours..._\n\n"
-            f"✅ _DELIVR-CM - Livré avec confiance_"
+            f"✅ _RELAY237 - Livré avec confiance_"
         )
     
     return _safe_send(
@@ -136,7 +136,7 @@ def send_otp_to_recipient(delivery):
             f"🔐 *Votre code de livraison : {delivery.otp_code}*\n"
             f"⚠️ _Donnez ce code au coursier à la réception du colis._\n\n"
             f"📍 Suivez le coursier en temps réel :\n{tracking_url}\n\n"
-            f"✅ _DELIVR-CM - Livré avec confiance_"
+            f"✅ _RELAY237 - Livré avec confiance_"
         )
     
     return _safe_send(
@@ -346,7 +346,7 @@ def send_pickup_confirmed_notification(delivery):
         f"✅ Votre livraison est en route vers "
         f"*{delivery.recipient_name or 'le destinataire'}*.\n\n"
         f"📍 Suivez en temps réel :\n{tracking_url}\n\n"
-        f"✅ _DELIVR-CM - Livré avec confiance_"
+        f"✅ _RELAY237 - Livré avec confiance_"
     )
     
     _safe_send(
@@ -518,7 +518,7 @@ def send_delivery_completed_notification(delivery):
         f"📏 Distance : {delivery.distance_km or 0:.1f} km\n\n"
         f"📋 Détails complets :\n{tracking_url}\n\n"
         f"⭐ Merci de votre confiance !\n"
-        f"✅ _DELIVR-CM - Livré avec confiance_"
+        f"✅ _RELAY237 - Livré avec confiance_"
     )
     
     _safe_send(
@@ -542,8 +542,8 @@ def send_completed_notification_recipient(delivery):
         f"✅ *Colis reçu avec succès !*\n\n"
         f"📦 Commande #{_ref(delivery)}\n"
         f"👤 De : *{sender_name}*\n\n"
-        f"Merci d'avoir utilisé DELIVR-CM ! 🙏\n\n"
-        f"✅ _DELIVR-CM - Livré avec confiance_"
+        f"Merci d'avoir utilisé RELAY237 ! 🙏\n\n"
+        f"✅ _RELAY237 - Livré avec confiance_"
     )
     
     _safe_send(
@@ -573,7 +573,7 @@ def send_cancelled_notification_sender(delivery, reason=""):
         message += f"📝 Raison : {reason}\n\n"
     message += (
         f"Vous pouvez créer une nouvelle commande à tout moment.\n\n"
-        f"📞 _Support : DELIVR-CM_"
+        f"📞 _Support : RELAY237_"
     )
     
     _safe_send(
@@ -598,7 +598,7 @@ def send_cancelled_notification_recipient(delivery):
         f"📦 Commande #{_ref(delivery)}\n"
         f"👤 De : *{sender_name}*\n\n"
         f"La commande a été annulée.\n\n"
-        f"📞 _Support : DELIVR-CM_"
+        f"📞 _Support : RELAY237_"
     )
     
     _safe_send(
@@ -625,7 +625,7 @@ def send_failed_notification_sender(delivery):
         f"📦 Commande #{_ref(delivery)}\n"
         f"La livraison n'a pas pu être effectuée.\n\n"
         f"Notre équipe va vous contacter pour trouver une solution.\n\n"
-        f"📞 _Support : DELIVR-CM_"
+        f"📞 _Support : RELAY237_"
     )
     
     _safe_send(
@@ -651,7 +651,7 @@ def send_failed_notification_recipient(delivery):
         f"👤 De : *{sender_name}*\n\n"
         f"La livraison n'a pas pu être effectuée.\n"
         f"L'expéditeur a été prévenu.\n\n"
-        f"📞 _Support : DELIVR-CM_"
+        f"📞 _Support : RELAY237_"
     )
     
     _safe_send(
@@ -677,7 +677,7 @@ def send_dispute_notification(dispute):
     status_label = dispute.get_status_display()
     
     message = (
-        f"⚖️ *Mise à jour Litige - DELIVR-CM*\n\n"
+        f"⚖️ *Mise à jour Litige - RELAY237*\n\n"
         f"📦 Commande : *#{_ref(delivery)}*\n"
         f"📑 Dossier : *#{str(dispute.id)[:8].upper()}*\n"
         f"📊 Statut : *{status_label}*\n\n"
@@ -691,7 +691,7 @@ def send_dispute_notification(dispute):
                 f"*{dispute.refund_amount:,.0f} XAF* crédités sur votre wallet.\n\n"
             )
     
-    message += "Merci de votre patience.\n✅ _L'équipe Support DELIVR-CM_"
+    message += "Merci de votre patience.\n✅ _L'équipe Support RELAY237_"
     
     _safe_send(
         dispute.creator.phone_number, message,

@@ -26,6 +26,60 @@ from finance.models import Transaction
 logger = logging.getLogger(__name__)
 
 
+MOBILE_ACTIVE_DELIVERY_STATUSES = [
+    DeliveryStatus.ASSIGNED,
+    DeliveryStatus.EN_ROUTE_PICKUP,
+    DeliveryStatus.ARRIVED_PICKUP,
+    DeliveryStatus.PICKED_UP,
+    DeliveryStatus.IN_TRANSIT,
+    DeliveryStatus.ARRIVED_DROPOFF,
+]
+
+
+def _delivery_address(delivery, address_field, neighborhood_field=None, fallback='N/A'):
+    address = getattr(delivery, address_field, None)
+    if address:
+        return address
+
+    if neighborhood_field:
+        neighborhood = getattr(delivery, neighborhood_field, None)
+        if neighborhood:
+            return neighborhood.name
+
+    return fallback
+
+
+def _serialize_mobile_delivery(delivery):
+    return {
+        'id': str(delivery.id),
+        'status': delivery.status,
+        'pickup_address': _delivery_address(delivery, 'pickup_address'),
+        'dropoff_address': _delivery_address(
+            delivery,
+            'dropoff_address',
+            'dropoff_neighborhood',
+        ),
+        'pickup_lat': delivery.pickup_geo.y if delivery.pickup_geo else None,
+        'pickup_lng': delivery.pickup_geo.x if delivery.pickup_geo else None,
+        'dropoff_lat': delivery.dropoff_geo.y if delivery.dropoff_geo else None,
+        'dropoff_lng': delivery.dropoff_geo.x if delivery.dropoff_geo else None,
+        'sender_phone': delivery.sender.phone_number if delivery.sender else None,
+        'sender_name': delivery.sender.full_name if delivery.sender else None,
+        'recipient_phone': delivery.recipient_phone,
+        'recipient_name': delivery.recipient_name,
+        'distance_km': float(delivery.distance_km or 0),
+        'total_price': float(delivery.total_price or 0),
+        'courier_earning': float(delivery.courier_earning or 0),
+        'pickup_otp': delivery.pickup_otp,
+        'dropoff_otp': delivery.otp_code,
+        'notes': delivery.package_description,
+        'created_at': delivery.created_at.isoformat(),
+        'assigned_at': delivery.assigned_at.isoformat() if delivery.assigned_at else None,
+        'picked_up_at': delivery.picked_up_at.isoformat() if delivery.picked_up_at else None,
+        'completed_at': delivery.completed_at.isoformat() if delivery.completed_at else None,
+    }
+
+
 # ============================================
 # PERMISSIONS
 # ============================================
@@ -275,12 +329,19 @@ class CourierDashboardView(APIView):
         # Active delivery
         active_delivery = Delivery.objects.filter(
             courier=courier,
-            status__in=[
-                DeliveryStatus.ASSIGNED,
-                DeliveryStatus.PICKED_UP,
-                DeliveryStatus.IN_TRANSIT,
-            ]
-        ).first()
+            status__in=MOBILE_ACTIVE_DELIVERY_STATUSES,
+        ).select_related(
+            'sender',
+            'dropoff_neighborhood',
+        ).order_by('-assigned_at', '-created_at').first()
+
+        recent_deliveries = Delivery.objects.filter(
+            courier=courier,
+            status=DeliveryStatus.COMPLETED,
+        ).select_related(
+            'sender',
+            'dropoff_neighborhood',
+        ).order_by('-completed_at', '-created_at')[:5]
         
         # Wallet (balance is on User model)
         wallet_balance = float(courier.wallet_balance)
@@ -312,8 +373,14 @@ class CourierDashboardView(APIView):
             'rating': 5.0,
             'success_streak': 0,
             'level': courier.courier_level or 'BRONZE',
-            'active_delivery': None,  # TODO: serialize active delivery
-            'recent_deliveries': [],  # TODO: add recent deliveries
+            'active_delivery': (
+                _serialize_mobile_delivery(active_delivery)
+                if active_delivery else None
+            ),
+            'recent_deliveries': [
+                _serialize_mobile_delivery(delivery)
+                for delivery in recent_deliveries
+            ],
         })
 
 

@@ -1,5 +1,5 @@
 /**
- * DELIVR-CM Checkout Styles
+ * RELAY237 Checkout Styles
  */
 
 /* Neighborhood select styling */
@@ -56,12 +56,12 @@
     }
 }
 
-/* DELIVR-CM branding on shipping method */
+/* RELAY237 branding on shipping method */
 .shipping_method[value*="delivr_cm"] + label::before {
     content: '🏍️ ';
 }
 
-/* Highlight DELIVR shipping option */
+/* Highlight RELAY237 shipping option */
 .woocommerce-shipping-methods li:has(.shipping_method[value*="delivr_cm"]) {
     background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
     border: 1px solid #0ea5e9;

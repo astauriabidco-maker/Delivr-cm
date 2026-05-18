@@ -5,7 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DELIVR-CM | Livraison E-commerce Douala & Yaoundé — GPS WhatsApp, Suivi Temps Réel</title>
+    <title>RELAY237 | Livraison E-commerce Douala & Yaoundé — GPS WhatsApp, Suivi Temps Réel</title>
     <link rel="icon" type="image/png" href="{% static 'img/favicon.png' %}">
     <meta name="description"
         content="Service de livraison e-commerce à Douala et Yaoundé. GPS via WhatsApp, suivi temps réel, paiement Mobile Money, smart routing et app coursier gamifiée.">
@@ -17,30 +17,22 @@
     <!-- HEADER -->
     <header class="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-16 lg:h-20">
-                <a href="{% url 'home:home' %}" class="flex items-center gap-2">
-                    <img src="{% static 'img/logo.png' %}" alt="DELIVR-CM Logo" class="h-8 w-auto">
-                    <span class="text-xl font-extrabold text-brand-blue">DELIVR<span
-                            class="text-brand-orange">-CM</span></span>
+            <div class="flex items-center justify-between h-24 lg:h-28">
+                <a href="{% url 'home:home' %}" class="flex items-center">
+                    <img src="{% static 'img/logo-nav.png' %}" alt="RELAY237 Logo"
+                        class="w-44 sm:w-52 lg:w-64 h-auto object-contain">
                 </a>
-                <nav class="hidden md:flex items-center gap-6">
+                <nav class="hidden md:flex items-center gap-7">
                     <a href="#pour-qui"
                         class="text-gray-600 hover:text-brand-blue font-medium transition-colors">Pour qui ?</a>
                     <a href="#comment-ca-marche"
                         class="text-gray-600 hover:text-brand-blue font-medium transition-colors">Comment ça marche</a>
-                    <a href="#vendeurs"
-                        class="text-gray-600 hover:text-brand-blue font-medium transition-colors">Vendeurs</a>
-                    <a href="#coursier"
-                        class="text-gray-600 hover:text-brand-blue font-medium transition-colors">Coursiers</a>
                     <a href="#tarifs"
                         class="text-gray-600 hover:text-brand-blue font-medium transition-colors">Tarifs</a>
                 </nav>
-                <div class="hidden md:flex items-center gap-3">
-                    <a href="{% url 'partners:login' %}"
-                        class="px-4 py-2 text-brand-blue font-semibold border-2 border-brand-blue rounded-lg hover:bg-brand-blue hover:text-white transition-all">Mon
-                        Espace</a>
+                <div class="hidden md:flex items-center">
                     <a href="{% url 'partners:signup' %}"
-                        class="px-4 py-2 bg-brand-orange text-white font-semibold rounded-lg hover:bg-brand-orange-dark transition-all shadow-sm">Créer un compte vendeur</a>
+                        class="px-5 py-3 bg-brand-orange text-white font-semibold rounded-lg hover:bg-brand-orange-dark transition-all shadow-sm">Créer un compte vendeur</a>
                 </div>
                 <button id="mobileMenuBtn" class="md:hidden p-2 text-gray-600"><i
                         class="fas fa-bars text-xl"></i></button>
@@ -63,7 +55,7 @@
 
     <!-- ==================== HERO ==================== -->
     <section
-        class="relative pt-24 lg:pt-32 pb-16 lg:pb-24 overflow-hidden bg-gradient-to-b from-slate-50 via-white to-white">
+        class="relative pt-28 lg:pt-32 pb-16 lg:pb-24 overflow-hidden bg-gradient-to-b from-slate-50 via-white to-white">
         <div class="hero-blob w-96 h-96 bg-brand-orange top-0 right-0"></div>
         <div class="hero-blob w-80 h-80 bg-brand-blue bottom-0 left-0"></div>
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
@@ -439,7 +431,7 @@
                 </div>
                 <h2 class="text-3xl lg:text-4xl font-extrabold text-gray-900 mb-4">Pour les vendeurs qui livrent
                     vraiment</h2>
-                <p class="text-lg text-gray-600 max-w-2xl mx-auto">DELIVR-CM couvre les canaux de vente les plus
+                <p class="text-lg text-gray-600 max-w-2xl mx-auto">RELAY237 couvre les canaux de vente les plus
                     fréquents au Cameroun, du DM Instagram au panier WooCommerce.</p>
             </div>
             <div class="grid md:grid-cols-2 lg:grid-cols-5 gap-5">
@@ -719,7 +711,7 @@
                 <div class="border border-gray-200 rounded-xl overflow-hidden">
                     <button onclick="toggleFaq(this)"
                         class="w-full px-6 py-4 text-left flex items-center justify-between bg-white hover:bg-gray-50 transition"><span
-                            class="font-semibold text-gray-900">Comment intégrer DELIVR-CM à mon site ?</span><i
+                            class="font-semibold text-gray-900">Comment intégrer RELAY237 à mon site ?</span><i
                             class="fas fa-chevron-down text-gray-400 transition-transform"></i></button>
                     <div class="hidden px-6 pb-4 text-gray-600">Deux options : installez notre <strong>plugin
                             WooCommerce</strong> en un clic, ou utilisez notre <strong>API REST</strong> documentée avec
@@ -763,7 +755,7 @@
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <h2 class="text-3xl lg:text-5xl font-black text-gray-900 mb-6">Prêt à livrer vos commandes plus proprement ?</h2>
             <p class="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">Commencez côté vendeur, ajoutez vos commandes, puis
-                laissez DELIVR-CM gérer l'assignation, le suivi et la preuve de livraison.</p>
+                laissez RELAY237 gérer l'assignation, le suivi et la preuve de livraison.</p>
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
                 <a href="{% url 'partners:signup' %}"
                     class="inline-flex items-center justify-center gap-2 px-8 py-4 bg-brand-orange text-white font-bold rounded-xl hover:bg-brand-orange-dark transition-all shadow-md text-lg"><i

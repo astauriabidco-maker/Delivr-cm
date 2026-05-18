@@ -1,6 +1,6 @@
 # 📦 Module `logistics/` — Livraisons, Quartiers & Routing
 
-> Le moteur opérationnel de DELIVR-CM. Gère tout le cycle de vie d'une livraison, du calcul de prix à la confirmation GPS.
+> Le moteur opérationnel de RELAY237. Gère tout le cycle de vie d'une livraison, du calcul de prix à la confirmation GPS.
 
 ---
 

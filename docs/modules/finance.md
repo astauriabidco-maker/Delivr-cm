@@ -1,6 +1,6 @@
 # 💰 Module `finance/` — Wallet, Transactions & Paiements
 
-> Le système nerveux financier de DELIVR-CM. Chaque mouvement d'argent passe par ce module.
+> Le système nerveux financier de RELAY237. Chaque mouvement d'argent passe par ce module.
 
 ---
 

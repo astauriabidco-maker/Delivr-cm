@@ -243,7 +243,7 @@ class _ActivationScreenState extends ConsumerState<ActivationScreen> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        'Vous n\'avez pas reçu de code ?\nContactez le support DELIVR',
+                        'Vous n\'avez pas reçu de code ?\nContactez le support RELAY237',
                         style: TextStyle(
                           fontSize: 13,
                           color: DelivrColors.info,

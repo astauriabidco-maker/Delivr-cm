@@ -1,5 +1,5 @@
 """
-Mobile Payment Service for DELIVR-CM
+Mobile Payment Service for RELAY237
 
 Unified service for handling mobile money payments (MTN MoMo + Orange Money).
 Routes requests to the appropriate provider based on phone number.
@@ -79,7 +79,7 @@ class MobilePaymentService:
                 amount=amount,
                 external_reference=external_reference,
                 payer_message=f"Paiement livraison #{str(delivery.id)[:8]}",
-                payee_note=f"DELIVR-CM Delivery {delivery.id}"
+                payee_note=f"RELAY237 Delivery {delivery.id}"
             )
             
             if result.get('success'):
@@ -98,7 +98,7 @@ class MobilePaymentService:
                 phone=phone,
                 amount=amount,
                 external_reference=external_reference,
-                description=f"Livraison DELIVR-CM #{str(delivery.id)[:8]}"
+                description=f"Livraison RELAY237 #{str(delivery.id)[:8]}"
             )
             
             if result.get('success'):

@@ -1,5 +1,5 @@
 """
-DELIVR-CM ASGI Configuration
+RELAY237 ASGI Configuration
 
 Configures Django Channels with WebSocket support for real-time tracking.
 """

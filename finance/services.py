@@ -1,5 +1,5 @@
 """
-FINANCE App - Business Services for DELIVR-CM
+FINANCE App - Business Services for RELAY237
 
 High-level financial operations for delivery completion and wallet management.
 """
@@ -20,7 +20,7 @@ def process_delivery_completion(delivery) -> Decimal:
     Process financial operations when a delivery is completed.
     
     This is the main entry point for financial settlement after delivery.
-    Implements the DELIVR-CM business rules from CONTEXT.md:
+    Implements the RELAY237 business rules from CONTEXT.md:
     
     - CASH_P2P: Courier keeps cash, platform debits commission (creates debt)
     - PREPAID_WALLET: Courier is credited their earning
@@ -248,7 +248,7 @@ def get_courier_financial_status(courier) -> dict:
 
 if __name__ == "__main__":
     print("=" * 60)
-    print("DELIVR-CM - Test du Service Financier")
+    print("RELAY237 - Test du Service Financier")
     print("=" * 60)
     print("\nCe module doit être testé via Django shell:")
     print("  docker-compose exec web python manage.py shell")

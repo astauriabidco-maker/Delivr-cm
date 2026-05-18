@@ -1,5 +1,5 @@
 """
-LOGISTICS App - Dispatch Service for DELIVR-CM
+LOGISTICS App - Dispatch Service for RELAY237
 
 Handles courier dispatch and order assignment logic.
 """

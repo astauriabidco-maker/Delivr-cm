@@ -55,7 +55,7 @@ class IntegrationConfig(models.Model):
     
     meta_verify_token = models.CharField(
         max_length=100,
-        default='delivr-cm-webhook-verify-token',
+        default='relay237-webhook-verify-token',
         verbose_name='Token de vérification Meta',
         help_text='Token utilisé pour vérifier les webhooks Meta'
     )

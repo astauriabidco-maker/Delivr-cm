@@ -1,5 +1,5 @@
 # =============================================
-# DELIVR-CM ProGuard Rules
+# RELAY237 ProGuard Rules
 # =============================================
 
 # Flutter wrapper

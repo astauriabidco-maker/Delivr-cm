@@ -1,5 +1,5 @@
 """
-E2E Tests for DELIVR-CM Delivery Flow
+E2E Tests for RELAY237 Delivery Flow
 
 Tests the complete flow: creation → assignment → pickup → delivery → payment → receipt
 """
@@ -243,6 +243,72 @@ class E2EDeliveryFlowTest(TransactionTestCase):
                 transaction_type=TransactionType.DELIVERY_CREDIT,
             ).count(),
             0
+        )
+
+    def test_mobile_dashboard_serializes_active_and_recent_deliveries(self):
+        """Dashboard should expose the active delivery and recent completed deliveries."""
+        active_delivery = Delivery.objects.create(
+            sender=self.sender,
+            courier=self.courier,
+            recipient_phone='+237699999991',
+            recipient_name='Active Recipient',
+            pickup_geo=self.pickup_point,
+            dropoff_geo=self.dropoff_point,
+            pickup_address='Akwa pickup',
+            dropoff_address='Bonapriso dropoff',
+            payment_method=PaymentMethod.CASH_P2P,
+            status=DeliveryStatus.ARRIVED_PICKUP,
+            assigned_at=timezone.now(),
+            distance_km=3.5,
+            total_price=Decimal('1500.00'),
+            platform_fee=Decimal('300.00'),
+            courier_earning=Decimal('1200.00')
+        )
+        recent_delivery = Delivery.objects.create(
+            sender=self.sender,
+            courier=self.courier,
+            recipient_phone='+237699999990',
+            recipient_name='Recent Recipient',
+            pickup_geo=self.pickup_point,
+            dropoff_geo=self.dropoff_point,
+            pickup_address='Akwa recent pickup',
+            dropoff_address='Bonapriso recent dropoff',
+            payment_method=PaymentMethod.CASH_P2P,
+            status=DeliveryStatus.ASSIGNED,
+            distance_km=4.0,
+            total_price=Decimal('2000.00'),
+            platform_fee=Decimal('400.00'),
+            courier_earning=Decimal('1600.00')
+        )
+        completed_at = timezone.now()
+        Delivery.objects.filter(id=recent_delivery.id).update(
+            status=DeliveryStatus.COMPLETED,
+            completed_at=completed_at,
+        )
+
+        self.api_client.force_authenticate(user=self.courier)
+        response = self.api_client.get('/api/mobile/dashboard/')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.data['has_active_delivery'])
+        self.assertEqual(response.data['active_delivery_id'], str(active_delivery.id))
+        self.assertEqual(response.data['active_delivery']['id'], str(active_delivery.id))
+        self.assertEqual(
+            response.data['active_delivery']['status'],
+            DeliveryStatus.ARRIVED_PICKUP,
+        )
+        self.assertEqual(
+            response.data['active_delivery']['pickup_address'],
+            'Akwa pickup',
+        )
+        self.assertEqual(len(response.data['recent_deliveries']), 1)
+        self.assertEqual(
+            response.data['recent_deliveries'][0]['id'],
+            str(recent_delivery.id),
+        )
+        self.assertEqual(
+            response.data['recent_deliveries'][0]['completed_at'],
+            completed_at.isoformat(),
         )
 
     @patch('bot.whatsapp_service.send_delivery_completed_notification')

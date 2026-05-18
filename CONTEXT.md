@@ -1,7 +1,7 @@
-# PROJET : DELIVR-CM (Plateforme Logistique Décentralisée Cameroun)
+# PROJET : RELAY237 (Plateforme Logistique Décentralisée Cameroun)
 
 ## 1. RÔLE ET OBJECTIF
-Tu agis en tant qu'Architecte et Lead Developer Backend pour le projet DELIVR-CM.
+Tu agis en tant qu'Architecte et Lead Developer Backend pour le projet RELAY237.
 L'objectif est de construire une API Backend (Django) pour une plateforme de livraison urbaine opérant à Douala et Yaoundé.
 
 **Contraintes Majeures :**

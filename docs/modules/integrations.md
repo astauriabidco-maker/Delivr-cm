@@ -1,6 +1,6 @@
 # 🔌 Module `integrations/` — API Partenaires & E-commerce
 
-> Connecte DELIVR-CM aux plateformes e-commerce externes (WooCommerce, Shopify, etc.) via des plugins et APIs.
+> Connecte RELAY237 aux plateformes e-commerce externes (WooCommerce, Shopify, etc.) via des plugins et APIs.
 
 ---
 
@@ -23,8 +23,8 @@
 ## 🔧 Plugin WooCommerce
 
 Le dossier `wp-plugin/` contient un plugin WordPress/WooCommerce qui :
-1. Ajoute "DELIVR-CM" comme méthode d'expédition
-2. Envoie automatiquement les commandes à l'API DELIVR-CM
+1. Ajoute "RELAY237" comme méthode d'expédition
+2. Envoie automatiquement les commandes à l'API RELAY237
 3. Affiche le statut de livraison dans le backoffice WooCommerce
 4. Met à jour le statut WooCommerce quand la livraison est terminée (via webhook)
 

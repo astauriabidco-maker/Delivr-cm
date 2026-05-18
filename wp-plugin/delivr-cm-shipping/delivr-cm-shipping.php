@@ -1,12 +1,12 @@
 <?php
 /**
- * Plugin Name: DELIVR-CM Shipping
- * Plugin URI: https://delivr.cm
- * Description: Intégration de livraison express géolocalisée par moto pour WooCommerce. Connecte votre boutique à l'API DELIVR-CM.
+ * Plugin Name: RELAY237 Shipping
+ * Plugin URI: https://relay237.com
+ * Description: Intégration de livraison express géolocalisée par moto pour WooCommerce. Connecte votre boutique à l'API RELAY237.
  * Version: 1.0.0
- * Author: DELIVR-CM
- * Author URI: https://delivr.cm
- * Text Domain: delivr-cm-shipping
+ * Author: RELAY237
+ * Author URI: https://relay237.com
+ * Text Domain: relay237-shipping
  * Domain Path: /languages
  * Requires at least: 5.8
  * Requires PHP: 7.4
@@ -47,7 +47,7 @@ function delivr_cm_woocommerce_missing_notice()
     ?>
     <div class="notice notice-error">
         <p>
-            <strong>DELIVR-CM Shipping</strong> nécessite WooCommerce pour fonctionner.
+            <strong>RELAY237 Shipping</strong> nécessite WooCommerce pour fonctionner.
             Veuillez <a
                 href="<?php echo esc_url(admin_url('plugin-install.php?s=woocommerce&tab=search&type=term')); ?>">installer
                 WooCommerce</a>.
@@ -88,7 +88,7 @@ add_action('woocommerce_shipping_methods', 'delivr_cm_add_shipping_method');
  */
 function delivr_cm_plugin_action_links($links)
 {
-    $settings_link = '<a href="' . admin_url('admin.php?page=wc-settings&tab=shipping&section=delivr_cm') . '">' . __('Paramètres', 'delivr-cm-shipping') . '</a>';
+    $settings_link = '<a href="' . admin_url('admin.php?page=wc-settings&tab=shipping&section=delivr_cm') . '">' . __('Paramètres', 'relay237-shipping') . '</a>';
     array_unshift($links, $settings_link);
     return $links;
 }
@@ -129,7 +129,7 @@ function delivr_cm_on_order_processing($order_id)
         return;
     }
 
-    // Check if DELIVR-CM shipping was used
+    // Check if RELAY237 shipping was used
     $shipping_methods = $order->get_shipping_methods();
     $uses_delivr = false;
 

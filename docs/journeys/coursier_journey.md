@@ -1,12 +1,12 @@
-# 🏍️ Parcours Coursier — "La journée type d'un coursier DELIVR"
+# 🏍️ Parcours Coursier — "La journée type d'un coursier RELAY237"
 
-> *Suivez Jean, coursier moto à Douala, dans sa journée avec DELIVR-CM.*
+> *Suivez Jean, coursier moto à Douala, dans sa journée avec RELAY237.*
 
 ---
 
 ## 📖 L'histoire de Jean
 
-Jean a 23 ans. Il a une moto et cherchait un job flexible. Un ami lui a parlé de DELIVR-CM. En 48h, il était coursier. Aujourd'hui, il fait entre 8 et 15 courses par jour et gagne plus qu'un emploi salarié classique.
+Jean a 23 ans. Il a une moto et cherchait un job flexible. Un ami lui a parlé de RELAY237. En 48h, il était coursier. Aujourd'hui, il fait entre 8 et 15 courses par jour et gagne plus qu'un emploi salarié classique.
 
 ---
 
@@ -57,7 +57,7 @@ Jean a 23 ans. Il a une moto et cherchait un job flexible. Un ami lui a parlé d
 
 ## ☀️ 7h30 — Jean se met en ligne
 
-Jean ouvre l'app DELIVR-CM sur son téléphone et active sa disponibilité :
+Jean ouvre l'app RELAY237 sur son téléphone et active sa disponibilité :
 
 ```
 ┌──────────────────────────────────────┐
@@ -374,9 +374,9 @@ Jean configure ses créneaux dans **📅 Disponibilité** :
 
 ---
 
-## 💡 Résumé — Ce que DELIVR-CM apporte à Jean
+## 💡 Résumé — Ce que RELAY237 apporte à Jean
 
-| Avant | Avec DELIVR-CM |
+| Avant | Avec RELAY237 |
 |---|---|
 | Attendre les appels | Courses automatiques push |
 | Négocier chaque prix | Tarification fixe et transparente |

@@ -1,6 +1,6 @@
 # 📦 Parcours Client — "Commander en 30 secondes"
 
-> *Suivez Paul, client à Akwa (Douala), qui reçoit un bijou commandé chez Marie Fashion via DELIVR-CM.*
+> *Suivez Paul, client à Akwa (Douala), qui reçoit un bijou commandé chez Marie Fashion via RELAY237.*
 
 ---
 
@@ -20,7 +20,7 @@ Marie lui envoie sur WhatsApp :
 💎 Marie Fashion Bijoux
 
 Passez votre commande ici 👉
-delivr-cm.com/book/marie-fashion-bijoux/
+relay237.com/book/marie-fashion-bijoux/
 ```
 
 Paul clique sur le lien.
@@ -74,7 +74,7 @@ Paul voit la page de commande **personnalisée aux couleurs de Marie** (rose fuc
 │                                          │
 │  [🚀 Commander ma livraison]            │
 │                                          │
-│  Propulsé par DELIVR-CM 🇨🇲              │
+│  Propulsé par RELAY237 🇨🇲              │
 └──────────────────────────────────────────┘
 ```
 
@@ -96,7 +96,7 @@ graph TD
 ### Paul reçoit un WhatsApp :
 
 ```
-📦 DELIVR-CM — Votre livraison
+📦 RELAY237 — Votre livraison
 
 Bonjour Paul ! Votre commande de Marie Fashion est confirmée.
 
@@ -128,7 +128,7 @@ Vous recevrez un code OTP à l'arrivée du coursier.
 Paul reçoit un dernier WhatsApp :
 
 ```
-🏍️ DELIVR-CM — Coursier en approche !
+🏍️ RELAY237 — Coursier en approche !
 
 Jean Mbarga arrive dans ~3 minutes.
 

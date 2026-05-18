@@ -1,5 +1,5 @@
 """
-DELIVR-CM Core Tests
+RELAY237 Core Tests
 =====================
 
 Tests for:
@@ -240,7 +240,7 @@ class TestSecurityMiddleware(TestCase):
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertEqual(data['status'], 'ok')
-        self.assertEqual(data['service'], 'delivr-cm')
+        self.assertEqual(data['service'], 'relay237')
     
     def test_readiness_endpoint_accessible(self):
         """Readiness check should be accessible without auth."""

@@ -1,5 +1,5 @@
 """
-Orange SMS Service for DELIVR-CM
+Orange SMS Service for RELAY237
 
 Fallback SMS provider using Orange Cameroun API.
 Used when WhatsApp is unavailable.
@@ -99,7 +99,7 @@ class OrangeSMSService:
         if not access_token:
             return None
         
-        sender_address = getattr(settings, 'ORANGE_SMS_SENDER', 'DELIVR-CM')
+        sender_address = getattr(settings, 'ORANGE_SMS_SENDER', 'RELAY237')
         
         # Clean phone number (Orange expects tel:+237...)
         phone_clean = to_number.replace('+', '').replace('whatsapp:', '').strip()
@@ -119,7 +119,7 @@ class OrangeSMSService:
             "outboundSMSMessageRequest": {
                 "address": f"tel:+{phone_clean}",
                 "senderAddress": f"tel:+{sender_address}",
-                "senderName": "DELIVR-CM",
+                "senderName": "RELAY237",
                 "outboundSMSTextMessage": {
                     "message": text[:160]  # Truncate to single SMS
                 }
@@ -158,7 +158,7 @@ class OrangeSMSService:
         if not access_token:
             return None
         
-        sender_address = getattr(settings, 'ORANGE_SMS_SENDER', 'DELIVR-CM')
+        sender_address = getattr(settings, 'ORANGE_SMS_SENDER', 'RELAY237')
         sender_encoded = requests.utils.quote(f"tel:+{sender_address}")
         
         url = f"{cls.SMS_URL}/{sender_encoded}/requests/{message_id}/deliveryInfos"

@@ -1211,7 +1211,7 @@ class PartnerWalletView(BusinessRequiredMixin, View):
                     f"Montant : {amount:,.0f} XAF\n"
                     f"Méthode : {method}\n"
                     f"Numéro : {request.user.phone_number}\n\n"
-                    f"En attente de confirmation par l'équipe DELIVR-CM."
+                    f"En attente de confirmation par l'équipe RELAY237."
                 ),
             )
             

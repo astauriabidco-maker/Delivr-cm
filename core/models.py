@@ -1,5 +1,5 @@
 """
-CORE App - Custom User Model for DELIVR-CM
+CORE App - Custom User Model for RELAY237
 
 Handles: Users (Clients, Couriers, Businesses, Admins)
 """
@@ -88,7 +88,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         blank=True,
         db_index=True,
         verbose_name="URL publique",
-        help_text="Ex: ma-boutique → delivr.cm/book/ma-boutique"
+        help_text="Ex: ma-boutique → relay237.com/book/ma-boutique"
     )
     
     # Location (optional - last known position)

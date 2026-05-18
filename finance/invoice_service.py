@@ -346,13 +346,13 @@ class InvoiceService:
                 phone = invoice.user.phone_number
             
             # Build message
-            message = f"📄 Votre reçu DELIVR-CM #{invoice.invoice_number}"
+            message = f"📄 Votre reçu RELAY237 #{invoice.invoice_number}"
             
             # Send document
             send_whatsapp_document(
                 phone=phone,
                 document_url=invoice.pdf_file.url,
-                filename=f"DELIVR-CM_{invoice.invoice_number}.pdf",
+                filename=f"RELAY237_{invoice.invoice_number}.pdf",
                 caption=message
             )
             

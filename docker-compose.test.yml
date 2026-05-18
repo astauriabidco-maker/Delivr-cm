@@ -1,0 +1,51 @@
+# RELAY237 Docker Compose - Isolated test database
+# Use with:
+# docker compose -f docker-compose.yml -f docker-compose.test.yml run --rm web sh -lc 'python scripts/wait_for_db.py && pytest'
+
+services:
+  web:
+    image: delivr-cm-web
+    build: null
+    container_name: relay237_test_web
+    ports: !reset []
+    environment:
+      WAIT_FOR_DB_TIMEOUT: ${WAIT_FOR_DB_TIMEOUT:-300}
+    healthcheck:
+      disable: true
+
+  db:
+    image: imresamu/postgis:15-3.5-alpine
+    container_name: relay237_test_db
+    volumes:
+      - test_postgres_data:/var/lib/postgresql/data
+    ports: !reset []
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -p 5432 -U ${DB_USER:-delivr_user} -d ${DB_NAME:-delivr_db} -t 10"]
+      interval: 10s
+      timeout: 15s
+      retries: 18
+      start_period: 120s
+
+  redis:
+    container_name: relay237_test_redis
+    ports: !reset []
+    volumes:
+      - test_redis_data:/data
+
+  celery_worker:
+    profiles:
+      - dev-workers
+
+  celery_beat:
+    profiles:
+      - dev-workers
+
+volumes:
+  test_postgres_data:
+    name: relay237_test_postgres_data
+  test_redis_data:
+    name: relay237_test_redis_data
+
+networks:
+  delivr_network:
+    name: relay237_test_network

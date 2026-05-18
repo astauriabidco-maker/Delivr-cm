@@ -1,4 +1,4 @@
-# DELIVR-CM Dependencies
+# RELAY237 Dependencies
 # ========================
 
 # Django Core

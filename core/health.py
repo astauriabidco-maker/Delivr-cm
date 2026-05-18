@@ -1,5 +1,5 @@
 """
-DELIVR-CM Monitoring & Health Check Endpoints
+RELAY237 Monitoring & Health Check Endpoints
 ===============================================
 
 Provides:
@@ -30,7 +30,7 @@ def health_check(request):
     """
     return JsonResponse({
         'status': 'ok',
-        'service': 'delivr-cm',
+        'service': 'relay237',
         'timestamp': timezone.now().isoformat(),
     })
 
@@ -124,7 +124,7 @@ def readiness_check(request):
     
     return JsonResponse({
         'status': overall_status,
-        'service': 'delivr-cm',
+        'service': 'relay237',
         'timestamp': timezone.now().isoformat(),
         'checks': checks,
     }, status=status_code)
@@ -181,7 +181,7 @@ def detailed_health(request):
         
         return JsonResponse({
             'status': 'ok',
-            'service': 'delivr-cm',
+            'service': 'relay237',
             'timestamp': timezone.now().isoformat(),
             'stats': stats,
         })

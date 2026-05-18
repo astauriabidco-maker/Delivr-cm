@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// DELIVR-CM Brand Colors
+/// RELAY237 Brand Colors
 class DelivrColors {
   DelivrColors._();
   
@@ -46,7 +46,7 @@ class DelivrColors {
   static const Color busy = Color(0xFFFF9800);
 }
 
-/// DELIVR-CM Theme Configuration
+/// RELAY237 Theme Configuration
 class DelivrTheme {
   DelivrTheme._();
   

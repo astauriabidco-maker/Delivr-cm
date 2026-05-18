@@ -6,7 +6,7 @@
 
 ## 🎯 Rôle en une phrase
 
-> Ce module donne aux vendeurs un **cockpit complet** pour gérer leurs livraisons, suivre leurs revenus, et intégrer DELIVR-CM à leur site e-commerce.
+> Ce module donne aux vendeurs un **cockpit complet** pour gérer leurs livraisons, suivre leurs revenus, et intégrer RELAY237 à leur site e-commerce.
 
 ---
 

@@ -1,5 +1,5 @@
 """
-DELIVR-CM Core Package
+RELAY237 Core Package
 
 This module initializes Celery when Django starts.
 """

@@ -1,5 +1,5 @@
 """
-LOGISTICS App - Smart Dispatch Service for DELIVR-CM
+LOGISTICS App - Smart Dispatch Service for RELAY237
 
 Intelligent courier dispatch with multi-factor scoring algorithm.
 Uses PostGIS for efficient geo-queries and Redis for caching.

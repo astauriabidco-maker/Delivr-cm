@@ -70,7 +70,7 @@ Rendez-vous au point de ramassage ou répondez *ANNULER {delivery_id}*
 """
 
     DAILY_SUMMARY = """
-📊 *Résumé de la Journée - DELIVR-CM*
+📊 *Résumé de la Journée - RELAY237*
 
 📦 Courses complétées: {deliveries_count}
 💰 Gains du jour: {total_earnings} XAF

@@ -22,7 +22,7 @@ Future<void> main() async {
   //
   AppConfig.init(AppConfig.development());
   
-  debugPrint('🚀 DELIVR starting with ${AppConfig.current}');
+  debugPrint('🚀 RELAY237 starting with ${AppConfig.current}');
   
   // Initialize Hive for local storage
   await Hive.initFlutter();

@@ -221,5 +221,5 @@ def get_tracking_url(delivery_id: str) -> str:
     This URL can be shared with customers to track their package.
     """
     # In production, use your domain
-    base_url = "https://delivr.cm"
+    base_url = "https://relay237.com"
     return f"{base_url}/track/{delivery_id}"

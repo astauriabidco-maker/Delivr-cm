@@ -1,5 +1,5 @@
 """
-Onboarding Service for DELIVR-CM Couriers
+Onboarding Service for RELAY237 Couriers
 
 Manages semi-automatic courier approval flow:
 1. Courier submits documents (CNI, photo moto)
@@ -143,7 +143,7 @@ class OnboardingService:
             from bot.services import send_whatsapp_notification
             
             message = (
-                "🎉 Félicitations ! Vous êtes maintenant un coursier certifié DELIVR-CM !\n\n"
+                "🎉 Félicitations ! Vous êtes maintenant un coursier certifié RELAY237 !\n\n"
                 "✅ Accès complet à toutes les livraisons\n"
                 "✅ Plus de limite quotidienne\n"
                 "✅ Priorité sur les courses premium\n\n"

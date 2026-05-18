@@ -172,7 +172,7 @@ class SupportScreen extends StatelessWidget {
             ),
             _buildQuickLink(
               icon: Icons.info_outline,
-              title: 'À propos de DELIVR',
+              title: 'À propos de RELAY237',
               onTap: () {},
             ),
           ],

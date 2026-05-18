@@ -15,7 +15,7 @@ class Migration(migrations.Migration):
             name="slug",
             field=models.SlugField(
                 blank=True,
-                help_text="Ex: ma-boutique → delivr.cm/book/ma-boutique",
+                help_text="Ex: ma-boutique → relay237.com/book/ma-boutique",
                 max_length=100,
                 null=True,
                 unique=True,

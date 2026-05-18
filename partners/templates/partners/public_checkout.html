@@ -1,10 +1,11 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="fr">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Commander chez {{ shop.full_name }} - DELIVR-CM</title>
+    <title>Commander chez {{ shop.full_name }} - RELAY237</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -51,9 +52,8 @@
     <!-- Header -->
     <header class="py-4 px-6 border-b border-white/10">
         <div class="max-w-lg mx-auto flex items-center justify-between">
-            <div class="flex items-center gap-2">
-                <span class="text-2xl">🚀</span>
-                <span class="text-white font-bold">DELIVR<span class="text-brand">-CM</span></span>
+            <div class="bg-white rounded-lg px-2 py-1">
+                <img src="{% static 'img/logo.png' %}" alt="RELAY237 Logo" class="h-28 w-auto">
             </div>
             <span class="text-white/60 text-sm">Livraison Express</span>
         </div>
@@ -196,7 +196,7 @@
     <!-- Footer -->
     <footer class="py-6 px-4 mt-8 border-t border-white/10">
         <div class="max-w-lg mx-auto text-center text-white/40 text-sm">
-            <p>Propulsé par <span class="text-brand">DELIVR-CM</span></p>
+            <p>Propulsé par <span class="text-brand">RELAY237</span></p>
             <p class="mt-1">Livraison express à Douala & Yaoundé</p>
         </div>
     </footer>

@@ -1,5 +1,5 @@
 /**
- * DELIVR-CM Checkout JavaScript
+ * RELAY237 Checkout JavaScript
  *
  * Handles dynamic neighborhood loading based on city selection
  */
@@ -12,7 +12,10 @@
          * Initialize
          */
         init: function () {
+            this.neighborhoodIds = delivr_cm_params.neighborhood_ids || {};
             this.bindEvents();
+            this.updateNeighborhoodId($('#billing_address_2'));
+            this.updateNeighborhoodId($('#shipping_address_2'));
         },
 
         /**
@@ -27,7 +30,7 @@
             $(document.body).on('change', '#billing_address_2', this.syncNeighborhood);
 
             // Update shipping on neighborhood change
-            $(document.body).on('change', '.delivr-neighborhood-select select', this.triggerShippingUpdate);
+            $(document.body).on('change', '.delivr-neighborhood-select select', this.onNeighborhoodChange);
         },
 
         /**
@@ -57,11 +60,12 @@
                 },
                 success: function (response) {
                     if (response.success) {
-                        DelivrCheckout.updateNeighborhoodOptions($neighborhoodField, response.data);
+                        DelivrCheckout.neighborhoodIds = response.data.ids || {};
+                        DelivrCheckout.updateNeighborhoodOptions($neighborhoodField, response.data.options || response.data);
                     }
                 },
                 error: function () {
-                    console.error('DELIVR-CM: Failed to load neighborhoods');
+                    console.error('RELAY237: Failed to load neighborhoods');
                 },
                 complete: function () {
                     $neighborhoodField.prop('disabled', false);
@@ -78,7 +82,13 @@
             $field.empty();
 
             $.each(options, function (value, label) {
-                $field.append($('<option></option>').attr('value', value).text(label));
+                var $option = $('<option></option>').attr('value', value).text(label);
+
+                if (DelivrCheckout.neighborhoodIds[value]) {
+                    $option.attr('data-neighborhood-id', DelivrCheckout.neighborhoodIds[value]);
+                }
+
+                $field.append($option);
             });
 
             // Restore previous value if exists
@@ -91,6 +101,31 @@
         },
 
         /**
+         * Handle neighborhood change
+         */
+        onNeighborhoodChange: function () {
+            var $field = $(this);
+
+            DelivrCheckout.updateNeighborhoodId($field);
+            DelivrCheckout.triggerShippingUpdate();
+        },
+
+        /**
+         * Copy selected RELAY237 neighborhood UUID into hidden checkout field
+         */
+        updateNeighborhoodId: function ($field) {
+            if (!$field.length) {
+                return;
+            }
+
+            var type = $field.attr('id').indexOf('billing') !== -1 ? 'billing' : 'shipping';
+            var selectedName = $field.val();
+            var selectedId = $field.find('option:selected').data('neighborhood-id') || this.neighborhoodIds[selectedName] || '';
+
+            $('#' + type + '_delivr_cm_neighborhood_id').val(selectedId);
+        },
+
+        /**
          * Sync billing neighborhood to shipping
          */
         syncNeighborhood: function () {
@@ -98,6 +133,7 @@
 
             if (!$shippingDifferent.is(':checked')) {
                 $('#shipping_address_2').val($(this).val());
+                DelivrCheckout.updateNeighborhoodId($('#shipping_address_2'));
             }
         },
 

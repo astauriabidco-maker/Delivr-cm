@@ -10,7 +10,7 @@ from core.models import User
 
 class HomeView(TemplateView):
     """
-    Public landing page for DELIVR-CM.
+    Public landing page for RELAY237.
     
     Displays all platform features: tracking, partner portal,
     courier app, mobile money, API, pricing, testimonials, FAQ.
@@ -38,7 +38,7 @@ class HomeView(TemplateView):
         whatsapp_number = getattr(settings, 'LANDING_CONTACT_WHATSAPP', '')
         whatsapp_digits = ''.join(ch for ch in whatsapp_number if ch.isdigit())
         context['contact'] = {
-            'email': getattr(settings, 'LANDING_CONTACT_EMAIL', 'contact@delivr.cm'),
+            'email': getattr(settings, 'LANDING_CONTACT_EMAIL', 'contact@relay237.com'),
             'whatsapp': whatsapp_number,
             'whatsapp_url': f'https://wa.me/{whatsapp_digits}' if whatsapp_digits else '',
         }

@@ -1,5 +1,5 @@
 """
-FINANCE App - Wallet & Transaction Management for DELIVR-CM
+FINANCE App - Wallet & Transaction Management for RELAY237
 
 Handles: Transactions, Wallet Operations, Commission Tracking
 """

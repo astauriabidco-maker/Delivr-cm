@@ -29,7 +29,7 @@ class DelivrCourierApp extends ConsumerWidget {
     );
     
     return MaterialApp.router(
-      title: 'DELIVR Coursier',
+      title: 'RELAY237 Coursier',
       debugShowCheckedModeBanner: false,
       theme: DelivrTheme.light,
       darkTheme: DelivrTheme.dark,

@@ -1,9 +1,12 @@
 {
+  "name": "relay237",
+  "private": true,
   "scripts": {
     "build:css": "postcss src/styles/home.css -o static/css/home.css",
     "copy:fontawesome": "mkdir -p static/vendor/fontawesome/css static/vendor/fontawesome/webfonts && cp node_modules/@fortawesome/fontawesome-free/css/all.min.css static/vendor/fontawesome/css/all.min.css && cp -R node_modules/@fortawesome/fontawesome-free/webfonts/* static/vendor/fontawesome/webfonts/",
     "copy:fonts": "mkdir -p static/fonts/inter && cp node_modules/@fontsource/inter/files/inter-latin-400-normal.woff2 static/fonts/inter/ && cp node_modules/@fontsource/inter/files/inter-latin-500-normal.woff2 static/fonts/inter/ && cp node_modules/@fontsource/inter/files/inter-latin-600-normal.woff2 static/fonts/inter/ && cp node_modules/@fontsource/inter/files/inter-latin-700-normal.woff2 static/fonts/inter/ && cp node_modules/@fontsource/inter/files/inter-latin-800-normal.woff2 static/fonts/inter/ && cp node_modules/@fontsource/inter/files/inter-latin-900-normal.woff2 static/fonts/inter/",
-    "build:assets": "npm run copy:fontawesome && npm run copy:fonts && npm run build:css"
+    "build:assets": "npm run copy:fontawesome && npm run copy:fonts && npm run build:css",
+    "lint:php": "docker run --rm --network none -v \"$PWD:/app:ro\" -w /app php:8.3-cli sh -lc \"find wp-plugin/delivr-cm-shipping -name '*.php' -print0 | xargs -0 -n1 php -l\""
   },
   "devDependencies": {
     "@fontsource/inter": "^5.2.8",

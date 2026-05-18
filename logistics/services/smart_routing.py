@@ -3,7 +3,7 @@ LOGISTICS App - Smart Routing Service
 
 Calculates optimal delivery routes by combining:
 1. OSRM (free open-source routing engine) for base route
-2. DELIVR-CM crowdsourced traffic data (heatmap)
+2. RELAY237 crowdsourced traffic data (heatmap)
 3. Active traffic events (accidents, road closures, etc.)
 
 The service generates strategic waypoints that, when passed to
@@ -139,7 +139,7 @@ class SmartRoute:
 class SmartRoutingService:
     """
     Intelligent routing that combines OSRM with real-time
-    crowdsourced traffic data from DELIVR-CM couriers.
+    crowdsourced traffic data from RELAY237 couriers.
     """
     
     @classmethod
