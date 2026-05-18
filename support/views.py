@@ -6,7 +6,7 @@ from django.http import HttpResponseForbidden
 from django.utils.decorators import method_decorator
 from django.contrib.admin.views.decorators import staff_member_required
 from django.utils import timezone
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from datetime import timedelta
 
 from .models import Dispute, DisputeReason, DisputeStatus
@@ -40,12 +40,17 @@ class SupportBackofficeView(View):
         dispute_id = request.POST.get('dispute_id')
         action = request.POST.get('action')
         note = request.POST.get('note')
-        refund_amount = Decimal(request.POST.get('refund_amount', '0'))
-        
+
         dispute = get_object_or_404(Dispute, pk=dispute_id)
         
         try:
             if action == 'resolve':
+                try:
+                    refund_amount = Decimal(request.POST.get('refund_amount') or '0')
+                except (InvalidOperation, TypeError, ValueError):
+                    messages.error(request, "Montant de remboursement invalide.")
+                    return redirect('support:backoffice_disputes')
+
                 SupportService.resolve_dispute(
                     dispute=dispute,
                     admin_user=request.user,

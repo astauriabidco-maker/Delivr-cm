@@ -47,3 +47,29 @@ class FleetApiTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.json()['couriers']), 1)
         self.assertTrue(response.json()['couriers'][0]['in_delivery'])
+
+    def test_live_map_api_returns_pending_delivery_markers(self):
+        delivery = Delivery.objects.create(
+            sender=self.sender,
+            recipient_phone='+237690200005',
+            status=DeliveryStatus.PENDING,
+            pickup_geo=Point(9.7042, 4.0502),
+            pickup_address='Akwa',
+            payment_method=PaymentMethod.CASH_P2P,
+            total_price=Decimal('1500.00'),
+        )
+
+        response = self.client.get('/fleet/api/courier-positions/')
+
+        self.assertEqual(response.status_code, 200)
+        deliveries = response.json()['deliveries']
+        self.assertEqual(len(deliveries), 1)
+        self.assertEqual(deliveries[0]['id'], str(delivery.id))
+        self.assertEqual(deliveries[0]['address'], 'Akwa')
+
+    def test_live_map_template_draws_delivery_markers(self):
+        response = self.client.get('/fleet/live-map/')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'updateDeliveryMarkers(data.deliveries || [])')
+        self.assertContains(response, 'createDeliveryMarker(delivery)')

@@ -77,6 +77,7 @@ class BusinessRequiredMixin(LoginRequiredMixin):
     """
     Mixin ensuring user is authenticated and has BUSINESS role.
     """
+    allow_pending_approval = False
     
     def dispatch(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
@@ -85,6 +86,10 @@ class BusinessRequiredMixin(LoginRequiredMixin):
         if request.user.role != UserRole.BUSINESS:
             messages.error(request, "Accès réservé aux partenaires e-commerce.")
             return redirect('partners:signup')
+
+        if not request.user.is_business_approved and not self.allow_pending_approval:
+            messages.warning(request, "Votre compte partenaire est en attente de validation.")
+            return redirect('partners:pending')
         
         return super().dispatch(request, *args, **kwargs)
 
@@ -98,6 +103,7 @@ class PartnerDashboardView(BusinessRequiredMixin, View):
     """
     
     template_name = 'partners/dashboard.html'
+    allow_pending_approval = True
     
     def get(self, request):
         from django.utils import timezone

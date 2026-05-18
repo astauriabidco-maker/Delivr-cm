@@ -121,6 +121,13 @@ class WC_Delivr_Shipping_Method extends WC_Shipping_Method
                 'default' => '',
                 'desc_tip' => true,
             ),
+            'webhook_secret' => array(
+                'title' => __('Secret webhook', 'relay237-shipping'),
+                'type' => 'password',
+                'description' => __('Secret partagé RELAY237 utilisé pour vérifier les retours de statut WooCommerce.', 'relay237-shipping'),
+                'default' => '',
+                'desc_tip' => true,
+            ),
             'shop_id' => array(
                 'title' => __('ID boutique RELAY237', 'relay237-shipping'),
                 'type' => 'text',

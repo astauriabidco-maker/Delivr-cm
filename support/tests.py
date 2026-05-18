@@ -59,3 +59,51 @@ class ClientDisputeCreateViewTest(TestCase):
 
         self.assertEqual(response.status_code, 403)
         self.assertFalse(Dispute.objects.filter(delivery=self.delivery).exists())
+
+
+class SupportBackofficeViewTest(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.admin = User.objects.create_user(
+            phone_number='+237690300010',
+            role=UserRole.ADMIN,
+            full_name='Support Admin',
+            is_staff=True,
+        )
+        self.sender = User.objects.create_user(
+            phone_number='+237690300011',
+            role=UserRole.BUSINESS,
+            full_name='Sender Shop',
+        )
+        self.delivery = Delivery.objects.create(
+            sender=self.sender,
+            recipient_phone='+237690300012',
+            recipient_name='Recipient Client',
+            pickup_geo=Point(9.7042, 4.0502),
+            payment_method=PaymentMethod.CASH_P2P,
+            total_price=Decimal('1500.00'),
+        )
+        self.dispute = Dispute.objects.create(
+            delivery=self.delivery,
+            creator=self.sender,
+            reason='OTHER',
+            description='Besoin de remboursement.',
+        )
+        self.client.force_login(self.admin)
+
+    @patch('support.views.SupportService.resolve_dispute')
+    def test_invalid_refund_amount_is_rejected_without_500(self, mock_resolve):
+        response = self.client.post(
+            '/backoffice/support/backoffice/disputes/',
+            {
+                'dispute_id': str(self.dispute.id),
+                'action': 'resolve',
+                'note': 'Montant invalide',
+                'refund_amount': 'not-a-number',
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.dispute.refresh_from_db()
+        self.assertEqual(self.dispute.refund_amount, Decimal('0.00'))
+        mock_resolve.assert_not_called()

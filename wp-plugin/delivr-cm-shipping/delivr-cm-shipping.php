@@ -70,8 +70,28 @@ function delivr_cm_shipping_init()
 
     // Include checkout fields customization
     require_once DELIVR_CM_PLUGIN_DIR . 'includes/class-wc-checkout-fields.php';
+
+    // Include incoming webhook receiver
+    require_once DELIVR_CM_PLUGIN_DIR . 'includes/class-wc-webhook-receiver.php';
 }
 add_action('woocommerce_shipping_init', 'delivr_cm_shipping_init');
+
+/**
+ * Register incoming REST webhook endpoint.
+ */
+function delivr_cm_register_webhook_routes()
+{
+    if (!delivr_cm_check_woocommerce()) {
+        return;
+    }
+
+    if (!class_exists('WC_Delivr_Webhook_Receiver')) {
+        require_once DELIVR_CM_PLUGIN_DIR . 'includes/class-wc-webhook-receiver.php';
+    }
+
+    WC_Delivr_Webhook_Receiver::register_routes();
+}
+add_action('rest_api_init', 'delivr_cm_register_webhook_routes');
 
 /**
  * Register the shipping method

@@ -391,7 +391,8 @@
         // Configuration
         // ============================================
         const DELIVERY_ID = '{{ delivery_id }}';
-        const WS_URL = `ws://${window.location.host}/ws/delivery/${DELIVERY_ID}/`;
+        const WS_PROTOCOL = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const WS_URL = `${WS_PROTOCOL}//${window.location.host}/ws/delivery/${DELIVERY_ID}/`;
         const API_BASE = `/api/track/${DELIVERY_ID}`;
 
         // ============================================

@@ -611,6 +611,11 @@
                 points.push([ll.lat, ll.lng, 0.8]);
             });
 
+            Object.values(deliveryMarkers).forEach(marker => {
+                const ll = marker.getLatLng();
+                points.push([ll.lat, ll.lng, 0.5]);
+            });
+
             // Add some neighborhood hotspots for Douala
             const hotspots = [
                 [4.0511, 9.7679, 0.6],  // Centre Akwa
@@ -649,6 +654,7 @@
                 const data = await response.json();
 
                 updateMarkers(data.couriers || []);
+                updateDeliveryMarkers(data.deliveries || []);
                 updateStats(data.couriers || [], data.deliveries || []);
                 updateLastUpdateTime();
                 if (heatmapVisible) updateHeatmap();
@@ -733,6 +739,62 @@
 
             marker.bindPopup(popupContent);
 
+            return marker;
+        }
+
+        // Update pending delivery markers on map
+        function updateDeliveryMarkers(deliveries) {
+            const currentIds = new Set();
+
+            deliveries.forEach(delivery => {
+                if (!delivery.lat || !delivery.lng) return;
+
+                currentIds.add(delivery.id);
+
+                if (!filters.deliveries) {
+                    return;
+                }
+
+                if (deliveryMarkers[delivery.id]) {
+                    deliveryMarkers[delivery.id].setLatLng([delivery.lat, delivery.lng]);
+                } else {
+                    const marker = createDeliveryMarker(delivery);
+                    deliveryMarkers[delivery.id] = marker;
+                    markerCluster.addLayer(marker);
+                }
+            });
+
+            Object.keys(deliveryMarkers).forEach(id => {
+                if (!currentIds.has(id) || !filters.deliveries) {
+                    markerCluster.removeLayer(deliveryMarkers[id]);
+                    delete deliveryMarkers[id];
+                }
+            });
+        }
+
+        // Create pending delivery marker
+        function createDeliveryMarker(delivery) {
+            const html = '<div class="delivery-marker">📦</div>';
+            const icon = L.divIcon({
+                html: html,
+                className: '',
+                iconSize: [28, 28],
+                iconAnchor: [14, 14]
+            });
+
+            const marker = L.marker([delivery.lat, delivery.lng], { icon: icon });
+            const popupContent = `
+            <div class="courier-popup">
+                <h4>Livraison en attente</h4>
+                <div class="stats">
+                    <div>Adresse: ${delivery.address || 'Non renseignée'}</div>
+                    <div>Gain coursier: ${delivery.earning || 0} XAF</div>
+                    <div>Distance: ${delivery.distance_km || 'N/A'} km</div>
+                </div>
+            </div>
+        `;
+
+            marker.bindPopup(popupContent);
             return marker;
         }
 
