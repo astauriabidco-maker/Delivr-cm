@@ -251,6 +251,16 @@ class Delivery(models.Model):
             models.Index(fields=['status', 'created_at']),
             models.Index(fields=['courier', 'status']),
         ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=['shop', 'external_order_id'],
+                condition=(
+                    models.Q(shop__isnull=False) &
+                    ~models.Q(external_order_id='')
+                ),
+                name='unique_shop_external_order_delivery',
+            ),
+        ]
 
     def __str__(self):
         return f"Livraison {str(self.id)[:8]} - {self.status}"

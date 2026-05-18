@@ -479,6 +479,62 @@ class E2EDeliveryFlowTest(TransactionTestCase):
         mock_broadcast.assert_not_called()
         mock_dispatch.assert_not_called()
 
+    def test_b2b_order_creation_is_idempotent_for_external_order_id(self):
+        """A WooCommerce retry must not create or debit the same order twice."""
+        self.business.last_location = self.pickup_point
+        self.business.save(update_fields=['last_location'])
+        initial_balance = self.business.wallet_balance
+
+        fake_pricing_engine = MagicMock()
+        fake_pricing_engine.estimate_from_neighborhood.return_value = (
+            3.5,
+            Decimal('1500.00'),
+            Decimal('300.00'),
+            Decimal('1200.00'),
+        )
+        payload = {
+            'shop_id': str(self.business.id),
+            'customer_phone': '+237699999994',
+            'customer_name': 'Idempotent Client',
+            'neighborhood_id': str(self.dropoff_neighborhood.id),
+            'items_description': 'Retry-safe package',
+            'external_order_id': 'woo-4242',
+        }
+
+        with patch('logistics.views.pricing_engine', return_value=fake_pricing_engine), \
+            patch('bot.whatsapp_service.send_order_confirmation_to_sender'), \
+            patch('bot.whatsapp_service.send_otp_to_recipient'), \
+            patch('logistics.events.broadcast_new_delivery'), \
+            patch('logistics.services.smart_dispatch.smart_dispatch_order'):
+            self.api_client.force_authenticate(user=self.business)
+            first_response = self.api_client.post('/api/orders/', payload, format='json')
+            second_response = self.api_client.post('/api/orders/', payload, format='json')
+
+        self.assertEqual(first_response.status_code, 201)
+        self.assertEqual(second_response.status_code, 200)
+        self.assertTrue(second_response.data['idempotent'])
+        self.assertEqual(
+            first_response.data['delivery_id'],
+            second_response.data['delivery_id']
+        )
+        self.assertEqual(
+            Delivery.objects.filter(
+                shop=self.business,
+                external_order_id='woo-4242',
+            ).count(),
+            1
+        )
+        self.assertEqual(
+            User.objects.filter(phone_number='+237699999994').count(),
+            1
+        )
+        self.business.refresh_from_db()
+        self.assertEqual(
+            self.business.wallet_balance,
+            initial_balance - Decimal('1500.00')
+        )
+        self.assertEqual(fake_pricing_engine.estimate_from_neighborhood.call_count, 1)
+
     def test_mobile_location_updates_user_location_fields(self):
         """The mobile HTTP fallback should update the courier GPS fields."""
         self.assertIsNone(self.courier.last_location)

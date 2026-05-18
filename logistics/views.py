@@ -599,35 +599,52 @@ class OrderAPIView(APIView):
                 status=status.HTTP_403_FORBIDDEN
             )
 
-        # Get neighborhood
-        try:
-            neighborhood = Neighborhood.objects.get(
-                pk=data['neighborhood_id'],
-                is_active=True
-            )
-        except Neighborhood.DoesNotExist:
-            return Response(
-                {'error': 'Quartier non trouvé.'},
-                status=status.HTTP_404_NOT_FOUND
-            )
-
-        if not shop.last_location:
-            return Response(
-                {'error': 'La boutique n\'a pas de position GPS.'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        # Calculate price
-        distance_km, total_price, platform_fee, courier_earning = pricing_engine().estimate_from_neighborhood(
-            shop_location=shop.last_location,
-            neighborhood_center=neighborhood.center_geo
-        )
-
         try:
             with transaction.atomic():
                 # Lock the shop wallet before creating the order, so a concurrent
-                # debit cannot invalidate the balance after validation.
+                # retry cannot create/debit twice for the same external order.
                 shop = User.objects.select_for_update().get(pk=shop.pk)
+                external_order_id = data.get('external_order_id', '').strip()
+
+                if external_order_id:
+                    existing_delivery = Delivery.objects.select_for_update().filter(
+                        shop=shop,
+                        external_order_id=external_order_id,
+                    ).first()
+                    if existing_delivery:
+                        return Response({
+                            'delivery_id': str(existing_delivery.id),
+                            'status': existing_delivery.status,
+                            'total_price': existing_delivery.total_price,
+                            'idempotent': True,
+                            'message': 'Commande déjà créée. Livraison existante retournée.'
+                        }, status=status.HTTP_200_OK)
+
+                # Get neighborhood after the idempotency check so a retry can
+                # succeed even if catalog data changed after the first creation.
+                try:
+                    neighborhood = Neighborhood.objects.get(
+                        pk=data['neighborhood_id'],
+                        is_active=True
+                    )
+                except Neighborhood.DoesNotExist:
+                    return Response(
+                        {'error': 'Quartier non trouvé.'},
+                        status=status.HTTP_404_NOT_FOUND
+                    )
+
+                if not shop.last_location:
+                    return Response(
+                        {'error': 'La boutique n\'a pas de position GPS.'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
+                # Calculate price while holding the shop lock so the balance
+                # check/debit stays consistent for concurrent orders.
+                distance_km, total_price, platform_fee, courier_earning = pricing_engine().estimate_from_neighborhood(
+                    shop_location=shop.last_location,
+                    neighborhood_center=neighborhood.center_geo
+                )
 
                 # Check shop wallet for prepaid - CRITICAL B2B PROTECTION
                 if shop.wallet_balance < total_price:
@@ -666,7 +683,7 @@ class OrderAPIView(APIView):
                     total_price=total_price,
                     platform_fee=platform_fee,
                     courier_earning=courier_earning,
-                    external_order_id=data.get('external_order_id', ''),
+                    external_order_id=external_order_id,
                     shop=shop
                 )
 
