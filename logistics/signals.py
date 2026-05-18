@@ -14,6 +14,14 @@ from logistics.models import Delivery, DeliveryStatus
 logger = logging.getLogger(__name__)
 
 
+DELIVERY_WEBHOOK_EVENTS = {
+    DeliveryStatus.ASSIGNED: 'order.assigned',
+    DeliveryStatus.PICKED_UP: 'order.picked_up',
+    DeliveryStatus.COMPLETED: 'order.completed',
+    DeliveryStatus.CANCELLED: 'order.cancelled',
+}
+
+
 # Store previous status for change detection
 _previous_status = {}
 
@@ -51,10 +59,11 @@ def on_delivery_saved(sender, instance, created, **kwargs):
 
 def _handle_new_delivery(delivery: Delivery):
     """Handle a newly created delivery."""
+    logger.info(f"[SIGNAL] New delivery created: {delivery.id}")
+    _send_partner_webhook(delivery, 'order.created')
+
     if delivery.status != DeliveryStatus.PENDING:
         return
-    
-    logger.info(f"[SIGNAL] New delivery created: {delivery.id}")
     
     # =============================================
     # Send OTP codes via WhatsApp
@@ -146,6 +155,10 @@ def _handle_delivery_update(delivery: Delivery, previous_status=None):
         f"[SIGNAL] Delivery {str(delivery.id)[:8]} status: "
         f"{previous} -> {delivery.status}"
     )
+
+    event_type = DELIVERY_WEBHOOK_EVENTS.get(delivery.status)
+    if event_type:
+        _send_partner_webhook(delivery, event_type)
     
     # Broadcast status change
     try:
@@ -190,6 +203,23 @@ def _handle_delivery_update(delivery: Delivery, previous_status=None):
     # Handle assignment - notify courier
     if delivery.status == DeliveryStatus.ASSIGNED and delivery.courier:
         _handle_delivery_assigned(delivery)
+
+
+def _send_partner_webhook(delivery: Delivery, event_type: str):
+    """Send the partner webhook for a delivery event when configured."""
+    partner = delivery.shop or delivery.sender
+    if not partner:
+        return
+
+    try:
+        from partners.services import WebhookService
+
+        payload = WebhookService.build_delivery_payload(delivery)
+        WebhookService.send(partner, event_type, payload)
+    except Exception as e:
+        logger.warning(
+            f"[SIGNAL] Partner webhook {event_type} failed for {delivery.id}: {e}"
+        )
 
 
 def _handle_delivery_completed(delivery: Delivery):

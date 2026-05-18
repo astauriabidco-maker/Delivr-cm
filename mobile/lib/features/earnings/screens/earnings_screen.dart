@@ -4,8 +4,8 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 
 import '../../../app/theme.dart';
+import '../../wallet/screens/wallet_screen.dart';
 
-/// Mock earnings data — will be replaced by API data
 class EarningsData {
   final double todayEarnings;
   final double weekEarnings;
@@ -51,79 +51,63 @@ class EarningEntry {
   });
 }
 
-/// Provider for earnings data (mock for now)
+/// Provider for earnings data derived from real wallet transactions.
 final earningsProvider = FutureProvider<EarningsData>((ref) async {
-  // Simulate API call
-  await Future.delayed(const Duration(milliseconds: 800));
+  final wallet = await ref.watch(walletProvider.future);
+  final earningTransactions =
+      wallet.transactions
+          .where((tx) => tx.type == 'earning' && tx.amount > 0)
+          .toList();
+  final now = DateTime.now();
+  final today = DateTime(now.year, now.month, now.day);
+  final weekStart = today.subtract(Duration(days: today.weekday - 1));
+  final monthStart = DateTime(now.year, now.month);
+
+  double sumSince(DateTime start) {
+    return earningTransactions
+        .where((tx) => !tx.date.isBefore(start))
+        .fold<double>(0, (total, tx) => total + tx.amount);
+  }
+
+  int countSince(DateTime start) {
+    return earningTransactions.where((tx) => !tx.date.isBefore(start)).length;
+  }
+
+  const dayLabels = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+  final weeklyChart = List<DailyEarning>.generate(7, (index) {
+    final day = weekStart.add(Duration(days: index));
+    final nextDay = day.add(const Duration(days: 1));
+    final amount = earningTransactions
+        .where((tx) => !tx.date.isBefore(day) && tx.date.isBefore(nextDay))
+        .fold<double>(0, (total, tx) => total + tx.amount);
+    return DailyEarning(dayLabels[index], amount);
+  });
+
+  final todayEarnings = sumSince(today);
+  final weekDeliveries = countSince(weekStart);
+  final weekEarnings = sumSince(weekStart);
 
   return EarningsData(
-    todayEarnings: 12500,
-    weekEarnings: 67800,
-    monthEarnings: 245000,
-    todayDeliveries: 8,
-    weekDeliveries: 42,
-    monthDeliveries: 156,
-    avgPerDelivery: 1562,
-    weeklyChart: const [
-      DailyEarning('Lun', 8500),
-      DailyEarning('Mar', 12300),
-      DailyEarning('Mer', 9800),
-      DailyEarning('Jeu', 11200),
-      DailyEarning('Ven', 14500),
-      DailyEarning('Sam', 7200),
-      DailyEarning('Dim', 4300),
-    ],
-    recentEntries: [
-      EarningEntry(
-        id: '1',
-        description: 'Livraison Akwa → Bonapriso',
-        amount: 1800,
-        date: DateTime.now().subtract(const Duration(hours: 1)),
-        type: 'delivery',
-      ),
-      EarningEntry(
-        id: '2',
-        description: 'Bonus vitesse ⚡',
-        amount: 500,
-        date: DateTime.now().subtract(const Duration(hours: 2)),
-        type: 'bonus',
-      ),
-      EarningEntry(
-        id: '3',
-        description: 'Livraison Deïdo → Bonanjo',
-        amount: 2200,
-        date: DateTime.now().subtract(const Duration(hours: 3)),
-        type: 'delivery',
-      ),
-      EarningEntry(
-        id: '4',
-        description: 'Pourboire client 🎉',
-        amount: 300,
-        date: DateTime.now().subtract(const Duration(hours: 4)),
-        type: 'tip',
-      ),
-      EarningEntry(
-        id: '5',
-        description: 'Livraison Bali → Akwa',
-        amount: 1500,
-        date: DateTime.now().subtract(const Duration(hours: 5)),
-        type: 'delivery',
-      ),
-      EarningEntry(
-        id: '6',
-        description: 'Livraison Ndokotti → Makepe',
-        amount: 2800,
-        date: DateTime.now().subtract(const Duration(hours: 7)),
-        type: 'delivery',
-      ),
-      EarningEntry(
-        id: '7',
-        description: 'Livraison Logpom → PK14',
-        amount: 3200,
-        date: DateTime.now().subtract(const Duration(hours: 9)),
-        type: 'delivery',
-      ),
-    ],
+    todayEarnings: todayEarnings,
+    weekEarnings: weekEarnings,
+    monthEarnings: sumSince(monthStart),
+    todayDeliveries: countSince(today),
+    weekDeliveries: weekDeliveries,
+    monthDeliveries: countSince(monthStart),
+    avgPerDelivery: weekDeliveries == 0 ? 0 : weekEarnings / weekDeliveries,
+    weeklyChart: weeklyChart,
+    recentEntries:
+        earningTransactions
+            .map(
+              (tx) => EarningEntry(
+                id: tx.id,
+                description: tx.description,
+                amount: tx.amount,
+                date: tx.date,
+                type: 'delivery',
+              ),
+            )
+            .toList(),
   );
 });
 
@@ -163,52 +147,65 @@ class _EarningsScreenState extends ConsumerState<EarningsScreen>
         elevation: 0,
       ),
       body: earningsAsync.when(
-        loading: () => const Center(
-          child: CircularProgressIndicator(color: DelivrColors.primary),
-        ),
-        error: (error, _) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, size: 48, color: DelivrColors.error),
-              const SizedBox(height: 16),
-              Text('Erreur: $error'),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () => ref.invalidate(earningsProvider),
-                child: const Text('Réessayer'),
-              ),
-            ],
-          ),
-        ),
-        data: (data) => RefreshIndicator(
-          onRefresh: () async => ref.invalidate(earningsProvider),
-          color: DelivrColors.primary,
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Main balance card
-                _buildMainCard(data),
-                const SizedBox(height: 20),
-
-                // Period tabs
-                _buildPeriodTabs(data),
-                const SizedBox(height: 20),
-
-                // Weekly chart
-                _buildWeeklyChart(data),
-                const SizedBox(height: 20),
-
-                // Recent earnings list
-                _buildRecentEarnings(data),
-                const SizedBox(height: 20),
-              ],
+        loading:
+            () => const Center(
+              child: CircularProgressIndicator(color: DelivrColors.primary),
             ),
-          ),
-        ),
+        error:
+            (error, _) => Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.error_outline,
+                    size: 48,
+                    color: DelivrColors.error,
+                  ),
+                  const SizedBox(height: 16),
+                  Text('Erreur: $error'),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () {
+                      ref.invalidate(walletProvider);
+                      ref.invalidate(earningsProvider);
+                    },
+                    child: const Text('Réessayer'),
+                  ),
+                ],
+              ),
+            ),
+        data:
+            (data) => RefreshIndicator(
+              onRefresh: () async {
+                ref.invalidate(walletProvider);
+                ref.invalidate(earningsProvider);
+              },
+              color: DelivrColors.primary,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Main balance card
+                    _buildMainCard(data),
+                    const SizedBox(height: 20),
+
+                    // Period tabs
+                    _buildPeriodTabs(data),
+                    const SizedBox(height: 20),
+
+                    // Weekly chart
+                    _buildWeeklyChart(data),
+                    const SizedBox(height: 20),
+
+                    // Recent earnings list
+                    _buildRecentEarnings(data),
+                    const SizedBox(height: 20),
+                  ],
+                ),
+              ),
+            ),
       ),
     );
   }
@@ -237,7 +234,11 @@ class _EarningsScreenState extends ConsumerState<EarningsScreen>
         children: [
           Row(
             children: [
-              const Icon(Icons.account_balance_wallet, color: Colors.white70, size: 20),
+              const Icon(
+                Icons.account_balance_wallet,
+                color: Colors.white70,
+                size: 20,
+              ),
               const SizedBox(width: 8),
               Text(
                 "Gains aujourd'hui",
@@ -268,7 +269,11 @@ class _EarningsScreenState extends ConsumerState<EarningsScreen>
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.delivery_dining, color: Colors.white, size: 16),
+                const Icon(
+                  Icons.delivery_dining,
+                  color: Colors.white,
+                  size: 16,
+                ),
                 const SizedBox(width: 4),
                 Text(
                   '${data.todayDeliveries} livraisons',
@@ -352,10 +357,7 @@ class _EarningsScreenState extends ConsumerState<EarningsScreen>
             const SizedBox(height: 12),
             Text(
               amount,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 4),
             Text(
@@ -372,9 +374,16 @@ class _EarningsScreenState extends ConsumerState<EarningsScreen>
   }
 
   Widget _buildWeeklyChart(EarningsData data) {
-    final maxEarning = data.weeklyChart.map((e) => e.amount).reduce(
-          (a, b) => a > b ? a : b,
-        );
+    final maxEarning = data.weeklyChart
+        .map((e) => e.amount)
+        .reduce((a, b) => a > b ? a : b);
+    if (maxEarning <= 0) {
+      return _buildUnavailableCard(
+        icon: Icons.bar_chart,
+        title: 'Cette semaine',
+        message: 'Aucun gain réel enregistré cette semaine.',
+      );
+    }
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -391,10 +400,7 @@ class _EarningsScreenState extends ConsumerState<EarningsScreen>
               SizedBox(width: 8),
               Text(
                 'Cette semaine',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               ),
             ],
           ),
@@ -455,24 +461,28 @@ class _EarningsScreenState extends ConsumerState<EarningsScreen>
                 ),
                 borderData: FlBorderData(show: false),
                 gridData: const FlGridData(show: false),
-                barGroups: data.weeklyChart.asMap().entries.map((entry) {
-                  final isToday = entry.key == DateTime.now().weekday - 1;
-                  return BarChartGroupData(
-                    x: entry.key,
-                    barRods: [
-                      BarChartRodData(
-                        toY: entry.value.amount,
-                        color: isToday
-                            ? DelivrColors.primary
-                            : DelivrColors.primary.withValues(alpha: 0.3),
-                        width: 28,
-                        borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(8),
-                        ),
-                      ),
-                    ],
-                  );
-                }).toList(),
+                barGroups:
+                    data.weeklyChart.asMap().entries.map((entry) {
+                      final isToday = entry.key == DateTime.now().weekday - 1;
+                      return BarChartGroupData(
+                        x: entry.key,
+                        barRods: [
+                          BarChartRodData(
+                            toY: entry.value.amount,
+                            color:
+                                isToday
+                                    ? DelivrColors.primary
+                                    : DelivrColors.primary.withValues(
+                                      alpha: 0.3,
+                                    ),
+                            width: 28,
+                            borderRadius: const BorderRadius.vertical(
+                              top: Radius.circular(8),
+                            ),
+                          ),
+                        ],
+                      );
+                    }).toList(),
               ),
             ),
           ),
@@ -482,19 +492,29 @@ class _EarningsScreenState extends ConsumerState<EarningsScreen>
   }
 
   Widget _buildRecentEarnings(EarningsData data) {
+    if (data.recentEntries.isEmpty) {
+      return _buildUnavailableCard(
+        icon: Icons.receipt_long,
+        title: 'Gains récents',
+        message:
+            'Vos gains apparaîtront ici après les prochaines transactions wallet.',
+      );
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Row(
           children: [
-            Icon(Icons.receipt_long, size: 20, color: DelivrColors.textSecondary),
+            Icon(
+              Icons.receipt_long,
+              size: 20,
+              color: DelivrColors.textSecondary,
+            ),
             SizedBox(width: 8),
             Text(
               "Gains récents",
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),
           ],
         ),
@@ -516,6 +536,44 @@ class _EarningsScreenState extends ConsumerState<EarningsScreen>
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildUnavailableCard({
+    required IconData icon,
+    required String title,
+    required String message,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: DelivrColors.surface,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 20, color: DelivrColors.textSecondary),
+              const SizedBox(width: 8),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            message,
+            style: const TextStyle(color: DelivrColors.textSecondary),
+          ),
+        ],
+      ),
     );
   }
 
@@ -576,7 +634,10 @@ class _EarningsScreenState extends ConsumerState<EarningsScreen>
             style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 15,
-              color: entry.type == 'penalty' ? DelivrColors.error : DelivrColors.success,
+              color:
+                  entry.type == 'penalty'
+                      ? DelivrColors.error
+                      : DelivrColors.success,
             ),
           ),
         ],

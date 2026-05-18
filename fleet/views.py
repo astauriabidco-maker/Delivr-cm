@@ -27,6 +27,25 @@ def is_admin(user):
     return user.is_authenticated and user.role == UserRole.ADMIN
 
 
+def get_active_delivery_courier_ids():
+    """Return courier IDs currently assigned to an active delivery."""
+    from logistics.models import Delivery, DeliveryStatus
+
+    return set(
+        Delivery.objects.filter(
+            status__in=[
+                DeliveryStatus.ASSIGNED,
+                DeliveryStatus.EN_ROUTE_PICKUP,
+                DeliveryStatus.ARRIVED_PICKUP,
+                DeliveryStatus.PICKED_UP,
+                DeliveryStatus.IN_TRANSIT,
+                DeliveryStatus.ARRIVED_DROPOFF,
+            ],
+            courier__isnull=False
+        ).values_list('courier_id', flat=True)
+    )
+
+
 class AdminRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
     """Mixin that requires user to be an admin."""
     
@@ -107,8 +126,7 @@ class CourierListView(AdminRequiredMixin, ListView):
         if search:
             queryset = queryset.filter(
                 Q(phone_number__icontains=search) |
-                Q(first_name__icontains=search) |
-                Q(last_name__icontains=search)
+                Q(full_name__icontains=search)
             )
         
         return queryset
@@ -485,8 +503,7 @@ def adjust_debt_ceiling(request, pk):
 @require_POST
 def acknowledge_alert(request, pk):
     """Acknowledge an alert (placeholder for future alert model)."""
-    # For now, just redirect back
-    messages.info(request, "Alerte marquée comme vue.")
+    messages.info(request, "Aucune alerte persistante à acquitter pour le moment.")
     return redirect('fleet:alerts')
 
 
@@ -511,13 +528,14 @@ def api_fleet_stats(request):
 @require_GET
 def api_online_couriers(request):
     """API: Get list of online couriers with locations."""
+    active_courier_ids = get_active_delivery_courier_ids()
     couriers = User.objects.filter(
         role=UserRole.COURIER,
         is_verified=True,
         is_online=True,
         last_location__isnull=False
     ).values(
-        'id', 'first_name', 'phone_number', 'courier_level',
+        'id', 'full_name', 'phone_number', 'courier_level',
         'last_location', 'last_location_updated', 'average_rating'
     )
     
@@ -525,14 +543,14 @@ def api_online_couriers(request):
     for c in couriers:
         result.append({
             'id': str(c['id']),
-            'name': c['first_name'] or f"Coursier {c['phone_number'][-4:]}",
+            'name': c['full_name'] or f"Coursier {c['phone_number'][-4:]}",
             'phone': c['phone_number'],
             'level': c['courier_level'],
             'rating': float(c['average_rating']) if c['average_rating'] else None,
             'lat': c['last_location'].y if c['last_location'] else None,
             'lng': c['last_location'].x if c['last_location'] else None,
             'last_update': c['last_location_updated'].isoformat() if c['last_location_updated'] else None,
-            'in_delivery': False,  # TODO: check active delivery
+            'in_delivery': c['id'] in active_courier_ids,
         })
     
     return JsonResponse({'couriers': result})
@@ -559,27 +577,21 @@ def api_courier_positions(request):
         last_location__isnull=False
     ).select_related()
     
-    # Get active deliveries for each courier
-    active_deliveries = dict(
-        Delivery.objects.filter(
-            status__in=[DeliveryStatus.ASSIGNED, DeliveryStatus.PICKED_UP, DeliveryStatus.IN_TRANSIT],
-            courier__isnull=False
-        ).values_list('courier_id', 'id')
-    )
+    active_courier_ids = get_active_delivery_courier_ids()
     
     # Build courier list
     courier_list = []
     for c in couriers:
         courier_list.append({
             'id': str(c.id),
-            'name': c.first_name or f"Coursier {c.phone_number[-4:]}",
+            'name': c.full_name or f"Coursier {c.phone_number[-4:]}",
             'phone': c.phone_number,
             'level': c.courier_level,
             'rating': float(c.average_rating) if c.average_rating else None,
             'lat': c.last_location.y if c.last_location else None,
             'lng': c.last_location.x if c.last_location else None,
             'last_update': c.last_location_updated.isoformat() if c.last_location_updated else None,
-            'in_delivery': c.id in active_deliveries,
+            'in_delivery': c.id in active_courier_ids,
             'deliveries_today': c.total_deliveries_completed or 0,
         })
     
@@ -1122,5 +1134,3 @@ class SettingsView(SuperAdminRequiredMixin, TemplateView):
         config.save()
         
         messages.success(request, "✅ Configuration des notifications mise à jour !")
-
-

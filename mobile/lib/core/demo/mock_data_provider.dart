@@ -482,7 +482,7 @@ final pendingDeliveriesProvider = StateProvider<List<MockDelivery>>((ref) {
 });
 
 /// Provider for demo mode toggle
-final demoModeProvider = StateProvider<bool>((ref) => true);
+final demoModeProvider = StateProvider<bool>((ref) => false);
 
 /// Provider for simulating new delivery arrival
 final newDeliveryNotificationProvider = StateProvider<MockDelivery?>((ref) => null);

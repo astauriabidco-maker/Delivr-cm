@@ -18,6 +18,76 @@ class WebhookService:
     """
     
     TIMEOUT = 10  # seconds
+
+    @staticmethod
+    def _format_datetime(value):
+        return value.isoformat() if value else None
+
+    @staticmethod
+    def _format_point(point):
+        if not point:
+            return None
+
+        return {
+            'latitude': point.y,
+            'longitude': point.x,
+        }
+
+    @classmethod
+    def build_delivery_payload(cls, delivery) -> dict:
+        """
+        Build the stable delivery payload sent for partner order events.
+
+        OTP codes and internal-only fields are intentionally excluded.
+        """
+        courier = delivery.courier
+        dropoff_neighborhood = delivery.dropoff_neighborhood
+
+        return {
+            'order': {
+                'id': str(delivery.id),
+                'external_order_id': delivery.external_order_id or '',
+                'status': delivery.status,
+                'payment_method': delivery.payment_method,
+                'package_description': delivery.package_description or '',
+                'recipient': {
+                    'name': delivery.recipient_name or '',
+                    'phone': delivery.recipient_phone or '',
+                },
+                'pickup': {
+                    'address': delivery.pickup_address or '',
+                    'location': cls._format_point(delivery.pickup_geo),
+                },
+                'dropoff': {
+                    'address': delivery.dropoff_address or '',
+                    'location': cls._format_point(delivery.dropoff_geo),
+                    'neighborhood': {
+                        'id': str(dropoff_neighborhood.id),
+                        'name': dropoff_neighborhood.name,
+                        'city': dropoff_neighborhood.city,
+                    } if dropoff_neighborhood else None,
+                },
+                'courier': {
+                    'id': str(courier.id),
+                    'name': courier.full_name or '',
+                    'phone': courier.phone_number or '',
+                } if courier else None,
+                'pricing': {
+                    'currency': 'XAF',
+                    'distance_km': delivery.distance_km,
+                    'total_price': str(delivery.total_price),
+                    'platform_fee': str(delivery.platform_fee),
+                    'courier_earning': str(delivery.courier_earning),
+                },
+                'timestamps': {
+                    'created_at': cls._format_datetime(delivery.created_at),
+                    'assigned_at': cls._format_datetime(delivery.assigned_at),
+                    'picked_up_at': cls._format_datetime(delivery.picked_up_at),
+                    'in_transit_at': cls._format_datetime(delivery.in_transit_at),
+                    'completed_at': cls._format_datetime(delivery.completed_at),
+                },
+            },
+        }
     
     @classmethod
     def send(cls, user, event_type: str, payload: dict) -> bool:

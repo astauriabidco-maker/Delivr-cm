@@ -342,9 +342,13 @@ class PublicQuoteAPIView(APIView):
                     shop_lat = shop.last_location.y
                     shop_lng = shop.last_location.x
                 else:
-                    # Default to Akwa center
-                    shop_lat = 4.0511
-                    shop_lng = 9.7679
+                    return Response(
+                        {
+                            'error': 'La boutique n\'a pas de position GPS configurée.',
+                            'message': 'Veuillez configurer la position GPS réelle de la boutique avant de demander un devis.'
+                        },
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
             except User.DoesNotExist:
                 return Response(
                     {'error': 'Boutique non trouvée.'},
@@ -382,8 +386,9 @@ class PublicQuoteAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Default shop location (Akwa center) if not provided
-        if not shop_lat or not shop_lng:
+        # Legacy integrations may still omit coordinates; keep that fallback only
+        # when no shop_id was supplied, because shop_id implies a real shop GPS.
+        if not shop_id and (not shop_lat or not shop_lng):
             shop_lat = 4.0511
             shop_lng = 9.7679
 
@@ -758,11 +763,16 @@ class PublicOrderCreateAPIView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        # Shop location (default to Akwa if not set)
-        if shop.last_location:
-            shop_location = shop.last_location
-        else:
-            shop_location = Point(9.7679, 4.0511, srid=4326)  # Default Akwa
+        if not shop.last_location:
+            return Response(
+                {
+                    'error': 'La boutique n\'a pas de position GPS configurée.',
+                    'message': 'Veuillez configurer la position GPS réelle de la boutique avant de créer une commande.'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        shop_location = shop.last_location
 
         # Calculate price
         distance_km, total_price, platform_fee, courier_earning = pricing_engine().estimate_from_neighborhood(
