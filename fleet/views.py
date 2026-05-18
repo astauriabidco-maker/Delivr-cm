@@ -24,7 +24,7 @@ from .services import FleetKPIService, AlertService
 
 def is_admin(user):
     """Check if user is an admin."""
-    return user.is_authenticated and user.role == UserRole.ADMIN
+    return user.is_authenticated and (user.role == UserRole.ADMIN or user.is_staff)
 
 
 def get_active_delivery_courier_ids():
@@ -50,7 +50,7 @@ class AdminRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
     """Mixin that requires user to be an admin."""
     
     def test_func(self):
-        return self.request.user.role == UserRole.ADMIN
+        return self.request.user.role == UserRole.ADMIN or self.request.user.is_staff
 
 
 class DashboardView(AdminRequiredMixin, TemplateView):
@@ -345,7 +345,11 @@ def complete_withdrawal(request, pk):
     from finance.models import WithdrawalRequest, WithdrawalService
     
     withdrawal = get_object_or_404(WithdrawalRequest, pk=pk)
-    transaction_id = request.POST.get('transaction_id', '')
+    transaction_id = request.POST.get('transaction_id', '').strip()
+
+    if not transaction_id:
+        messages.error(request, "ID transaction requis pour finaliser le retrait.")
+        return redirect('fleet:withdrawals')
     
     try:
         WithdrawalService.complete_request(withdrawal, transaction_id)
@@ -489,7 +493,10 @@ def adjust_debt_ceiling(request, pk):
     new_ceiling = request.POST.get('debt_ceiling')
     if new_ceiling:
         try:
-            courier.debt_ceiling = Decimal(new_ceiling)
+            new_ceiling_amount = Decimal(new_ceiling)
+            if new_ceiling_amount < Decimal('0'):
+                raise ValueError
+            courier.debt_ceiling = new_ceiling_amount
             courier.save(update_fields=['debt_ceiling'])
             messages.success(request, f"Plafond dette mis à jour: {courier.debt_ceiling} XAF")
         except (ValueError, TypeError):
