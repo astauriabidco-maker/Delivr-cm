@@ -22,7 +22,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('DELIVR_CM_VERSION', '1.0.0');
+define('DELIVR_CM_VERSION', '1.0.1');
 define('DELIVR_CM_PLUGIN_FILE', __FILE__);
 define('DELIVR_CM_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('DELIVR_CM_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -68,13 +68,23 @@ function delivr_cm_shipping_init()
     // Include shipping method class
     require_once DELIVR_CM_PLUGIN_DIR . 'includes/class-wc-shipping-delivr.php';
 
-    // Include checkout fields customization
-    require_once DELIVR_CM_PLUGIN_DIR . 'includes/class-wc-checkout-fields.php';
-
     // Include incoming webhook receiver
     require_once DELIVR_CM_PLUGIN_DIR . 'includes/class-wc-webhook-receiver.php';
 }
 add_action('woocommerce_shipping_init', 'delivr_cm_shipping_init');
+
+/**
+ * Initialize checkout customizations early enough for admin-ajax.php handlers.
+ */
+function delivr_cm_checkout_fields_init()
+{
+    if (!delivr_cm_check_woocommerce()) {
+        return;
+    }
+
+    require_once DELIVR_CM_PLUGIN_DIR . 'includes/class-wc-checkout-fields.php';
+}
+add_action('plugins_loaded', 'delivr_cm_checkout_fields_init', 20);
 
 /**
  * Register incoming REST webhook endpoint.

@@ -397,9 +397,21 @@ class WC_Delivr_Checkout_Fields
      */
     public function ajax_get_neighborhoods()
     {
-        check_ajax_referer('delivr_cm_nonce', 'nonce');
+        $nonce = isset($_POST['nonce']) ? sanitize_text_field(wp_unslash($_POST['nonce'])) : '';
 
-        $city = isset($_POST['city']) ? sanitize_text_field(wp_unslash($_POST['city'])) : 'Douala';
+        if (empty($nonce) && isset($_POST['_ajax_nonce'])) {
+            $nonce = sanitize_text_field(wp_unslash($_POST['_ajax_nonce']));
+        }
+
+        if (empty($nonce) || !wp_verify_nonce($nonce, 'delivr_cm_nonce')) {
+            wp_send_json_error(array('message' => 'invalid_nonce'), 403);
+        }
+
+        $city = isset($_POST['city']) ? sanitize_text_field(wp_unslash($_POST['city'])) : '';
+
+        if (empty($city)) {
+            wp_send_json_error(array('message' => 'missing_city'), 400);
+        }
 
         // Save to session
         if (WC()->session) {

@@ -48,3 +48,25 @@ def test_webhook_receiver_is_signed_idempotent_and_heals_delivery_id():
     assert "$is_duplicate = $previous_status === $status && $previous_event === $event" in receiver
     assert "$order->update_meta_data('_delivr_cm_delivery_id', $delivery_id)" in receiver
     assert "if (!$is_duplicate)" in receiver
+
+
+def test_checkout_ajax_handler_is_registered_before_shipping_init():
+    plugin = read_plugin_file("delivr-cm-shipping.php")
+
+    assert "function delivr_cm_checkout_fields_init()" in plugin
+    assert "class-wc-checkout-fields.php" in plugin
+    assert "add_action('plugins_loaded', 'delivr_cm_checkout_fields_init', 20)" in plugin
+    assert plugin.index("function delivr_cm_checkout_fields_init()") > plugin.index(
+        "add_action('woocommerce_shipping_init', 'delivr_cm_shipping_init');"
+    )
+
+
+def test_checkout_ajax_uses_json_errors_and_ajax_nonce_fallback():
+    checkout = read_plugin_file("includes/class-wc-checkout-fields.php")
+    script = read_plugin_file("assets/js/checkout.js")
+
+    assert "wp_verify_nonce($nonce, 'delivr_cm_nonce')" in checkout
+    assert "wp_send_json_error(array('message' => 'invalid_nonce'), 403)" in checkout
+    assert "wp_send_json_error(array('message' => 'missing_city'), 400)" in checkout
+    assert "_ajax_nonce: delivr_cm_params.nonce" in script
+    assert "xhr.status, xhr.responseText" in script

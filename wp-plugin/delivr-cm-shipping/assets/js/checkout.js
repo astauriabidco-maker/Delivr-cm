@@ -12,6 +12,10 @@
          * Initialize
          */
         init: function () {
+            if (typeof delivr_cm_params === 'undefined' || !delivr_cm_params.ajax_url) {
+                return;
+            }
+
             this.neighborhoodIds = delivr_cm_params.neighborhood_ids || {};
             this.bindEvents();
             this.updateNeighborhoodId($('#billing_address_2'));
@@ -41,13 +45,16 @@
             var city = $this.val();
             var type = $this.attr('id').indexOf('billing') !== -1 ? 'billing' : 'shipping';
             var $neighborhoodField = $('#' + type + '_address_2');
+            var $neighborhoodIdField = $('#' + type + '_delivr_cm_neighborhood_id');
 
             if (!city) {
+                $neighborhoodIdField.val('');
                 return;
             }
 
             // Show loading state
             $neighborhoodField.prop('disabled', true);
+            $neighborhoodIdField.val('');
 
             // Fetch neighborhoods via AJAX
             $.ajax({
@@ -56,16 +63,20 @@
                 data: {
                     action: 'delivr_get_neighborhoods',
                     nonce: delivr_cm_params.nonce,
+                    _ajax_nonce: delivr_cm_params.nonce,
                     city: city
                 },
                 success: function (response) {
                     if (response.success) {
                         DelivrCheckout.neighborhoodIds = response.data.ids || {};
                         DelivrCheckout.updateNeighborhoodOptions($neighborhoodField, response.data.options || response.data);
+                        return;
                     }
+
+                    console.error('RELAY237: Neighborhood loading failed', response.data || response);
                 },
-                error: function () {
-                    console.error('RELAY237: Failed to load neighborhoods');
+                error: function (xhr) {
+                    console.error('RELAY237: Failed to load neighborhoods', xhr.status, xhr.responseText);
                 },
                 complete: function () {
                     $neighborhoodField.prop('disabled', false);
