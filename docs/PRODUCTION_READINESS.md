@@ -42,10 +42,28 @@ La requete doit retourner 0 ligne avant d'appliquer la contrainte `unique_comple
 Commandes pre-prod:
 
 ```bash
+python scripts/preflight_prod.py --require-production --base-url https://staging.relay237.com
 python manage.py check --deploy
 python manage.py migrate --plan
 python manage.py migrate
 python manage.py collectstatic --noinput
+```
+
+Le script `scripts/preflight_prod.py` automatise les controles suivants:
+
+- demarrage Django avec la configuration cible;
+- `manage.py check` et `manage.py check --deploy`;
+- connexion DB;
+- absence de migrations en attente;
+- absence de doublons wallet bloquants avant `unique_completed_delivery_wallet_tx`;
+- `collectstatic` en dry-run;
+- `/health/` et `/health/ready/` si `--base-url` est fourni;
+- verification que l'URL cible utilise HTTPS et donc `wss://` pour le temps reel.
+
+Pour un essai local sans imposer `DJANGO_ENV=production`:
+
+```bash
+python scripts/preflight_prod.py --skip-static
 ```
 
 ## 4. Paiements et webhooks
