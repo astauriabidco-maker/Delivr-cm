@@ -447,7 +447,13 @@ class _DropoffScreenState extends ConsumerState<DropoffScreen> {
   }
 
   Future<void> _showSuccessDialog() async {
-    final delivery = ref.read(activeDeliveryProvider).delivery!;
+    final state = ref.read(activeDeliveryProvider);
+    final walletDelta = state.lastWalletDelta;
+    final walletBalance = state.lastWalletBalance;
+    final hasWalletMovement = walletDelta != null && walletDelta != 0;
+    final walletDeltaLabel = walletDelta == null
+        ? null
+        : '${walletDelta > 0 ? '+' : ''}${walletDelta.toStringAsFixed(0)} XAF';
     
     await showDialog(
       context: context,
@@ -480,20 +486,36 @@ class _DropoffScreenState extends ConsumerState<DropoffScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              '+${delivery.courierEarning.toStringAsFixed(0)} XAF',
-              style: const TextStyle(
+              walletDeltaLabel ?? 'Livraison validée',
+              style: TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
-                color: DelivrColors.success,
+                color: hasWalletMovement && walletDelta < 0
+                    ? DelivrColors.error
+                    : DelivrColors.success,
               ),
             ),
             const SizedBox(height: 4),
-            const Text(
-              'ajoutés à votre wallet',
-              style: TextStyle(
+            Text(
+              walletDelta == null
+                  ? 'Votre course est terminée'
+                  : hasWalletMovement
+                      ? 'mouvement appliqué à votre wallet'
+                      : 'aucun mouvement wallet appliqué',
+              style: const TextStyle(
                 color: DelivrColors.textSecondary,
               ),
             ),
+            if (walletBalance != null) ...[
+              const SizedBox(height: 4),
+              Text(
+                'Solde: ${walletBalance.toStringAsFixed(0)} XAF',
+                style: const TextStyle(
+                  color: DelivrColors.textSecondary,
+                  fontSize: 12,
+                ),
+              ),
+            ],
           ],
         ),
         actions: [

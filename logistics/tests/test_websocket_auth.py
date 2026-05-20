@@ -1,4 +1,5 @@
 from django.test import TestCase
+from asgiref.sync import async_to_sync
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from core.models import User, UserRole
@@ -40,3 +41,23 @@ class CourierWebSocketAuthTest(TestCase):
         courier = CourierConsumer.authenticate_courier_token_sync(token)
 
         self.assertIsNone(courier)
+
+    def test_courier_handles_dispatch_status_events(self):
+        consumer = CourierConsumer()
+        messages = []
+
+        async def capture(message):
+            messages.append(message)
+
+        consumer.send_json = capture
+
+        async_to_sync(consumer.delivery_status_change)({
+            'delivery_id': 'delivery-123',
+            'new_status': 'PICKED_UP',
+        })
+
+        self.assertEqual(messages, [{
+            'type': 'delivery_update',
+            'delivery_id': 'delivery-123',
+            'new_status': 'PICKED_UP',
+        }])

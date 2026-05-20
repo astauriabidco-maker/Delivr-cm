@@ -258,6 +258,22 @@ class CourierConsumer(AsyncJsonWebsocketConsumer):
             'order_id': event['order_id'],
             'message': 'Vous avez été assigné à une nouvelle commande!',
         })
+
+    async def order_cancelled(self, event):
+        """Notify courier their assigned order was cancelled."""
+        await self.send_json({
+            'type': 'order_cancelled',
+            'order_id': event['order_id'],
+            'reason': event.get('reason', ''),
+        })
+
+    async def delivery_status_change(self, event):
+        """Relay delivery status changes received through the dispatch group."""
+        await self.send_json({
+            'type': 'delivery_update',
+            'delivery_id': event['delivery_id'],
+            'new_status': event['new_status'],
+        })
     
     # ============================================
     # Database helpers

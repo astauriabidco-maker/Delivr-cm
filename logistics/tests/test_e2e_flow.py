@@ -223,6 +223,12 @@ class E2EDeliveryFlowTest(TransactionTestCase):
         )
 
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['wallet_delta'], -300.0)
+        self.assertEqual(
+            response.data['wallet_balance'],
+            float(courier_initial_balance - delivery.platform_fee)
+        )
+        self.assertEqual(response.data['wallet_transaction_type'], TransactionType.COMMISSION)
         self.courier.refresh_from_db()
         self.assertEqual(
             self.courier.wallet_balance,
@@ -352,6 +358,12 @@ class E2EDeliveryFlowTest(TransactionTestCase):
         )
 
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['wallet_delta'], 1600.0)
+        self.assertEqual(
+            response.data['wallet_balance'],
+            float(courier_initial_balance + delivery.courier_earning)
+        )
+        self.assertEqual(response.data['wallet_transaction_type'], TransactionType.DELIVERY_CREDIT)
         self.courier.refresh_from_db()
         self.assertEqual(
             self.courier.wallet_balance,

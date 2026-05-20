@@ -195,6 +195,8 @@ class ActiveDeliveryState {
   final String? error;
   final File? pendingPhoto;
   final bool isSubmitting;
+  final double? lastWalletDelta;
+  final double? lastWalletBalance;
 
   const ActiveDeliveryState({
     this.delivery,
@@ -202,6 +204,8 @@ class ActiveDeliveryState {
     this.error,
     this.pendingPhoto,
     this.isSubmitting = false,
+    this.lastWalletDelta,
+    this.lastWalletBalance,
   });
 
   ActiveDeliveryState copyWith({
@@ -210,8 +214,11 @@ class ActiveDeliveryState {
     String? error,
     File? pendingPhoto,
     bool? isSubmitting,
+    double? lastWalletDelta,
+    double? lastWalletBalance,
     bool clearPhoto = false,
     bool clearError = false,
+    bool clearWalletResult = false,
   }) {
     return ActiveDeliveryState(
       delivery: delivery ?? this.delivery,
@@ -219,6 +226,12 @@ class ActiveDeliveryState {
       error: clearError ? null : (error ?? this.error),
       pendingPhoto: clearPhoto ? null : (pendingPhoto ?? this.pendingPhoto),
       isSubmitting: isSubmitting ?? this.isSubmitting,
+      lastWalletDelta: clearWalletResult
+          ? null
+          : (lastWalletDelta ?? this.lastWalletDelta),
+      lastWalletBalance: clearWalletResult
+          ? null
+          : (lastWalletBalance ?? this.lastWalletBalance),
     );
   }
 }
@@ -379,6 +392,7 @@ class ActiveDeliveryNotifier extends StateNotifier<ActiveDeliveryState> {
       );
 
       if (response.success) {
+        final responseData = response.data;
         state = state.copyWith(
           delivery: state.delivery!.copyWith(
             status: DeliveryStatus.completed,
@@ -387,6 +401,10 @@ class ActiveDeliveryNotifier extends StateNotifier<ActiveDeliveryState> {
           ),
           isSubmitting: false,
           clearPhoto: true,
+          lastWalletDelta:
+              (responseData?['wallet_delta'] as num?)?.toDouble(),
+          lastWalletBalance:
+              (responseData?['wallet_balance'] as num?)?.toDouble(),
         );
         return true;
       } else {

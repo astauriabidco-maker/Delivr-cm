@@ -727,6 +727,13 @@ class ConfirmDropoffView(APIView):
 
         # Update courier progression and badges.
         GamificationService.process_delivery_completion(courier, delivery)
+
+        wallet_tx = (
+            Transaction.objects
+            .filter(delivery=delivery, user=courier)
+            .order_by('-created_at')
+            .first()
+        )
         
         # Broadcast update
         from logistics.events import broadcast_delivery_update
@@ -743,6 +750,9 @@ class ConfirmDropoffView(APIView):
             'message': 'Livraison terminée',
             'status': delivery.status,
             'earning': float(delivery.courier_earning),
+            'wallet_delta': float(wallet_tx.amount) if wallet_tx else 0,
+            'wallet_balance': float(courier.wallet_balance),
+            'wallet_transaction_type': wallet_tx.transaction_type if wallet_tx else None,
         })
 
 
