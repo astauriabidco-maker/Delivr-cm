@@ -31,6 +31,7 @@ LANDING_FACEBOOK_URL = config('LANDING_FACEBOOK_URL', default='')
 LANDING_INSTAGRAM_URL = config('LANDING_INSTAGRAM_URL', default='')
 LANDING_LINKEDIN_URL = config('LANDING_LINKEDIN_URL', default='')
 LANDING_X_URL = config('LANDING_X_URL', default='')
+PUBLIC_DOMAIN = config('PUBLIC_DOMAIN', default='relay237.com')
 
 if DJANGO_ENV == 'production':
     weak_secret_keys = {
@@ -246,6 +247,11 @@ CORS_ALLOWED_ORIGINS = config(
     cast=Csv()
 )
 CORS_ALLOW_CREDENTIALS = True
+CSRF_TRUSTED_ORIGINS = config(
+    'CSRF_TRUSTED_ORIGINS',
+    default=f'https://{PUBLIC_DOMAIN},https://www.{PUBLIC_DOMAIN}',
+    cast=Csv(),
+)
 
 # ===========================================
 # REDIS & CELERY CONFIGURATION
@@ -486,3 +492,57 @@ if not DEBUG:
             environment=config('SENTRY_ENVIRONMENT', default='production'),
             release=f"relay237@{config('APP_VERSION', default='1.0.0')}",
         )
+
+
+def _missing_config(*names):
+    return [name for name in names if not globals().get(name)]
+
+
+if DJANGO_ENV == 'production':
+    unsafe_hosts = {'*', 'localhost', '127.0.0.1', '0.0.0.0', '10.0.2.2'}
+    configured_hosts = set(ALLOWED_HOSTS)
+    if configured_hosts & unsafe_hosts:
+        raise RuntimeError('ALLOWED_HOSTS contains development hosts in production')
+    if PUBLIC_DOMAIN not in configured_hosts:
+        raise RuntimeError(f'ALLOWED_HOSTS must include PUBLIC_DOMAIN ({PUBLIC_DOMAIN})')
+
+    unsafe_origins = [
+        origin for origin in CORS_ALLOWED_ORIGINS
+        if origin.startswith('http://') or 'localhost' in origin or '127.0.0.1' in origin
+    ]
+    if unsafe_origins:
+        raise RuntimeError('CORS_ALLOWED_ORIGINS contains non-production origins')
+    if not CSRF_TRUSTED_ORIGINS:
+        raise RuntimeError('CSRF_TRUSTED_ORIGINS must be configured for production')
+
+    if REDIS_URL in {'', 'redis://localhost:6379/0'}:
+        raise RuntimeError('REDIS_URL must be configured for production')
+
+    if WHATSAPP_NOTIFICATIONS_ENABLED:
+        if ACTIVE_WHATSAPP_PROVIDER.lower() == 'twilio':
+            missing = _missing_config('TWILIO_ACCOUNT_SID', 'TWILIO_AUTH_TOKEN', 'TWILIO_WHATSAPP_NUMBER')
+        else:
+            missing = _missing_config('META_API_TOKEN', 'META_PHONE_NUMBER_ID', 'META_VERIFY_TOKEN', 'META_APP_SECRET')
+        if missing:
+            raise RuntimeError(f'Missing WhatsApp production config: {", ".join(missing)}')
+
+    if MTN_MOMO_ENVIRONMENT.lower() == 'production':
+        missing = _missing_config(
+            'MTN_MOMO_SUBSCRIPTION_KEY',
+            'MTN_MOMO_API_USER',
+            'MTN_MOMO_API_KEY',
+            'MTN_MOMO_CALLBACK_URL',
+            'MTN_MOMO_WEBHOOK_SECRET',
+        )
+        if missing:
+            raise RuntimeError(f'Missing MTN MoMo production config: {", ".join(missing)}')
+
+    if ORANGE_MONEY_ENVIRONMENT.lower() == 'production':
+        missing = _missing_config(
+            'ORANGE_MONEY_MERCHANT_KEY',
+            'ORANGE_MONEY_MERCHANT_SECRET',
+            'ORANGE_MONEY_CALLBACK_URL',
+            'ORANGE_MONEY_RETURN_URL',
+        )
+        if missing:
+            raise RuntimeError(f'Missing Orange Money production config: {", ".join(missing)}')
