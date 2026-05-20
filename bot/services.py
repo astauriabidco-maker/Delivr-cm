@@ -403,6 +403,10 @@ def send_whatsapp_document(
     Returns:
         Message ID if successful, None if failed
     """
+    if not outbound_whatsapp_enabled():
+        logger.info("[META] Outbound WhatsApp disabled; skipped document to %s file=%s", phone, filename)
+        return None
+
     import requests
     
     # Clean phone number

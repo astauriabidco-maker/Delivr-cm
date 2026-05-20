@@ -371,3 +371,18 @@ class OutboundWhatsAppSettingsTest(TestCase):
 
         self.assertIsNone(result)
         mock_post.assert_not_called()
+
+    @override_settings(WHATSAPP_NOTIFICATIONS_ENABLED=False)
+    @patch('requests.post')
+    def test_meta_document_send_is_skipped_when_disabled(self, mock_post):
+        from bot.services import send_whatsapp_document
+
+        result = send_whatsapp_document(
+            phone='+237690000001',
+            document_url='https://relay237.com/media/receipt.pdf',
+            filename='receipt.pdf',
+            caption='Votre reçu',
+        )
+
+        self.assertIsNone(result)
+        mock_post.assert_not_called()

@@ -250,8 +250,11 @@ def _handle_delivery_completed(delivery: Delivery):
         
         # Send receipt via WhatsApp to recipient
         try:
-            InvoiceService.send_receipt_via_whatsapp(invoice)
-            logger.info(f"[SIGNAL] Receipt sent via WhatsApp for {invoice.invoice_number}")
+            sent = InvoiceService.send_receipt_via_whatsapp(invoice)
+            if sent:
+                logger.info(f"[SIGNAL] Receipt sent via WhatsApp for {invoice.invoice_number}")
+            else:
+                logger.info(f"[SIGNAL] Receipt WhatsApp send skipped or failed for {invoice.invoice_number}")
         except Exception as wa_error:
             logger.warning(f"[SIGNAL] WhatsApp send failed: {wa_error}")
     

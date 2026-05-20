@@ -349,13 +349,17 @@ class InvoiceService:
             message = f"📄 Votre reçu RELAY237 #{invoice.invoice_number}"
             
             # Send document
-            send_whatsapp_document(
+            message_id = send_whatsapp_document(
                 phone=phone,
                 document_url=invoice.pdf_file.url,
                 filename=f"RELAY237_{invoice.invoice_number}.pdf",
                 caption=message
             )
-            
+
+            if not message_id:
+                logger.info(f"Invoice {invoice.invoice_number} WhatsApp document not sent to {phone}")
+                return False
+
             logger.info(f"Sent invoice {invoice.invoice_number} to {phone}")
             return True
             
