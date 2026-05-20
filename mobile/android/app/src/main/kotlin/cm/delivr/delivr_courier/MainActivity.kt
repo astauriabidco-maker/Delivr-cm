@@ -1,4 +1,4 @@
-package cm.delivr.delivr_courier
+package cm.delivr.courier
 
 import io.flutter.embedding.android.FlutterActivity
 

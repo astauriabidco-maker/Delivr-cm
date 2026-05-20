@@ -23,21 +23,36 @@ class DoualaNeeighborhoods {
     Neighborhood(name: 'Akwa', lat: 4.0555, lng: 9.7034, zone: 'Douala I'),
     Neighborhood(name: 'Bali', lat: 4.0489, lng: 9.7112, zone: 'Douala I'),
     Neighborhood(name: 'Bonapriso', lat: 4.0267, lng: 9.6878, zone: 'Douala I'),
-    
+
     // Douala II
     Neighborhood(name: 'New Bell', lat: 4.0345, lng: 9.7234, zone: 'Douala II'),
-    Neighborhood(name: 'Nkongmondo', lat: 4.0312, lng: 9.7189, zone: 'Douala II'),
-    
+    Neighborhood(
+      name: 'Nkongmondo',
+      lat: 4.0312,
+      lng: 9.7189,
+      zone: 'Douala II',
+    ),
+
     // Douala III
     Neighborhood(name: 'Makepe', lat: 4.0678, lng: 9.7456, zone: 'Douala III'),
-    Neighborhood(name: 'Logbessou', lat: 4.0756, lng: 9.7623, zone: 'Douala III'),
-    Neighborhood(name: 'Bonamoussadi', lat: 4.0823, lng: 9.7345, zone: 'Douala III'),
+    Neighborhood(
+      name: 'Logbessou',
+      lat: 4.0756,
+      lng: 9.7623,
+      zone: 'Douala III',
+    ),
+    Neighborhood(
+      name: 'Bonamoussadi',
+      lat: 4.0823,
+      lng: 9.7345,
+      zone: 'Douala III',
+    ),
     Neighborhood(name: 'Kotto', lat: 4.0934, lng: 9.7512, zone: 'Douala III'),
-    
+
     // Douala IV
     Neighborhood(name: 'Bonaberi', lat: 4.0645, lng: 9.6678, zone: 'Douala IV'),
     Neighborhood(name: 'Sodiko', lat: 4.0756, lng: 9.6534, zone: 'Douala IV'),
-    
+
     // Douala V
     Neighborhood(name: 'Ndokotti', lat: 4.0456, lng: 9.7389, zone: 'Douala V'),
     Neighborhood(name: 'Bepanda', lat: 4.0512, lng: 9.7445, zone: 'Douala V'),
@@ -315,10 +330,17 @@ class MockDataProvider {
 
   /// Get active deliveries (assigned to courier)
   static List<MockDelivery> getActiveDeliveries() {
-    return _deliveries.where((d) => 
-      ['en_route_pickup', 'arrived_pickup', 'picked_up', 'in_transit', 'arrived_dropoff']
-        .contains(d.status)
-    ).toList();
+    return _deliveries
+        .where(
+          (d) => [
+            'en_route_pickup',
+            'arrived_pickup',
+            'picked_up',
+            'in_transit',
+            'arrived_dropoff',
+          ].contains(d.status),
+        )
+        .toList();
   }
 
   /// Get pending deliveries (available to accept)
@@ -344,12 +366,12 @@ class MockDataProvider {
 
   /// Generate a new random delivery for simulation
   static MockDelivery generateNewDelivery() {
-    final pickup = DoualaNeeighborhoods.all[
-      DateTime.now().millisecondsSinceEpoch % DoualaNeeighborhoods.all.length
-    ];
-    final dropoff = DoualaNeeighborhoods.all[
-      (DateTime.now().millisecondsSinceEpoch + 5) % DoualaNeeighborhoods.all.length
-    ];
+    final pickup =
+        DoualaNeeighborhoods.all[DateTime.now().millisecondsSinceEpoch %
+            DoualaNeeighborhoods.all.length];
+    final dropoff =
+        DoualaNeeighborhoods.all[(DateTime.now().millisecondsSinceEpoch + 5) %
+            DoualaNeeighborhoods.all.length];
 
     final senders = [
       ('Restaurant Chez Mama', '+237699111111', 'food', 'Commande repas'),
@@ -374,8 +396,10 @@ class MockDataProvider {
 
     // Calculate simple distance (Haversine approximation)
     final distKm = _calculateDistance(
-      pickup.lat, pickup.lng,
-      dropoff.lat, dropoff.lng,
+      pickup.lat,
+      pickup.lng,
+      dropoff.lat,
+      dropoff.lng,
     );
     final timeMin = (distKm / 0.5).round(); // ~30km/h average
 
@@ -384,7 +408,8 @@ class MockDataProvider {
 
     return MockDelivery(
       id: 'DEL-NEW-${DateTime.now().millisecondsSinceEpoch}',
-      trackingCode: 'DLR-${DateTime.now().year}-${DateTime.now().millisecondsSinceEpoch.toString().substring(8)}',
+      trackingCode:
+          'DLR-${DateTime.now().year}-${DateTime.now().millisecondsSinceEpoch.toString().substring(8)}',
       senderName: sender.$1,
       senderPhone: sender.$2,
       pickupLocation: pickup,
@@ -405,13 +430,21 @@ class MockDataProvider {
   }
 
   /// Haversine formula for distance calculation
-  static double _calculateDistance(double lat1, double lng1, double lat2, double lng2) {
+  static double _calculateDistance(
+    double lat1,
+    double lng1,
+    double lat2,
+    double lng2,
+  ) {
     const double earthRadius = 6371; // km
     final dLat = _toRadians(lat2 - lat1);
     final dLng = _toRadians(lng2 - lng1);
-    final a = _sin(dLat / 2) * _sin(dLat / 2) +
-        _cos(_toRadians(lat1)) * _cos(_toRadians(lat2)) *
-        _sin(dLng / 2) * _sin(dLng / 2);
+    final a =
+        _sin(dLat / 2) * _sin(dLat / 2) +
+        _cos(_toRadians(lat1)) *
+            _cos(_toRadians(lat2)) *
+            _sin(dLng / 2) *
+            _sin(dLng / 2);
     final c = 2 * _atan2(_sqrt(a), _sqrt(1 - a));
     return earthRadius * c;
   }
@@ -485,16 +518,21 @@ final pendingDeliveriesProvider = StateProvider<List<MockDelivery>>((ref) {
 final demoModeProvider = StateProvider<bool>((ref) => false);
 
 /// Provider for simulating new delivery arrival
-final newDeliveryNotificationProvider = StateProvider<MockDelivery?>((ref) => null);
+final newDeliveryNotificationProvider = StateProvider<MockDelivery?>(
+  (ref) => null,
+);
 
 /// Provider for accepted deliveries (active courses)
-final acceptedDeliveriesProvider = StateNotifierProvider<AcceptedDeliveriesNotifier, List<MockDelivery>>((ref) {
-  return AcceptedDeliveriesNotifier();
-});
+final acceptedDeliveriesProvider =
+    StateNotifierProvider<AcceptedDeliveriesNotifier, List<MockDelivery>>((
+      ref,
+    ) {
+      return AcceptedDeliveriesNotifier();
+    });
 
 /// Notifier for managing accepted deliveries
 class AcceptedDeliveriesNotifier extends StateNotifier<List<MockDelivery>> {
-  AcceptedDeliveriesNotifier() : super(MockDataProvider.getActiveDeliveries());
+  AcceptedDeliveriesNotifier() : super(const []);
 
   /// Accept a new delivery
   void acceptDelivery(MockDelivery delivery) {
@@ -520,51 +558,62 @@ class AcceptedDeliveriesNotifier extends StateNotifier<List<MockDelivery>> {
       estimatedDistanceKm: delivery.estimatedDistanceKm,
       estimatedTimeMinutes: delivery.estimatedTimeMinutes,
     );
-    
+
     state = [acceptedDelivery, ...state];
   }
 
   /// Update delivery status
   void updateStatus(String deliveryId, String newStatus) {
-    state = state.map((d) {
-      if (d.id == deliveryId) {
-        return MockDelivery(
-          id: d.id,
-          trackingCode: d.trackingCode,
-          senderName: d.senderName,
-          senderPhone: d.senderPhone,
-          pickupLocation: d.pickupLocation,
-          pickupAddress: d.pickupAddress,
-          recipientName: d.recipientName,
-          recipientPhone: d.recipientPhone,
-          dropoffLocation: d.dropoffLocation,
-          dropoffAddress: d.dropoffAddress,
-          packageType: d.packageType,
-          packageDescription: d.packageDescription,
-          price: d.price,
-          courierEarning: d.courierEarning,
-          status: newStatus,
-          createdAt: d.createdAt,
-          acceptedAt: d.acceptedAt,
-          estimatedDistanceKm: d.estimatedDistanceKm,
-          estimatedTimeMinutes: d.estimatedTimeMinutes,
-        );
-      }
-      return d;
-    }).toList();
+    state =
+        state.map((d) {
+          if (d.id == deliveryId) {
+            return MockDelivery(
+              id: d.id,
+              trackingCode: d.trackingCode,
+              senderName: d.senderName,
+              senderPhone: d.senderPhone,
+              pickupLocation: d.pickupLocation,
+              pickupAddress: d.pickupAddress,
+              recipientName: d.recipientName,
+              recipientPhone: d.recipientPhone,
+              dropoffLocation: d.dropoffLocation,
+              dropoffAddress: d.dropoffAddress,
+              packageType: d.packageType,
+              packageDescription: d.packageDescription,
+              price: d.price,
+              courierEarning: d.courierEarning,
+              status: newStatus,
+              createdAt: d.createdAt,
+              acceptedAt: d.acceptedAt,
+              estimatedDistanceKm: d.estimatedDistanceKm,
+              estimatedTimeMinutes: d.estimatedTimeMinutes,
+            );
+          }
+          return d;
+        }).toList();
   }
 
   /// Get active deliveries count (for stats)
-  int get activeCount => state.where((d) => 
-    ['en_route_pickup', 'arrived_pickup', 'picked_up', 'in_transit', 'arrived_dropoff']
-      .contains(d.status)
-  ).length;
+  int get activeCount =>
+      state
+          .where(
+            (d) => [
+              'en_route_pickup',
+              'arrived_pickup',
+              'picked_up',
+              'in_transit',
+              'arrived_dropoff',
+            ].contains(d.status),
+          )
+          .length;
 
   /// Get total earnings for today
   double get todayEarnings => state
-    .where((d) => d.status == 'completed' && 
-      d.acceptedAt != null && 
-      d.acceptedAt!.day == DateTime.now().day)
-    .fold(0.0, (sum, d) => sum + d.courierEarning);
+      .where(
+        (d) =>
+            d.status == 'completed' &&
+            d.acceptedAt != null &&
+            d.acceptedAt!.day == DateTime.now().day,
+      )
+      .fold(0.0, (sum, d) => sum + d.courierEarning);
 }
-

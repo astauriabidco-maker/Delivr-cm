@@ -347,3 +347,27 @@ class WebhookSignatureTest(TestCase):
 
         self.assertEqual(response.status_code, 200)
         mock_parse.assert_called_once()
+
+
+class OutboundWhatsAppSettingsTest(TestCase):
+    """Test outbound provider calls are controlled by settings."""
+
+    @override_settings(WHATSAPP_NOTIFICATIONS_ENABLED=False)
+    @patch('bot.services.TwilioService.get_client')
+    def test_twilio_send_is_skipped_when_disabled(self, mock_get_client):
+        from bot.services import TwilioService
+
+        result = TwilioService.send_message('+237690000001', 'Test')
+
+        self.assertIsNone(result)
+        mock_get_client.assert_not_called()
+
+    @override_settings(WHATSAPP_NOTIFICATIONS_ENABLED=False)
+    @patch('requests.post')
+    def test_meta_send_is_skipped_when_disabled(self, mock_post):
+        from bot.services import MetaWhatsAppService
+
+        result = MetaWhatsAppService.send_message('+237690000001', 'Test')
+
+        self.assertIsNone(result)
+        mock_post.assert_not_called()

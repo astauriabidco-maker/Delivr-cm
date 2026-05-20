@@ -21,7 +21,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 DJANGO_ENV = config('DJANGO_ENV', default='development')
 SECRET_KEY = config('SECRET_KEY', default='dev-secret-key-change-in-production')
 DEBUG = config('DEBUG', default=True, cast=bool)
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1,0.0.0.0', cast=Csv())
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1,0.0.0.0,10.0.2.2', cast=Csv())
 DB_PASSWORD = config('DB_PASSWORD', default='delivr_secret_2024')
 
 # Public landing page configuration
@@ -312,6 +312,14 @@ NOMINATIM_BASE_URL = config('NOMINATIM_BASE_URL', default='http://nominatim:8080
 # ===========================================
 # WHATSAPP PROVIDER CONFIGURATION
 # ===========================================
+# Disable outbound WhatsApp notifications in DEBUG by default so local QA and
+# automated tests never call Twilio/Meta unless explicitly enabled.
+WHATSAPP_NOTIFICATIONS_ENABLED = config(
+    'WHATSAPP_NOTIFICATIONS_ENABLED',
+    default=not DEBUG,
+    cast=bool,
+)
+
 # Toggle between providers: 'twilio' or 'meta'
 ACTIVE_WHATSAPP_PROVIDER = config('ACTIVE_WHATSAPP_PROVIDER', default='twilio')
 

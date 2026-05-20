@@ -8,33 +8,44 @@ import 'features/notifications/notification_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  // =============================================
-  // ENVIRONMENT CONFIGURATION
-  // =============================================
-  // Switch between environments by changing this line:
-  //
-  // AppConfig.init(AppConfig.development());       // Web browser
-  // AppConfig.init(AppConfig.emulator());           // Android emulator
-  // AppConfig.init(AppConfig.localNetwork('192.168.1.X'));  // Physical device (WiFi)
-  // AppConfig.init(AppConfig.staging());            // Staging server
-  // AppConfig.init(AppConfig.production());         // Production
-  //
-  AppConfig.init(AppConfig.development());
-  
-  debugPrint('🚀 RELAY237 starting with ${AppConfig.current}');
-  
+
+  AppConfig.init(_resolveAppConfig());
+
+  debugPrint('RELAY237 starting with ${AppConfig.current}');
+
   // Initialize Hive for local storage
   await Hive.initFlutter();
-  
+
   // Initialize notification service
   final notificationService = NotificationService();
   await notificationService.initialize();
   await notificationService.requestPermissions();
-  
-  runApp(
-    const ProviderScope(
-      child: DelivrCourierApp(),
-    ),
+
+  runApp(const ProviderScope(child: DelivrCourierApp()));
+}
+
+AppConfig _resolveAppConfig() {
+  const environment = String.fromEnvironment(
+    'APP_ENV',
+    defaultValue: 'development',
   );
+  const localIp = String.fromEnvironment('LOCAL_API_IP');
+
+  switch (environment) {
+    case 'emulator':
+      return AppConfig.emulator();
+    case 'local_network':
+      if (localIp.isEmpty) {
+        throw StateError('LOCAL_API_IP is required when APP_ENV=local_network');
+      }
+      return AppConfig.localNetwork(localIp);
+    case 'staging':
+      return AppConfig.staging();
+    case 'production':
+      return AppConfig.production();
+    case 'development':
+      return AppConfig.development();
+    default:
+      throw StateError('Unsupported APP_ENV: $environment');
+  }
 }

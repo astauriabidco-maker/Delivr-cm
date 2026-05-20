@@ -2,22 +2,24 @@ import 'dart:async';
 import 'dart:developer' as dev;
 
 import 'package:battery_plus/battery_plus.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 
+import '../api/api_client.dart';
 import '../websocket/websocket_service.dart';
 
 /// GPS tracking modes
 enum LocationTrackingMode {
   /// High accuracy, frequent updates (10s interval)
   active,
-  
-  /// Balanced accuracy, moderate updates (30s interval)  
+
+  /// Balanced accuracy, moderate updates (30s interval)
   idle,
-  
+
   /// Low power, infrequent updates (60s interval)
   batterySaving,
-  
+
   /// Tracking paused
   stopped,
 }
@@ -60,16 +62,17 @@ class LocationState {
 }
 
 /// Location state provider
-final locationStateProvider = StateNotifierProvider<LocationStateNotifier, LocationState>((ref) {
-  return LocationStateNotifier(ref);
-});
+final locationStateProvider =
+    StateNotifierProvider<LocationStateNotifier, LocationState>((ref) {
+      return LocationStateNotifier(ref);
+    });
 
 class LocationStateNotifier extends StateNotifier<LocationState> {
   final Ref _ref;
   StreamSubscription<Position>? _positionSubscription;
   StreamSubscription<BatteryState>? _batterySubscription;
   Timer? _updateTimer;
-  
+
   final Battery _battery = Battery();
   bool _hasActiveDelivery = false;
 
@@ -82,24 +85,37 @@ class LocationStateNotifier extends StateNotifier<LocationState> {
     // Get initial battery level
     final level = await _battery.batteryLevel;
     state = state.copyWith(batteryLevel: level);
-    
+
     // Listen to battery state changes
-    _batterySubscription = _battery.onBatteryStateChanged.listen((batteryState) async {
+    _batterySubscription = _battery.onBatteryStateChanged.listen((
+      batteryState,
+    ) async {
       final level = await _battery.batteryLevel;
       state = state.copyWith(batteryLevel: level);
-      
+
       // Auto-switch to battery saving mode if below 20%
-      if (state.isTracking && level < 20 && state.mode != LocationTrackingMode.batterySaving) {
-        dev.log('[GPS] Battery low ($level%), switching to battery saving mode', name: 'Location');
+      if (state.isTracking &&
+          level < 20 &&
+          state.mode != LocationTrackingMode.batterySaving) {
+        dev.log(
+          '[GPS] Battery low ($level%), switching to battery saving mode',
+          name: 'Location',
+        );
         await _switchMode(LocationTrackingMode.batterySaving);
       }
-      
+
       // Return to appropriate mode if battery recovers above 30%
-      if (state.isTracking && level > 30 && state.mode == LocationTrackingMode.batterySaving) {
-        final newMode = _hasActiveDelivery 
-            ? LocationTrackingMode.active 
-            : LocationTrackingMode.idle;
-        dev.log('[GPS] Battery recovered ($level%), switching to $newMode', name: 'Location');
+      if (state.isTracking &&
+          level > 30 &&
+          state.mode == LocationTrackingMode.batterySaving) {
+        final newMode =
+            _hasActiveDelivery
+                ? LocationTrackingMode.active
+                : LocationTrackingMode.idle;
+        dev.log(
+          '[GPS] Battery recovered ($level%), switching to $newMode',
+          name: 'Location',
+        );
         await _switchMode(newMode);
       }
     });
@@ -108,7 +124,7 @@ class LocationStateNotifier extends StateNotifier<LocationState> {
   /// Start GPS tracking
   Future<bool> startTracking({bool hasActiveDelivery = false}) async {
     _hasActiveDelivery = hasActiveDelivery;
-    
+
     // Check and request permissions
     final hasPermission = await _checkAndRequestPermission();
     if (!hasPermission) {
@@ -118,7 +134,7 @@ class LocationStateNotifier extends StateNotifier<LocationState> {
       );
       return false;
     }
-    
+
     // Determine initial mode based on battery and delivery status
     LocationTrackingMode initialMode;
     if (state.batteryLevel < 20) {
@@ -128,16 +144,12 @@ class LocationStateNotifier extends StateNotifier<LocationState> {
     } else {
       initialMode = LocationTrackingMode.idle;
     }
-    
-    state = state.copyWith(
-      isTracking: true,
-      mode: initialMode,
-      error: null,
-    );
-    
+
+    state = state.copyWith(isTracking: true, mode: initialMode, error: null);
+
     // Start position stream
     await _startPositionStream(initialMode);
-    
+
     dev.log('[GPS] Tracking started in $initialMode mode', name: 'Location');
     return true;
   }
@@ -148,28 +160,29 @@ class LocationStateNotifier extends StateNotifier<LocationState> {
     _positionSubscription = null;
     _updateTimer?.cancel();
     _updateTimer = null;
-    
+
     state = state.copyWith(
       isTracking: false,
       mode: LocationTrackingMode.stopped,
     );
-    
+
     dev.log('[GPS] Tracking stopped', name: 'Location');
   }
 
   /// Set active delivery status (affects tracking frequency)
   Future<void> setActiveDelivery(bool hasActiveDelivery) async {
     _hasActiveDelivery = hasActiveDelivery;
-    
+
     if (!state.isTracking) return;
-    
+
     // Don't change mode if in battery saving
     if (state.mode == LocationTrackingMode.batterySaving) return;
-    
-    final newMode = hasActiveDelivery 
-        ? LocationTrackingMode.active 
-        : LocationTrackingMode.idle;
-    
+
+    final newMode =
+        hasActiveDelivery
+            ? LocationTrackingMode.active
+            : LocationTrackingMode.idle;
+
     if (state.mode != newMode) {
       await _switchMode(newMode);
     }
@@ -178,46 +191,47 @@ class LocationStateNotifier extends StateNotifier<LocationState> {
   /// Switch tracking mode
   Future<void> _switchMode(LocationTrackingMode mode) async {
     if (state.mode == mode) return;
-    
+
     // Cancel current stream
     _positionSubscription?.cancel();
     _updateTimer?.cancel();
-    
+
     state = state.copyWith(mode: mode);
-    
+
     // Start new stream with updated settings
     await _startPositionStream(mode);
-    
+
     dev.log('[GPS] Switched to $mode mode', name: 'Location');
   }
 
   /// Start position stream with mode-specific settings
   Future<void> _startPositionStream(LocationTrackingMode mode) async {
     final settings = _getLocationSettings(mode);
-    
+
     try {
       // Get initial position
       final position = await Geolocator.getCurrentPosition(
         locationSettings: settings,
       );
       _handlePositionUpdate(position);
-      
+      await _sendLocationToBackend();
+
       // Start listening to position updates
       _positionSubscription = Geolocator.getPositionStream(
         locationSettings: settings,
-      ).listen(
-        _handlePositionUpdate,
-        onError: _handlePositionError,
-      );
-      
+      ).listen(_handlePositionUpdate, onError: _handlePositionError);
+
       // Setup periodic timer for backend updates (throttling)
       final interval = _getUpdateInterval(mode);
       _updateTimer = Timer.periodic(interval, (_) {
         _sendLocationToBackend();
       });
-      
     } catch (e) {
-      dev.log('[GPS] Failed to start position stream: $e', name: 'Location', error: e);
+      dev.log(
+        '[GPS] Failed to start position stream: $e',
+        name: 'Location',
+        error: e,
+      );
       state = state.copyWith(error: 'Erreur GPS: $e');
     }
   }
@@ -237,7 +251,7 @@ class LocationStateNotifier extends StateNotifier<LocationState> {
             enableWakeLock: true,
           ),
         );
-        
+
       case LocationTrackingMode.idle:
         // Balanced for idle couriers
         return AndroidSettings(
@@ -250,7 +264,7 @@ class LocationStateNotifier extends StateNotifier<LocationState> {
             enableWakeLock: false,
           ),
         );
-        
+
       case LocationTrackingMode.batterySaving:
         // Low power mode
         return AndroidSettings(
@@ -263,7 +277,7 @@ class LocationStateNotifier extends StateNotifier<LocationState> {
             enableWakeLock: false,
           ),
         );
-        
+
       case LocationTrackingMode.stopped:
         // Shouldn't happen, but return default
         return const LocationSettings(
@@ -294,7 +308,7 @@ class LocationStateNotifier extends StateNotifier<LocationState> {
       lastUpdate: DateTime.now(),
       error: null,
     );
-    
+
     dev.log(
       '[GPS] Position: ${position.latitude.toStringAsFixed(5)}, '
       '${position.longitude.toStringAsFixed(5)} '
@@ -309,16 +323,45 @@ class LocationStateNotifier extends StateNotifier<LocationState> {
     state = state.copyWith(error: 'Erreur de localisation');
   }
 
-  /// Send current location to backend via WebSocket
-  void _sendLocationToBackend() {
+  /// Send current location to backend via WebSocket and HTTP fallback.
+  Future<void> _sendLocationToBackend() async {
     final position = state.currentPosition;
     if (position == null) return;
-    
+
     try {
       final wsService = _ref.read(wsServiceProvider);
+      await wsService.ensureConnected();
       wsService.sendLocationUpdate(position.latitude, position.longitude);
     } catch (e) {
       dev.log('[GPS] Failed to send location: $e', name: 'Location', error: e);
+    }
+
+    try {
+      final dio = _ref.read(dioProvider);
+      await dio.post(
+        '/api/mobile/location/',
+        data: {
+          'latitude': position.latitude,
+          'longitude': position.longitude,
+          'accuracy': position.accuracy,
+          'speed': position.speed,
+          'heading': position.heading,
+          'timestamp': position.timestamp.toIso8601String(),
+        },
+      );
+      dev.log('[GPS] Location synced via HTTP fallback', name: 'Location');
+    } on DioException catch (e) {
+      dev.log(
+        '[GPS] HTTP location sync failed: ${e.message}',
+        name: 'Location',
+        error: e,
+      );
+    } catch (e) {
+      dev.log(
+        '[GPS] HTTP location sync failed: $e',
+        name: 'Location',
+        error: e,
+      );
     }
   }
 
@@ -329,9 +372,9 @@ class LocationStateNotifier extends StateNotifier<LocationState> {
       dev.log('[GPS] Location services disabled', name: 'Location');
       return false;
     }
-    
+
     LocationPermission permission = await Geolocator.checkPermission();
-    
+
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
@@ -339,27 +382,27 @@ class LocationStateNotifier extends StateNotifier<LocationState> {
         return false;
       }
     }
-    
+
     if (permission == LocationPermission.deniedForever) {
       dev.log('[GPS] Permission denied forever', name: 'Location');
       return false;
     }
-    
+
     // For background tracking, we need "always" permission
     if (permission == LocationPermission.whileInUse) {
       // Request background permission
       permission = await Geolocator.requestPermission();
     }
-    
-    return permission == LocationPermission.always || 
-           permission == LocationPermission.whileInUse;
+
+    return permission == LocationPermission.always ||
+        permission == LocationPermission.whileInUse;
   }
 
   /// Get distance to a point
   double distanceTo(double latitude, double longitude) {
     final position = state.currentPosition;
     if (position == null) return double.infinity;
-    
+
     return Geolocator.distanceBetween(
       position.latitude,
       position.longitude,

@@ -10,6 +10,7 @@ Provides real-time updates for:
 import json
 import logging
 from typing import Dict, Any
+from urllib.parse import parse_qs
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from channels.db import database_sync_to_async
 from asgiref.sync import sync_to_async
@@ -150,22 +151,25 @@ class CourierConsumer(AsyncJsonWebsocketConsumer):
     city_group = None
     
     async def connect(self):
-        # Require authentication
-        user = self.scope.get('user')
-        
-        if not user or user.is_anonymous:
-            # For development, accept all connections
-            # In production, add proper auth check
-            pass
-        
+        courier = await self.authenticate_from_query_token()
+
+        if not courier:
+            logger.warning("[WS] Courier connection rejected: missing or invalid JWT")
+            await self.close(code=4001)
+            return
+
         await self.accept()
+
+        await self._attach_courier(courier)
         
         await self.send_json({
-            'type': 'connection_established',
-            'message': 'Connecté en tant que coursier. Envoyez votre position GPS.',
+            'type': 'authenticated',
+            'courier_id': self.courier_id,
+            'name': courier['name'],
+            'wallet_balance': str(courier['wallet_balance']),
         })
         
-        logger.info("[WS] Courier connected")
+        logger.info(f"[WS] Courier {self.courier_id} connected")
     
     async def disconnect(self, close_code):
         if self.city_group:
@@ -187,35 +191,13 @@ class CourierConsumer(AsyncJsonWebsocketConsumer):
         message_type = content.get('type')
         
         if message_type == 'authenticate':
-            # Authenticate courier by phone number
-            phone = content.get('phone_number')
-            courier = await self.authenticate_courier(phone)
-            
-            if courier:
-                self.courier_id = str(courier['id'])
-                self.city_group = f"dispatch_{courier.get('city', 'DOUALA')}"
-                
-                # Join courier-specific and city groups
-                await self.channel_layer.group_add(
-                    f'courier_{self.courier_id}',
-                    self.channel_name
-                )
-                await self.channel_layer.group_add(
-                    self.city_group,
-                    self.channel_name
-                )
-                
-                await self.send_json({
-                    'type': 'authenticated',
-                    'courier_id': self.courier_id,
-                    'name': courier['name'],
-                    'wallet_balance': str(courier['wallet_balance']),
-                })
-            else:
-                await self.send_json({
-                    'type': 'error',
-                    'message': 'Numéro de téléphone non reconnu',
-                })
+            await self.send_json({
+                'type': 'authenticated' if self.courier_id else 'error',
+                'courier_id': self.courier_id,
+                'message': 'Authentification WebSocket déjà établie'
+                if self.courier_id
+                else 'Token WebSocket requis',
+            })
         
         elif message_type == 'location_update':
             # Update courier's GPS position
@@ -280,10 +262,62 @@ class CourierConsumer(AsyncJsonWebsocketConsumer):
     # ============================================
     # Database helpers
     # ============================================
+
+    async def _attach_courier(self, courier: Dict[str, Any]) -> None:
+        """Attach an authenticated courier to their private and dispatch groups."""
+        self.courier_id = str(courier['id'])
+        self.city_group = f"dispatch_{courier.get('city', 'DOUALA')}"
+
+        await self.channel_layer.group_add(
+            f'courier_{self.courier_id}',
+            self.channel_name
+        )
+        await self.channel_layer.group_add(
+            self.city_group,
+            self.channel_name
+        )
+
+    async def authenticate_from_query_token(self) -> Dict[str, Any]:
+        """Authenticate courier from a JWT passed as ?token=<access_token>."""
+        raw_query = self.scope.get('query_string', b'').decode()
+        token = parse_qs(raw_query).get('token', [None])[0]
+        if not token:
+            return None
+        return await self.authenticate_courier_token(token)
+
+    @database_sync_to_async
+    def authenticate_courier_token(self, token: str) -> Dict[str, Any]:
+        """Authenticate courier by validating a SimpleJWT access token."""
+        return self.authenticate_courier_token_sync(token)
+
+    @staticmethod
+    def authenticate_courier_token_sync(token: str) -> Dict[str, Any]:
+        """Synchronous JWT validation helper for tests and async wrapper."""
+        from core.models import User, UserRole
+        from rest_framework_simplejwt.exceptions import TokenError
+        from rest_framework_simplejwt.tokens import AccessToken
+
+        try:
+            validated = AccessToken(token)
+            user_id = validated.get('user_id')
+            courier = User.objects.get(
+                pk=user_id,
+                role=UserRole.COURIER,
+                is_active=True,
+                is_verified=True,
+            )
+            return {
+                'id': courier.id,
+                'name': courier.full_name,
+                'wallet_balance': courier.wallet_balance,
+                'city': 'DOUALA',
+            }
+        except (TokenError, User.DoesNotExist, ValueError, TypeError):
+            return None
     
     @database_sync_to_async
     def authenticate_courier(self, phone_number: str) -> Dict[str, Any]:
-        """Authenticate courier by phone number."""
+        """Legacy phone lookup retained for old clients; not used for socket auth."""
         from core.models import User, UserRole
         
         try:

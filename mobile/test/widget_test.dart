@@ -7,13 +7,26 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:delivr_courier/app/app.dart';
+import 'package:delivr_courier/core/auth/auth_provider.dart';
 
 void main() {
   testWidgets('App loads successfully', (WidgetTester tester) async {
     // Build our app and trigger a frame.
     await tester.pumpWidget(
-      const ProviderScope(
-        child: DelivrCourierApp(),
+      ProviderScope(
+        overrides: [
+          authStateProvider.overrideWith(
+            (ref) => AuthStateNotifier(
+              ref,
+              initialState: const AuthState(
+                isAuthenticated: false,
+                isLoading: false,
+              ),
+              checkOnInit: false,
+            ),
+          ),
+        ],
+        child: const DelivrCourierApp(),
       ),
     );
 

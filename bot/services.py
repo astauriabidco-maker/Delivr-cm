@@ -15,6 +15,11 @@ from django.conf import settings
 logger = logging.getLogger(__name__)
 
 
+def outbound_whatsapp_enabled() -> bool:
+    """Return whether real outbound WhatsApp provider calls are enabled."""
+    return getattr(settings, 'WHATSAPP_NOTIFICATIONS_ENABLED', False)
+
+
 # ===========================================
 # TWILIO SERVICE
 # ===========================================
@@ -58,6 +63,10 @@ class TwilioService:
         Returns:
             Message SID if successful, None if failed
         """
+        if not outbound_whatsapp_enabled():
+            logger.info("[TWILIO] Outbound WhatsApp disabled; skipped message to %s", to_number)
+            return None
+
         # Ensure WhatsApp format
         if not to_number.startswith('whatsapp:'):
             to_number = f"whatsapp:{to_number}"
@@ -151,6 +160,10 @@ class MetaWhatsAppService:
         Returns:
             Message ID if successful, None if failed
         """
+        if not outbound_whatsapp_enabled():
+            logger.info("[META] Outbound WhatsApp disabled; skipped message to %s", to_number)
+            return None
+
         import requests
         
         # Clean phone number (remove + and any prefix)

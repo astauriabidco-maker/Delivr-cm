@@ -30,18 +30,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
-    
+
     setState(() => _isLoading = true);
-    
+
     final authService = ref.read(authServiceProvider);
     final success = await authService.login(
       _phoneController.text.trim(),
       _passwordController.text,
     );
-    
+
+    if (!mounted) return;
     setState(() => _isLoading = false);
-    
-    if (success && mounted) {
+
+    if (success) {
       context.go(AppRoutes.dashboard);
     }
   }
@@ -49,7 +50,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authStateProvider);
-    
+
     return Scaffold(
       backgroundColor: DelivrColors.background,
       body: SafeArea(
@@ -61,7 +62,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: 48),
-                
+
                 // Logo & Title
                 Center(
                   child: Column(
@@ -99,9 +100,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ],
                   ),
                 ),
-                
+
                 const SizedBox(height: 48),
-                
+
                 // Phone field
                 TextFormField(
                   controller: _phoneController,
@@ -118,15 +119,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     if (value == null || value.isEmpty) {
                       return 'Veuillez entrer votre numéro';
                     }
-                    if (!RegExp(r'^\+?237[0-9]{9}$').hasMatch(value.replaceAll(' ', ''))) {
+                    if (!RegExp(
+                      r'^\+?237[0-9]{9}$',
+                    ).hasMatch(value.replaceAll(' ', ''))) {
                       return 'Numéro invalide';
                     }
                     return null;
                   },
                 ),
-                
+
                 const SizedBox(height: 16),
-                
+
                 // Password field
                 TextFormField(
                   controller: _passwordController,
@@ -136,7 +139,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     prefixIcon: const Icon(Icons.lock_outline),
                     suffixIcon: IconButton(
                       icon: Icon(
-                        _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                        _obscurePassword
+                            ? Icons.visibility_off
+                            : Icons.visibility,
                       ),
                       onPressed: () {
                         setState(() => _obscurePassword = !_obscurePassword);
@@ -150,9 +155,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     return null;
                   },
                 ),
-                
+
                 const SizedBox(height: 8),
-                
+
                 // Error message
                 if (authState.error != null)
                   Container(
@@ -181,26 +186,27 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ],
                     ),
                   ),
-                
+
                 const SizedBox(height: 32),
-                
+
                 // Login button
                 ElevatedButton(
                   onPressed: _isLoading ? null : _handleLogin,
-                  child: _isLoading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : const Text('Se connecter'),
+                  child:
+                      _isLoading
+                          ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                          : const Text('Se connecter'),
                 ),
-                
+
                 const SizedBox(height: 24),
-                
+
                 // Divider
                 Row(
                   children: [
@@ -215,18 +221,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     Expanded(child: Divider(color: DelivrColors.divider)),
                   ],
                 ),
-                
+
                 const SizedBox(height: 24),
-                
+
                 // Activation code button
                 OutlinedButton.icon(
                   onPressed: () => context.push(AppRoutes.activation),
                   icon: const Icon(Icons.qr_code),
                   label: const Text('J\'ai un code d\'activation'),
                 ),
-                
+
                 const SizedBox(height: 48),
-                
+
                 // Help text
                 Center(
                   child: Text(

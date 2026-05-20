@@ -12,13 +12,7 @@ import '../config/app_config.dart';
 import '../../features/notifications/notification_service.dart';
 
 /// WebSocket connection states
-enum WebSocketState {
-  disconnected,
-  connecting,
-  connected,
-  reconnecting,
-  error,
-}
+enum WebSocketState { disconnected, connecting, connected, reconnecting, error }
 
 /// WebSocket event types from backend
 class WsEventType {
@@ -26,13 +20,13 @@ class WsEventType {
   static const authenticated = 'authenticated';
   static const error = 'error';
   static const pong = 'pong';
-  
+
   // Courier events
   static const newOrder = 'new_order';
   static const orderAssigned = 'order_assigned';
   static const orderCancelled = 'order_cancelled';
   static const locationConfirmed = 'location_confirmed';
-  
+
   // Status updates
   static const statusUpdate = 'status_update';
   static const walletUpdate = 'wallet_update';
@@ -46,19 +40,17 @@ class WsMessage {
   final Map<String, dynamic> payload;
   final DateTime timestamp;
 
-  WsMessage({
-    required this.type,
-    required this.payload,
-    DateTime? timestamp,
-  }) : timestamp = timestamp ?? DateTime.now();
+  WsMessage({required this.type, required this.payload, DateTime? timestamp})
+    : timestamp = timestamp ?? DateTime.now();
 
   factory WsMessage.fromJson(Map<String, dynamic> json) {
     return WsMessage(
       type: json['type'] ?? 'unknown',
       payload: Map<String, dynamic>.from(json),
-      timestamp: json['timestamp'] != null 
-          ? DateTime.tryParse(json['timestamp']) ?? DateTime.now()
-          : DateTime.now(),
+      timestamp:
+          json['timestamp'] != null
+              ? DateTime.tryParse(json['timestamp']) ?? DateTime.now()
+              : DateTime.now(),
     );
   }
 
@@ -70,7 +62,9 @@ class WsMessage {
 }
 
 /// WebSocket state notifier
-final wsStateProvider = StateNotifierProvider<WsStateNotifier, WebSocketState>((ref) {
+final wsStateProvider = StateNotifierProvider<WsStateNotifier, WebSocketState>((
+  ref,
+) {
   return WsStateNotifier();
 });
 
@@ -97,11 +91,11 @@ class WebSocketService {
   StreamSubscription? _connectivitySubscription;
   Timer? _heartbeatTimer;
   Timer? _reconnectTimer;
-  
+
   int _reconnectAttempts = 0;
   static const int maxReconnectAttempts = 10;
   static const Duration heartbeatInterval = Duration(seconds: 30);
-  
+
   bool _isManuallyDisconnected = false;
 
   WebSocketService(this._ref) {
@@ -114,42 +108,64 @@ class WebSocketService {
     return AppConfig.current.courierWsUrl;
   }
 
+  Future<Uri?> _authenticatedWsUri() async {
+    final token = await _ref.read(authServiceProvider).getAccessToken();
+    if (token == null || token.isEmpty) {
+      return null;
+    }
+
+    final uri = Uri.parse(wsUrl);
+    return uri.replace(
+      queryParameters: {...uri.queryParameters, 'token': token},
+    );
+  }
+
   /// Connect to WebSocket server
   Future<void> connect() async {
     if (_channel != null) return;
-    
+
     _isManuallyDisconnected = false;
     _ref.read(wsStateProvider.notifier).setConnecting();
-    
+
     try {
+      final uri = await _authenticatedWsUri();
+      if (uri == null) {
+        dev.log('[WS] Cannot connect: missing access token', name: 'WebSocket');
+        _ref.read(wsStateProvider.notifier).setError();
+        return;
+      }
+
       dev.log('[WS] Connecting to $wsUrl', name: 'WebSocket');
-      
-      _channel = WebSocketChannel.connect(Uri.parse(wsUrl));
-      
+
+      _channel = WebSocketChannel.connect(uri);
+
       await _channel!.ready;
-      
+
       _ref.read(wsStateProvider.notifier).setConnected();
       _reconnectAttempts = 0;
-      
+
       dev.log('[WS] Connected successfully', name: 'WebSocket');
-      
-      // Authenticate after connection
-      await _authenticate();
-      
+
       // Start listening to messages
       _subscription = _channel!.stream.listen(
         _handleMessage,
         onError: _handleError,
         onDone: _handleDisconnect,
       );
-      
+
       // Start heartbeat
       _startHeartbeat();
-      
     } catch (e) {
       dev.log('[WS] Connection failed: $e', name: 'WebSocket', error: e);
       _ref.read(wsStateProvider.notifier).setError();
       _scheduleReconnect();
+    }
+  }
+
+  /// Ensure a socket exists before sending real-time events.
+  Future<void> ensureConnected() async {
+    if (_channel == null) {
+      await connect();
     }
   }
 
@@ -167,40 +183,21 @@ class WebSocketService {
       dev.log('[WS] Cannot send: not connected', name: 'WebSocket');
       return;
     }
-    
-    final message = {
-      'type': type,
-      ...data,
-    };
-    
+
+    final message = {'type': type, ...data};
+
     _channel!.sink.add(jsonEncode(message));
     dev.log('[WS] Sent: $type', name: 'WebSocket');
   }
 
-  /// Authenticate with the server
-  Future<void> _authenticate() async {
-    final authState = _ref.read(authStateProvider);
-    
-    if (authState.courierPhone != null) {
-      send('authenticate', {
-        'phone_number': authState.courierPhone,
-      });
-    }
-  }
-
   /// Send location update
   void sendLocationUpdate(double latitude, double longitude) {
-    send('location_update', {
-      'latitude': latitude,
-      'longitude': longitude,
-    });
+    send('location_update', {'latitude': latitude, 'longitude': longitude});
   }
 
   /// Accept a delivery order
   void acceptOrder(String orderId) {
-    send('accept_order', {
-      'order_id': orderId,
-    });
+    send('accept_order', {'order_id': orderId});
   }
 
   /// Handle incoming message
@@ -208,42 +205,45 @@ class WebSocketService {
     try {
       final data = jsonDecode(rawMessage as String) as Map<String, dynamic>;
       final message = WsMessage.fromJson(data);
-      
+
       dev.log('[WS] Received: ${message.type}', name: 'WebSocket');
-      
+
       switch (message.type) {
         case WsEventType.authenticated:
-          dev.log('[WS] Authenticated as courier ${data['courier_id']}', name: 'WebSocket');
+          dev.log(
+            '[WS] Authenticated as courier ${data['courier_id']}',
+            name: 'WebSocket',
+          );
           break;
-          
+
         case WsEventType.newOrder:
           _handleNewOrder(data);
           break;
-          
+
         case WsEventType.orderAssigned:
           _handleOrderAssigned(data);
           break;
-          
+
         case WsEventType.orderCancelled:
           _handleOrderCancelled(data);
           break;
-          
+
         case WsEventType.walletUpdate:
           _handleWalletUpdate(data);
           break;
-          
+
         case WsEventType.levelUp:
           _handleLevelUp(data);
           break;
-          
+
         case WsEventType.badgeUnlocked:
           _handleBadgeUnlocked(data);
           break;
-          
+
         case WsEventType.pong:
           // Heartbeat response, all good
           break;
-          
+
         case WsEventType.error:
           dev.log('[WS] Server error: ${data['message']}', name: 'WebSocket');
           break;
@@ -256,11 +256,12 @@ class WebSocketService {
   /// Handle new order notification
   void _handleNewOrder(Map<String, dynamic> data) {
     final notificationService = _ref.read(notificationServiceProvider);
-    
+
     notificationService.showDeliveryNotification(
       title: '✅ Nouvelle Course Disponible!',
-      body: '${data['pickup_address'] ?? 'Retrait'} → ${data['dropoff_address'] ?? 'Livraison'}\n'
-            '💰 ${data['courier_earning'] ?? 0} XAF',
+      body:
+          '${data['pickup_address'] ?? 'Retrait'} → ${data['dropoff_address'] ?? 'Livraison'}\n'
+          '💰 ${data['courier_earning'] ?? 0} XAF',
       payload: 'new_order:${data['order_id']}',
     );
   }
@@ -268,10 +269,11 @@ class WebSocketService {
   /// Handle order assigned notification
   void _handleOrderAssigned(Map<String, dynamic> data) {
     final notificationService = _ref.read(notificationServiceProvider);
-    
+
     notificationService.showDeliveryNotification(
       title: '✅ Course Assignée!',
-      body: 'Vous avez été assigné à la course #${data['order_id']?.toString().substring(0, 8) ?? ''}',
+      body:
+          'Vous avez été assigné à la course #${data['order_id']?.toString().substring(0, 8) ?? ''}',
       payload: 'order_assigned:${data['order_id']}',
     );
   }
@@ -279,10 +281,11 @@ class WebSocketService {
   /// Handle order cancelled notification
   void _handleOrderCancelled(Map<String, dynamic> data) {
     final notificationService = _ref.read(notificationServiceProvider);
-    
+
     notificationService.showNotification(
       title: '❌ Course Annulée',
-      body: 'La course #${data['order_id']?.toString().substring(0, 8) ?? ''} a été annulée.',
+      body:
+          'La course #${data['order_id']?.toString().substring(0, 8) ?? ''} a été annulée.',
       payload: 'order_cancelled:${data['order_id']}',
     );
   }
@@ -290,13 +293,14 @@ class WebSocketService {
   /// Handle wallet update
   void _handleWalletUpdate(Map<String, dynamic> data) {
     final notificationService = _ref.read(notificationServiceProvider);
-    
+
     final amount = data['amount'] ?? 0;
     final isCredit = (data['type'] ?? '') == 'credit';
-    
+
     notificationService.showNotification(
       title: isCredit ? '💰 Paiement Reçu' : '💳 Débit Wallet',
-      body: '${isCredit ? '+' : '-'}$amount XAF\nSolde: ${data['balance'] ?? 0} XAF',
+      body:
+          '${isCredit ? '+' : '-'}$amount XAF\nSolde: ${data['balance'] ?? 0} XAF',
       payload: 'wallet_update',
     );
   }
@@ -304,7 +308,7 @@ class WebSocketService {
   /// Handle level up
   void _handleLevelUp(Map<String, dynamic> data) {
     final notificationService = _ref.read(notificationServiceProvider);
-    
+
     notificationService.showNotification(
       title: '🎉 Félicitations!',
       body: 'Vous êtes passé au niveau ${data['new_level'] ?? 'suivant'}!',
@@ -315,7 +319,7 @@ class WebSocketService {
   /// Handle badge unlocked
   void _handleBadgeUnlocked(Map<String, dynamic> data) {
     final notificationService = _ref.read(notificationServiceProvider);
-    
+
     notificationService.showNotification(
       title: '🏆 Nouveau Badge Débloqué!',
       body: data['badge_name'] ?? 'Bravo pour votre accomplissement!',
@@ -336,7 +340,7 @@ class WebSocketService {
     dev.log('[WS] Disconnected', name: 'WebSocket');
     _ref.read(wsStateProvider.notifier).setDisconnected();
     _cleanup();
-    
+
     if (!_isManuallyDisconnected) {
       _scheduleReconnect();
     }
@@ -357,17 +361,17 @@ class WebSocketService {
       dev.log('[WS] Max reconnect attempts reached', name: 'WebSocket');
       return;
     }
-    
+
     _ref.read(wsStateProvider.notifier).setReconnecting();
-    
+
     // Exponential backoff: 1s, 2s, 4s, 8s, ... up to 30s
-    final delay = Duration(
-      seconds: (1 << _reconnectAttempts).clamp(1, 30),
+    final delay = Duration(seconds: (1 << _reconnectAttempts).clamp(1, 30));
+
+    dev.log(
+      '[WS] Reconnecting in ${delay.inSeconds}s (attempt ${_reconnectAttempts + 1})',
+      name: 'WebSocket',
     );
-    
-    dev.log('[WS] Reconnecting in ${delay.inSeconds}s (attempt ${_reconnectAttempts + 1})', 
-            name: 'WebSocket');
-    
+
     _reconnectTimer = Timer(delay, () {
       _reconnectAttempts++;
       connect();
@@ -376,12 +380,12 @@ class WebSocketService {
 
   /// Setup connectivity listener for auto-reconnect
   void _setupConnectivityListener() {
-    _connectivitySubscription = Connectivity().onConnectivityChanged.listen((results) {
-      final hasConnection = results.any((r) => 
-        r != ConnectivityResult.none
-      );
-      
-      if (hasConnection && 
+    _connectivitySubscription = Connectivity().onConnectivityChanged.listen((
+      results,
+    ) {
+      final hasConnection = results.any((r) => r != ConnectivityResult.none);
+
+      if (hasConnection &&
           _ref.read(wsStateProvider) == WebSocketState.disconnected &&
           !_isManuallyDisconnected) {
         dev.log('[WS] Network restored, reconnecting...', name: 'WebSocket');

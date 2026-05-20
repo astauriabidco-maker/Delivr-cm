@@ -5,8 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../app/theme.dart';
 import '../../../core/api/api_client.dart';
 
-
-/// Deliveries list screen with active and completed tabs
+/// Deliveries list screen with available, active and completed tabs
 class DeliveriesScreen extends ConsumerStatefulWidget {
   const DeliveriesScreen({super.key});
 
@@ -21,7 +20,7 @@ class _DeliveriesScreenState extends ConsumerState<DeliveriesScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
   }
 
   @override
@@ -44,6 +43,7 @@ class _DeliveriesScreenState extends ConsumerState<DeliveriesScreen>
           labelColor: DelivrColors.primary,
           unselectedLabelColor: DelivrColors.textSecondary,
           tabs: const [
+            Tab(text: 'Disponibles'),
             Tab(text: 'En cours'),
             Tab(text: 'Terminées'),
           ],
@@ -52,11 +52,113 @@ class _DeliveriesScreenState extends ConsumerState<DeliveriesScreen>
       body: TabBarView(
         controller: _tabController,
         children: const [
+          _AvailableDeliveriesTab(),
           _ActiveDeliveriesTab(),
           _CompletedDeliveriesTab(),
         ],
       ),
     );
+  }
+}
+
+/// Tab showing available deliveries to accept
+class _AvailableDeliveriesTab extends ConsumerWidget {
+  const _AvailableDeliveriesTab();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final deliveriesAsync = ref.watch(availableDeliveriesProvider);
+    final acceptingId = ref.watch(acceptingDeliveryIdProvider);
+
+    return deliveriesAsync.when(
+      data: (deliveries) {
+        if (deliveries.isEmpty) {
+          return _buildEmptyState(
+            icon: Icons.assignment_outlined,
+            title: 'Aucune course disponible',
+            subtitle: 'Passez en ligne et gardez votre GPS actif',
+          );
+        }
+        return RefreshIndicator(
+          onRefresh: () => ref.refresh(availableDeliveriesProvider.future),
+          child: ListView.separated(
+            padding: const EdgeInsets.all(16),
+            itemCount: deliveries.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 12),
+            itemBuilder: (context, index) {
+              final delivery = deliveries[index];
+              return _DeliveryCard(
+                delivery: delivery,
+                isActive: false,
+                trailing: ElevatedButton(
+                  onPressed:
+                      acceptingId == null
+                          ? () => _acceptDelivery(context, ref, delivery)
+                          : null,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: DelivrColors.primary,
+                    foregroundColor: Colors.white,
+                  ),
+                  child:
+                      acceptingId == delivery.id
+                          ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                          : const Text('Accepter'),
+                ),
+              );
+            },
+          ),
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error:
+          (error, _) => _buildErrorState(
+            error.toString(),
+            () => ref.refresh(availableDeliveriesProvider),
+          ),
+    );
+  }
+
+  Future<void> _acceptDelivery(
+    BuildContext context,
+    WidgetRef ref,
+    DeliveryListItem delivery,
+  ) async {
+    ref.read(acceptingDeliveryIdProvider.notifier).state = delivery.id;
+
+    try {
+      final api = ref.read(apiClientProvider);
+      final response = await api.post('/api/orders/${delivery.id}/accept/');
+
+      if (!context.mounted) return;
+
+      if (response.success) {
+        ref.invalidate(availableDeliveriesProvider);
+        ref.invalidate(activeDeliveriesProvider);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Course acceptée'),
+            backgroundColor: DelivrColors.success,
+          ),
+        );
+        context.push('/deliveries/${delivery.id}');
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(response.error ?? 'Acceptation impossible'),
+            backgroundColor: DelivrColors.error,
+          ),
+        );
+      }
+    } finally {
+      ref.read(acceptingDeliveryIdProvider.notifier).state = null;
+    }
   }
 }
 
@@ -83,18 +185,18 @@ class _ActiveDeliveriesTab extends ConsumerWidget {
             padding: const EdgeInsets.all(16),
             itemCount: deliveries.length,
             separatorBuilder: (_, __) => const SizedBox(height: 12),
-            itemBuilder: (context, index) => _DeliveryCard(
-              delivery: deliveries[index],
-              isActive: true,
-            ),
+            itemBuilder:
+                (context, index) =>
+                    _DeliveryCard(delivery: deliveries[index], isActive: true),
           ),
         );
       },
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, _) => _buildErrorState(
-        error.toString(),
-        () => ref.refresh(activeDeliveriesProvider),
-      ),
+      error:
+          (error, _) => _buildErrorState(
+            error.toString(),
+            () => ref.refresh(activeDeliveriesProvider),
+          ),
     );
   }
 }
@@ -122,18 +224,18 @@ class _CompletedDeliveriesTab extends ConsumerWidget {
             padding: const EdgeInsets.all(16),
             itemCount: deliveries.length,
             separatorBuilder: (_, __) => const SizedBox(height: 12),
-            itemBuilder: (context, index) => _DeliveryCard(
-              delivery: deliveries[index],
-              isActive: false,
-            ),
+            itemBuilder:
+                (context, index) =>
+                    _DeliveryCard(delivery: deliveries[index], isActive: false),
           ),
         );
       },
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, _) => _buildErrorState(
-        error.toString(),
-        () => ref.refresh(completedDeliveriesProvider),
-      ),
+      error:
+          (error, _) => _buildErrorState(
+            error.toString(),
+            () => ref.refresh(completedDeliveriesProvider),
+          ),
     );
   }
 }
@@ -142,19 +244,19 @@ class _CompletedDeliveriesTab extends ConsumerWidget {
 class _DeliveryCard extends StatelessWidget {
   final DeliveryListItem delivery;
   final bool isActive;
+  final Widget? trailing;
 
   const _DeliveryCard({
     required this.delivery,
     required this.isActive,
+    this.trailing,
   });
 
   @override
   Widget build(BuildContext context) {
     return Card(
       elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         onTap: () => context.push('/deliveries/${delivery.id}'),
         borderRadius: BorderRadius.circular(12),
@@ -172,7 +274,9 @@ class _DeliveryCard extends StatelessWidget {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: _getStatusColor(delivery.status).withValues(alpha: 0.1),
+                      color: _getStatusColor(
+                        delivery.status,
+                      ).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Row(
@@ -195,14 +299,19 @@ class _DeliveryCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const Spacer(),
-                  Text(
-                    delivery.createdAt,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: DelivrColors.textSecondary,
+                  if (trailing != null) ...[
+                    const Spacer(),
+                    trailing!,
+                  ] else ...[
+                    const Spacer(),
+                    Text(
+                      delivery.createdAt,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: DelivrColors.textSecondary,
+                      ),
                     ),
-                  ),
+                  ],
                 ],
               ),
 
@@ -381,20 +490,18 @@ Widget _buildEmptyState({
     child: Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Icon(icon, size: 64, color: DelivrColors.primary.withValues(alpha: 0.5)),
+        Icon(
+          icon,
+          size: 64,
+          color: DelivrColors.primary.withValues(alpha: 0.5),
+        ),
         const SizedBox(height: 16),
         Text(
           title,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
-        Text(
-          subtitle,
-          style: TextStyle(color: DelivrColors.textSecondary),
-        ),
+        Text(subtitle, style: TextStyle(color: DelivrColors.textSecondary)),
       ],
     ),
   );
@@ -456,7 +563,9 @@ class DeliveryListItem {
     try {
       final date = DateTime.parse(isoDate);
       final now = DateTime.now();
-      if (date.day == now.day && date.month == now.month && date.year == now.year) {
+      if (date.day == now.day &&
+          date.month == now.month &&
+          date.year == now.year) {
         return 'Aujourd\'hui ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
       }
       return '${date.day}/${date.month} ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
@@ -467,24 +576,64 @@ class DeliveryListItem {
 }
 
 /// Providers for deliveries list
-final activeDeliveriesProvider = FutureProvider<List<DeliveryListItem>>((ref) async {
+final availableDeliveriesProvider = FutureProvider<List<DeliveryListItem>>((
+  ref,
+) async {
   final api = ref.watch(apiClientProvider);
-  final response = await api.get('/api/mobile/deliveries/', queryParameters: {'status': 'active'});
-  
+  final response = await api.get(
+    '/api/mobile/deliveries/',
+    queryParameters: {'status': 'available'},
+  );
+
   if (response.success && response.data != null) {
     final list = response.data!['deliveries'] as List<dynamic>?;
-    return list?.map((e) => DeliveryListItem.fromJson(e as Map<String, dynamic>)).toList() ?? [];
+    return list
+            ?.map((e) => DeliveryListItem.fromJson(e as Map<String, dynamic>))
+            .toList() ??
+        [];
   }
-  return [];
+
+  throw Exception(response.error ?? 'Courses disponibles indisponibles');
 });
 
-final completedDeliveriesProvider = FutureProvider<List<DeliveryListItem>>((ref) async {
+final acceptingDeliveryIdProvider = StateProvider<String?>((ref) => null);
+
+final activeDeliveriesProvider = FutureProvider<List<DeliveryListItem>>((
+  ref,
+) async {
   final api = ref.watch(apiClientProvider);
-  final response = await api.get('/api/mobile/deliveries/', queryParameters: {'status': 'completed'});
-  
+  final response = await api.get(
+    '/api/mobile/deliveries/',
+    queryParameters: {'status': 'active'},
+  );
+
   if (response.success && response.data != null) {
     final list = response.data!['deliveries'] as List<dynamic>?;
-    return list?.map((e) => DeliveryListItem.fromJson(e as Map<String, dynamic>)).toList() ?? [];
+    return list
+            ?.map((e) => DeliveryListItem.fromJson(e as Map<String, dynamic>))
+            .toList() ??
+        [];
   }
-  return [];
+
+  throw Exception(response.error ?? 'Courses en cours indisponibles');
+});
+
+final completedDeliveriesProvider = FutureProvider<List<DeliveryListItem>>((
+  ref,
+) async {
+  final api = ref.watch(apiClientProvider);
+  final response = await api.get(
+    '/api/mobile/deliveries/',
+    queryParameters: {'status': 'completed'},
+  );
+
+  if (response.success && response.data != null) {
+    final list = response.data!['deliveries'] as List<dynamic>?;
+    return list
+            ?.map((e) => DeliveryListItem.fromJson(e as Map<String, dynamic>))
+            .toList() ??
+        [];
+  }
+
+  throw Exception(response.error ?? 'Historique indisponible');
 });

@@ -81,7 +81,7 @@ class QuickActions extends StatelessWidget {
                 icon: Icons.local_shipping,
                 label: 'Mes courses',
                 color: DelivrColors.error,
-                onTap: () => context.push(AppRoutes.activeDeliveries),
+                onTap: () => context.go(AppRoutes.deliveries),
               ),
             ),
           ],
@@ -123,11 +123,7 @@ class _ActionButton extends StatelessWidget {
                   color: color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(
-                  icon,
-                  color: color,
-                  size: 22,
-                ),
+                child: Icon(icon, color: color, size: 22),
               ),
               const SizedBox(width: 12),
               Text(

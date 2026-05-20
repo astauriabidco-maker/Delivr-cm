@@ -158,6 +158,15 @@ class User(AbstractBaseUser, PermissionsMixin):
         default=False,
         verbose_name="Documents vérifiés"
     )
+    activation_code = models.CharField(
+        max_length=32,
+        unique=True,
+        null=True,
+        blank=True,
+        db_index=True,
+        verbose_name="Code d'activation mobile",
+        help_text="Code à usage unique pour activer l'application coursier."
+    )
     cni_document = models.FileField(
         upload_to='documents/cni/',
         null=True,
@@ -548,5 +557,4 @@ class PromoCode(models.Model):
             discount = self.discount_value
         
         return max(Decimal('0.00'), total_price - discount)
-
 

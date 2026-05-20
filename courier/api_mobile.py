@@ -472,10 +472,7 @@ class DeliveryListView(APIView):
         elif status_filter == 'completed':
             qs = qs.filter(status=DeliveryStatus.COMPLETED)
         
-        qs = qs.select_related(
-            'pickup_neighborhood', 
-            'dropoff_neighborhood'
-        ).order_by('-created_at')[:50]
+        qs = qs.select_related('dropoff_neighborhood').order_by('-created_at')[:50]
         
         deliveries = []
         for d in qs:
@@ -487,9 +484,7 @@ class DeliveryListView(APIView):
         return {
             'id': str(d.id),
             'status': d.status,
-            'pickup_address': d.pickup_address or (
-                d.pickup_neighborhood.name if d.pickup_neighborhood else 'N/A'
-            ),
+            'pickup_address': d.pickup_address or 'N/A',
             'dropoff_address': d.dropoff_address or (
                 d.dropoff_neighborhood.name if d.dropoff_neighborhood else 'N/A'
             ),
@@ -524,7 +519,7 @@ class DeliveryDetailView(APIView):
     def get(self, request, delivery_id):
         try:
             delivery = Delivery.objects.select_related(
-                'sender', 'pickup_neighborhood', 'dropoff_neighborhood'
+                'sender', 'dropoff_neighborhood'
             ).get(id=delivery_id, courier=request.user)
         except Delivery.DoesNotExist:
             return Response(
@@ -538,9 +533,7 @@ class DeliveryDetailView(APIView):
         return {
             'id': str(d.id),
             'status': d.status,
-            'pickup_address': d.pickup_address or (
-                d.pickup_neighborhood.name if d.pickup_neighborhood else 'N/A'
-            ),
+            'pickup_address': d.pickup_address or 'N/A',
             'dropoff_address': d.dropoff_address or (
                 d.dropoff_neighborhood.name if d.dropoff_neighborhood else 'N/A'
             ),

@@ -5,12 +5,14 @@ import 'package:go_router/go_router.dart';
 import '../../../app/router.dart';
 import '../../../app/theme.dart';
 import '../../../core/demo/mock_data_provider.dart';
+import '../../../core/location/location_service.dart';
 import '../providers/dashboard_provider.dart';
 import '../widgets/stats_card.dart';
 import '../widgets/online_toggle.dart';
 import '../widgets/active_delivery_banner.dart';
 import '../widgets/quick_actions.dart';
 import '../widgets/courier_map_widget.dart';
+import '../widgets/gps_status_widget.dart';
 import '../../deliveries/widgets/new_delivery_popup.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
@@ -26,17 +28,23 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final dashboardAsync = ref.watch(dashboardProvider);
     final demoMode = ref.watch(demoModeProvider);
     // Watch accepted deliveries to trigger rebuilds
-    final acceptedDeliveries = ref.watch(acceptedDeliveriesProvider);
+    final acceptedDeliveries =
+        demoMode
+            ? ref.watch(acceptedDeliveriesProvider)
+            : const <MockDelivery>[];
 
     return Scaffold(
       backgroundColor: DelivrColors.background,
       // Demo FAB - only visible in demo mode
-      floatingActionButton: demoMode ? FloatingActionButton.extended(
-        onPressed: () => _simulateNewDelivery(),
-        backgroundColor: DelivrColors.primary,
-        icon: const Icon(Icons.add_alert),
-        label: const Text('Simuler course'),
-      ) : null,
+      floatingActionButton:
+          demoMode
+              ? FloatingActionButton.extended(
+                onPressed: () => _simulateNewDelivery(),
+                backgroundColor: DelivrColors.primary,
+                icon: const Icon(Icons.add_alert),
+                label: const Text('Simuler course'),
+              )
+              : null,
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () async {
@@ -55,7 +63,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 // Online Toggle
                 const OnlineToggle(),
                 const SizedBox(height: 16),
-                
+
+                _buildGpsPanel(dashboardAsync),
+                const SizedBox(height: 16),
+
                 // Interactive Map
                 _buildMapSection(context, dashboardAsync),
                 const SizedBox(height: 16),
@@ -68,9 +79,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         padding: const EdgeInsets.only(bottom: 16),
                         child: ActiveDeliveryBanner(
                           delivery: data.activeDelivery!,
-                          onTap: () => context.push(
-                            '/deliveries/${data.activeDelivery!.id}',
-                          ),
+                          onTap:
+                              () => context.push(
+                                '/deliveries/${data.activeDelivery!.id}',
+                              ),
                         ),
                       );
                     }
@@ -86,16 +98,20 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   loading: () => _buildStatsLoading(),
                   error: (error, _) => _buildError(error.toString()),
                 ),
-                
+
                 const SizedBox(height: 24),
 
                 // Quick Actions
                 const QuickActions(),
-                
+
                 const SizedBox(height: 24),
 
                 // Recent Deliveries - pass accepted deliveries directly
-                _buildRecentDeliveries(context, dashboardAsync, acceptedDeliveries),
+                _buildRecentDeliveries(
+                  context,
+                  dashboardAsync,
+                  acceptedDeliveries,
+                ),
               ],
             ),
           ),
@@ -107,19 +123,19 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   /// Simulate a new delivery notification
   void _simulateNewDelivery() async {
     final newDelivery = MockDataProvider.generateNewDelivery();
-    
+
     final accepted = await showNewDeliveryPopup(
       context,
       delivery: newDelivery,
       timeoutSeconds: 30,
     );
-    
+
     if (!mounted) return;
-    
+
     if (accepted) {
       // Add to accepted deliveries provider
       ref.read(acceptedDeliveriesProvider.notifier).acceptDelivery(newDelivery);
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('✓ Course ${newDelivery.trackingCode} acceptée !'),
@@ -127,7 +143,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           duration: const Duration(seconds: 3),
         ),
       );
-      
+
       // Force a rebuild
       setState(() {});
     } else {
@@ -140,7 +156,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     }
   }
 
-
   Widget _buildHeader(BuildContext context) {
     return Row(
       children: [
@@ -152,13 +167,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             color: DelivrColors.primary.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
           ),
-          child: const Icon(
-            Icons.person,
-            color: DelivrColors.primary,
-          ),
+          child: const Icon(Icons.person, color: DelivrColors.primary),
         ),
         const SizedBox(width: 12),
-        
+
         // Greeting
         Expanded(
           child: Column(
@@ -182,7 +194,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             ],
           ),
         ),
-        
+
         // Notifications
         IconButton(
           onPressed: () {
@@ -216,8 +228,72 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     if (hour < 18) return 'Bon après-midi 👋';
     return 'Bonsoir 👋';
   }
-  
-  Widget _buildMapSection(BuildContext context, AsyncValue<DashboardData> dashboardAsync) {
+
+  Widget _buildGpsPanel(AsyncValue<DashboardData> dashboardAsync) {
+    final locationState = ref.watch(locationStateProvider);
+    final hasActiveDelivery = dashboardAsync.maybeWhen(
+      data: (data) => data.activeDelivery != null,
+      orElse: () => false,
+    );
+
+    return Row(
+      children: [
+        const Expanded(child: GpsStatusWidget()),
+        const SizedBox(width: 12),
+        FilledButton.icon(
+          onPressed: () => _toggleGpsTracking(hasActiveDelivery),
+          icon: Icon(
+            locationState.isTracking ? Icons.gps_off : Icons.my_location,
+            size: 18,
+          ),
+          label: Text(locationState.isTracking ? 'Stop' : 'Activer'),
+          style: FilledButton.styleFrom(
+            backgroundColor:
+                locationState.isTracking
+                    ? DelivrColors.textSecondary
+                    : DelivrColors.primary,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _toggleGpsTracking(bool hasActiveDelivery) async {
+    final notifier = ref.read(locationStateProvider.notifier);
+    final locationState = ref.read(locationStateProvider);
+
+    if (locationState.isTracking) {
+      notifier.stopTracking();
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Suivi GPS désactivé')));
+      return;
+    }
+
+    final started = await notifier.startTracking(
+      hasActiveDelivery: hasActiveDelivery,
+    );
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          started
+              ? 'Suivi GPS activé'
+              : ref.read(locationStateProvider).error ??
+                  'Impossible d’activer le GPS',
+        ),
+        backgroundColor: started ? DelivrColors.success : DelivrColors.error,
+      ),
+    );
+  }
+
+  Widget _buildMapSection(
+    BuildContext context,
+    AsyncValue<DashboardData> dashboardAsync,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -247,7 +323,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           ],
         ),
         const SizedBox(height: 8),
-        
+
         // Map widget
         dashboardAsync.when(
           data: (data) {
@@ -255,18 +331,21 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             final markers = <MapDeliveryMarker>[];
             for (final delivery in data.recentDeliveries.take(5)) {
               // Add markers for active deliveries
-              if (delivery.status != 'COMPLETED' && delivery.status != 'CANCELLED') {
-                markers.add(MapDeliveryMarker(
-                  id: delivery.id,
-                  latitude: 4.051 + (markers.length * 0.005), // Sample coords
-                  longitude: 9.768 + (markers.length * 0.003),
-                  status: delivery.status,
-                  recipientName: delivery.dropoffAddress,
-                  isPickup: delivery.status == 'ASSIGNED',
-                ));
+              if (delivery.status != 'COMPLETED' &&
+                  delivery.status != 'CANCELLED') {
+                markers.add(
+                  MapDeliveryMarker(
+                    id: delivery.id,
+                    latitude: 4.051 + (markers.length * 0.005), // Sample coords
+                    longitude: 9.768 + (markers.length * 0.003),
+                    status: delivery.status,
+                    recipientName: delivery.dropoffAddress,
+                    isPickup: delivery.status == 'ASSIGNED',
+                  ),
+                );
               }
             }
-            
+
             return CourierMapWidget(
               // Default to Douala center
               latitude: 4.0511,
@@ -275,36 +354,40 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               height: 200,
             );
           },
-          loading: () => Container(
-            height: 200,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: const Center(
-              child: CircularProgressIndicator(),
-            ),
-          ),
-          error: (_, __) => Container(
-            height: 200,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.map_outlined, size: 48, color: DelivrColors.textSecondary),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Carte indisponible',
-                    style: TextStyle(color: DelivrColors.textSecondary),
-                  ),
-                ],
+          loading:
+              () => Container(
+                height: 200,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Center(child: CircularProgressIndicator()),
               ),
-            ),
-          ),
+          error:
+              (_, __) => Container(
+                height: 200,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.map_outlined,
+                        size: 48,
+                        color: DelivrColors.textSecondary,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Carte indisponible',
+                        style: TextStyle(color: DelivrColors.textSecondary),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
         ),
       ],
     );
@@ -419,7 +502,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     AsyncValue<DashboardData> dashboardAsync,
     List<MockDelivery> acceptedDeliveries,
   ) {
-    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -439,7 +521,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 if (acceptedDeliveries.isNotEmpty) ...[
                   const SizedBox(width: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: DelivrColors.primary,
                       borderRadius: BorderRadius.circular(10),
@@ -463,13 +548,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           ],
         ),
         const SizedBox(height: 12),
-        
+
         // Show accepted mock deliveries first
         if (acceptedDeliveries.isNotEmpty)
           Column(
-            children: acceptedDeliveries.take(5).map((delivery) {
-              return _buildMockDeliveryItem(context, delivery);
-            }).toList(),
+            children:
+                acceptedDeliveries.take(5).map((delivery) {
+                  return _buildMockDeliveryItem(context, delivery);
+                }).toList(),
           )
         else
           dashboardAsync.when(
@@ -491,19 +577,18 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       const SizedBox(height: 12),
                       Text(
                         'Aucune course récente',
-                        style: TextStyle(
-                          color: DelivrColors.textSecondary,
-                        ),
+                        style: TextStyle(color: DelivrColors.textSecondary),
                       ),
                     ],
                   ),
                 );
               }
-              
+
               return Column(
-                children: data.recentDeliveries.map((delivery) {
-                  return _buildDeliveryItem(context, delivery);
-                }).toList(),
+                children:
+                    data.recentDeliveries.map((delivery) {
+                      return _buildDeliveryItem(context, delivery);
+                    }).toList(),
               );
             },
             loading: () => _shimmerCard(),
@@ -551,7 +636,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
-                color: _getMockStatusColor(delivery.status).withValues(alpha: 0.1),
+                color: _getMockStatusColor(
+                  delivery.status,
+                ).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(4),
               ),
               child: Text(
@@ -566,10 +653,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             const SizedBox(width: 8),
             Text(
               '${delivery.estimatedDistanceKm.toStringAsFixed(1)} km',
-              style: TextStyle(
-                fontSize: 12,
-                color: DelivrColors.textSecondary,
-              ),
+              style: TextStyle(fontSize: 12, color: DelivrColors.textSecondary),
             ),
           ],
         ),
@@ -669,10 +753,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         ),
         subtitle: Text(
           delivery.timeAgo,
-          style: TextStyle(
-            fontSize: 12,
-            color: DelivrColors.textSecondary,
-          ),
+          style: TextStyle(fontSize: 12, color: DelivrColors.textSecondary),
         ),
         trailing: Text(
           '${delivery.earning.toStringAsFixed(0)} XAF',
